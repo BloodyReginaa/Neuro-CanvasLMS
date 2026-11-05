@@ -1,0 +1,23 @@
+{
+  "name": "canvas-ai-connector",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Read-only Canvas LMS connector (remote MCP server on Cloudflare Workers) for Claude and ChatGPT",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test",
+    "deploy": "wrangler deploy",
+    "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^0.10.3",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "fflate": "^0.8.3",
+    "ipaddr.js": "2.2.0",
+    "unpdf": "^1.8.1"
+  },
+  "devDependencies": {
+    "wrangler": "^4.136.3"
+  },
+  "engines": { "node": ">=20" }
+}

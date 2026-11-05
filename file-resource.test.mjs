@@ -1,0 +1,11 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {fileResourceURI,parseFileResourceURI,readFileResource} from './file-resource.mjs';
+import {Buffer} from 'node:buffer';
+const bytes=Buffer.from('%PDF-1.4 original bytes');const args={course_id:41051,module_id:545828,item_id:3555793};
+const sha256=Buffer.from(await crypto.subtle.digest('SHA-256',bytes)).toString('hex');
+const uri=fileResourceURI(args,{sha256,name:'5-volumes.pdf'});
+const options={resolve:async()=>{},fetcher:async()=>new Response(bytes,{headers:{'content-type':'application/pdf'}})};
+const api=async()=>Response.json({id:args.item_id,module_id:args.module_id,type:'ExternalUrl',external_url:'https://www.dropbox.com/scl/fi/example/5-volumes.pdf'});
+test('resource URI accepts only module IDs, hash and encoded filename',()=>{assert.deepEqual(parseFileResourceURI(uri),{args,sha256,name:'5-volumes.pdf'});for(const bad of ['https://example.org/a',uri+'?url=https://example.org',uri.replace('/41051/','/0/'),uri.replace('/41051/','/99999999999999999999/')])assert.throws(()=>parseFileResourceURI(bad));});
+test('resource read returns exact binary via authenticated Canvas source',async()=>{const result=await readFileResource(uri,'secret',api,options);assert.equal(result.contents[0].uri,uri);assert.equal(result.contents[0].mimeType,'application/pdf');assert.deepEqual(Buffer.from(result.contents[0].blob,'base64'),bytes);});
+test('resource read rejects changed file and lost Canvas access',async()=>{await assert.rejects(readFileResource(uri.replace(sha256,'a'.repeat(64)),'secret',api,options),/changed/);await assert.rejects(readFileResource(uri,'secret',async()=>new Response('',{status:403}),options));});
