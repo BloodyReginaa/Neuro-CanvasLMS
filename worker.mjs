@@ -3,7 +3,7 @@ import { moduleFileTool, moduleFile, fileOriginalTool, fileOriginal } from './mo
 import { connect } from 'cloudflare:sockets';
 import { createCanvasTransport } from './canvas-transport.mjs';
 import { OAuthProvider } from '@cloudflare/workers-oauth-provider';
-import { WorkerEntrypoint } from 'cloudflare:workers';
+import { WorkerEntrypoint, env as workerEnv } from 'cloudflare:workers';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import {
@@ -18,7 +18,12 @@ import { isAllowedRedirect, resolveOwner, currentOwner } from './owner.mjs';
 import { pickLang } from './i18n.mjs';
 import { homePage, authorizePage, messagePage } from './pages.mjs';
 
-const canvasTransport = createCanvasTransport(connect);
+// CANVAS_TRANSPORT (optional var): 'auto' (default), 'fetch' or 'socket' — see canvas-transport.mjs.
+const canvasTransport = createCanvasTransport(connect, fetch, {
+  mode: () =>
+    ['fetch', 'socket'].includes(workerEnv.CANVAS_TRANSPORT) ? workerEnv.CANVAS_TRANSPORT : 'auto',
+  log: entry => console.log(JSON.stringify({ canvas_transport: entry })),
+});
 // Our own messages (no upstream bodies, no tokens) may be shown to the AI so it can correct itself.
 const SAFE_ERROR =
   /^(Canvas|Invalid [a-z_]+$|Unexpected argument|Missing argument|Missing context_id|Unknown tool)/;
