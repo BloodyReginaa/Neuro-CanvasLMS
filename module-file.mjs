@@ -1,3 +1,4 @@
+import { DOWNLOAD_UA, loginRedirect } from './file-content.mjs';
 import ipaddr from 'ipaddr.js';
 import { Buffer } from 'node:buffer';
 import { callCanvas } from './canvas.mjs';
@@ -28,11 +29,11 @@ export async function downloadOriginal(raw,{fetcher=cloudFetch,resolve=resolvePu
  for(let hops=0;hops<=5;hops++){
   const u=safeURL(url);try{await resolve(u.hostname,fetcher,signal);}catch(e){if(e.message?.startsWith('Canvas'))throw e;throw new Error('Canvas file: DNS validation failed ('+e.name+'): '+String(e.message).replace(/https?:\/\/\S+/g,'[URL]').slice(0,180));}
   // Never attach Canvas credentials, cookies or a referrer to a file request.
-  const r=await fetcher(u.href,{method:'GET',redirect:'manual',headers:{Accept:'application/pdf,application/octet-stream;q=0.9,*/*;q=0.5'},signal});
+  const r=await fetcher(u.href,{method:'GET',redirect:'manual',headers:{Accept:'application/pdf,application/octet-stream;q=0.9,*/*;q=0.5','User-Agent':DOWNLOAD_UA},signal});
   if([301,302,303,307,308].includes(r.status)){
-   await r.body?.cancel();const next=r.headers.get('location');if(!next||hops===5)throw new Error('Canvas file: too many or invalid redirects.');url=safeURL(new URL(next,u).href).href;continue;
+   await r.body?.cancel();const next=r.headers.get('location');if(!next||hops===5)throw new Error('Canvas file: too many or invalid redirects.');url=safeURL(new URL(next,u).href).href;if(loginRedirect(url))throw new Error('Canvas file: download was redirected to the Canvas login page.');continue;
   }
-  if(!r.ok){await r.body?.cancel();throw new Error('Canvas file: download returned HTTP '+r.status+'.');}
+  if(!r.ok){await r.body?.cancel();throw new Error('Canvas file: download returned HTTP '+r.status+' from '+u.hostname+u.pathname.replace(/\/[^/]{40,}/g,'/…')+' after '+hops+' redirect(s).');}
   const length=r.headers.get('content-length');if(length&&(!/^\d+$/.test(length)||Number(length)>maxBytes)){await r.body?.cancel();throw new Error('Canvas file: file exceeds 15 MiB limit.');}
   const reader=r.body?.getReader();if(!reader)throw new Error('Canvas file: empty download.');
   const chunks=[];let size=0;

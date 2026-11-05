@@ -2,6 +2,12 @@ import { getDocumentProxy } from 'unpdf';
 import { unzipSync, strFromU8 } from 'fflate';
 import { CANVAS_HOST } from './config.mjs';
 const MAX_BYTES=15*1024*1024;
+// The User-Agent matters for file downloads (verified 2026-11 on UMass Amherst):
+//  - the Canvas host answers 403 "Not Authorized" when there is NO User-Agent;
+//  - Instructure's file storage (inst-fs-*.inscloudgate.net) answers 403 to any
+//    User-Agent containing "UMassCanvas". Keep it honest and don't rename it to that.
+export const DOWNLOAD_UA='Neuro-CanvasLMS/2.0 (read-only personal integration)';
+export const loginRedirect=raw=>{const u=new URL(raw);return /\.instructure\.com$/.test(u.hostname)||u.hostname===CANVAS_HOST?/^\/login(\/|$)/.test(u.pathname):false;};
 // Only URLs returned by the authenticated Canvas file-metadata endpoint are used.
 // Canvas credentials are NEVER sent to downloads, including same-origin ones.
 export function allowedDownload(raw){
@@ -35,14 +41,17 @@ export async function readFileContent(meta,args,fetcher=fetch){
  const base={file_id:meta.id,name:meta.display_name??meta.filename,source_url:meta.url,mime_type:meta['content-type']};
  if(!meta.url||!allowedDownload(meta.url))return {...base,text:null,extraction_note:'Canvas download host is not in the connector allowlist; use the Canvas file link.'};
  if(meta.size>MAX_BYTES)return {...base,text:null,extraction_note:'File exceeds the 15 MiB extraction limit; use the download link.'};
- let url=meta.url,response;
- for(let i=0;i<5;i++){
-  if(!allowedDownload(url))throw new Error('Canvas file redirect host is not allowed.');
-  response=await fetcher(url,{method:'GET',redirect:'manual',headers:{Accept:'*/*'},signal:AbortSignal.timeout(20000)});
-  if(response.status>=300&&response.status<400){const location=response.headers.get('location');if(!location)throw new Error('Canvas download redirect is missing its destination.');url=new URL(location,url).href;continue;}
+ let url=meta.url,response;const hops=[];
+ const where=u=>{const x=new URL(u);return x.hostname+x.pathname.replace(/\/[^/]{40,}/g,'/…');};
+ for(let i=0;i<8;i++){
+  if(!allowedDownload(url))throw new Error('Canvas file redirect host is not allowed: '+[...hops,where(url)].join(' → '));
+  response=await fetcher(url,{method:'GET',redirect:'manual',headers:{Accept:'*/*','User-Agent':DOWNLOAD_UA},signal:AbortSignal.timeout(20000)});
+  hops.push(response.status+' '+where(url));
+  if(response.status>=300&&response.status<400){const location=response.headers.get('location');if(!location)throw new Error('Canvas download redirect is missing its destination.');url=new URL(location,url).href;if(loginRedirect(url))throw new Error('Canvas file download was redirected to the Canvas login page; this school may require a browser session for file downloads.');continue;}
   break;
  }
- if(!response?.ok)throw new Error('Canvas file download failed; access or download URL may have expired.');
+ if(response.status>=300&&response.status<400)throw new Error('Canvas file download: too many redirects ('+hops.join(' → ')+').');
+ if(!response?.ok)throw new Error('Canvas file download failed (HTTP '+response.status+'; '+hops.join(' → ')+'; content-type '+(response.headers.get('content-type')??'unknown').split(';')[0]+').');
  const extracted=await extractBytes(await boundedBytes(response),base.name??'',base.mime_type??response.headers.get('content-type')??'');
  if(extracted.text===null)return {...base,...extracted};
  const offset=args.offset??0,max=args.max_chars??20000,total=extracted.text.length;

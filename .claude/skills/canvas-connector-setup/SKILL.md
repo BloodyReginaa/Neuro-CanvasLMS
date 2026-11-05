@@ -130,6 +130,7 @@ After tool changes, start a new chat (some clients cache the tool list).
 | "Only Claude, ChatGPT…" / unsupported app | The client's OAuth redirect isn't allowed. See `isAllowedRedirect` in `owner.mjs`. |
 | Verification failed, HTTP 401 | Token wrong, incomplete or expired → new token. |
 | HTTP 406 / HTML error pages from Canvas | The school's front end blocks a request style. The transport in `canvas-transport.mjs` already uses a raw TLS socket for this; confirm `CANVAS_HOST` is the real Canvas host. |
+| File download fails with HTTP 403 (`text/html`) while file metadata works | A firewall is rejecting the download's User-Agent. The Canvas host rejects a missing one; Instructure's file storage (`inst-fs-*.inscloudgate.net`) rejects any containing `UMassCanvas`. Keep `DOWNLOAD_UA` in `file-content.mjs` as shipped. The error message lists every redirect hop to show which host refused. |
 | HTTP 403/404 on files or quizzes | Canvas course permissions; the instructor hid that page. Module-linked items may still work. |
 | File "exceeds 15 MiB" | Worker memory limit. Have the user download the file and open it with Claude Code locally. |
 | Handwritten/scanned PDF has no text | Expected. Use `canvas_module_file`; the AI reads the PDF pages as images (ask for ~150 dpi for formulas). |
