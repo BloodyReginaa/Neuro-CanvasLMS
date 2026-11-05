@@ -33,7 +33,7 @@ school that uses Canvas; you change one line.
 
 ## What you get
 
-- **58 read-only tools:** courses, modules, pages, files, assignments, submissions, grades and
+- **59 read-only tools:** courses, modules, pages, files, assignments, submissions, grades and
   feedback, rubrics, announcements, discussions, inbox, calendar, to-dos, groups, quiz
   history and profile settings.
 - **Real file reading:** text from PDF, Word, PowerPoint and Excel, plus the original file

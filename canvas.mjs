@@ -3,7 +3,8 @@ import { readFileContent } from './file-content.mjs';
 import { CANVAS_HOST } from './config.mjs';
 export const ORIGIN = 'https://' + CANVAS_HOST;
 const id = {type:'integer',minimum:1};
-const page = {type:'integer',minimum:1,maximum:1000};
+// Canvas pages are numbers on most endpoints but opaque bookmarks on others (e.g. planner).
+const page = {type:'string',pattern:'^(?:[1-9][0-9]{0,3}|bookmark:[A-Za-z0-9_=-]{1,1000})$',maxLength:1010,description:'Page to fetch: a number, or the next_page value returned by the previous call.'};
 const def = (name,description,properties={},required=[]) => ({name,description,inputSchema:{type:'object',properties,required,additionalProperties:false},annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false}});
 export const tools = [
  def('canvas_profile','Read the connected Canvas profile.'),
@@ -25,9 +26,9 @@ function validate(p,v,k){
 export function endpoint(name,args={}) {
  const tool=tools.find(t=>t.name===name); if(!tool) throw new Error('Unknown tool');
  const schema=tool.inputSchema;
- for(const k of Object.keys(args)) if(!schema.properties[k]) throw new Error('Unexpected argument');
+ for(const k of Object.keys(args)) if(!schema.properties[k]) throw new Error('Unexpected argument: '+String(k).slice(0,40).replace(/[^\w-]/g,'?'));
  for(const k of schema.required) if(args[k]===undefined) throw new Error('Missing argument: '+k);
- for(const [k,v] of Object.entries(args))validate(schema.properties[k],v,k);
+ for(const [k,v] of Object.entries(args))validate(schema.properties[k],k==='page'&&Number.isSafeInteger(v)?String(v):v,k);
  const extra=extraSpecs.find(s=>s.name===name);
  if(extra){
   if(['canvas_files','canvas_folders'].includes(name)&&args.context_type!=='user'&&!args.context_id)throw new Error('Missing context_id');
@@ -60,9 +61,24 @@ export async function callCanvas(name,args,token,fetcher=fetch){
   const negotiation=body.includes('An appropriate representation of the requested resource could not be found');
   throw new Error('Canvas returned HTTP 406 ('+(r.headers.get('content-type')??'unknown').split(';')[0]+'; '+(r.headers.get('server')??'unknown')+'); response markers: '+markers.join(', ')+'; upstream host: '+safeHost+'; negotiation page: '+negotiation+'; ray: '+(/^[a-f0-9]{16,32}-[A-Z]{3}$/.test(ray)?ray:'unavailable'));
  }
+ if(r.status===401){
+  // Canvas uses 401 both for a bad/expired token and for "not allowed to see this".
+  let msg='';try{msg=JSON.stringify((await r.clone().json()).errors??'');}catch{}
+  const tokenProblem=/invalid access token|expired/i.test(msg)||/invalid_token/i.test(r.headers.get('www-authenticate')??'');
+  throw new Error(tokenProblem?'Canvas authorization expired; reconnect.':'Canvas denied access to this resource (HTTP 401: not authorized for this item). The connection itself is fine.');
+ }
  if(!r.ok)throw new Error(r.status===401?'Canvas authorization expired; reconnect.':`Canvas returned HTTP ${r.status} (${(r.headers.get('content-type')??'unknown').split(';')[0]}; ${r.headers.get('server')??'unknown'})`);
  const data=await r.json();
  if(name==='canvas_file_content')return readFileContent(data,args,fetcher);
- const next=/<[^>]+>;\s*rel="next"/.test(r.headers.get('link')??'');
- return {data,has_more:next,next_page:next?(args.page??1)+1:null,source_url:u.href};
+ const next=nextPage(r.headers.get('link'));
+ return {data,has_more:next!==null,next_page:next,source_url:u.href};
+}
+
+// Read the next page exactly as Canvas gives it (number or bookmark) from the Link header.
+export function nextPage(link){
+ const part=(link??'').split(',').find(x=>/;\s*rel="next"/.test(x));
+ const url=part?.match(/<([^>]+)>/)?.[1];if(!url)return null;
+ let p;try{p=new URL(url).searchParams.get('page');}catch{return null;}
+ if(!p)return null;
+ return /^[1-9][0-9]{0,3}$/.test(p)?Number(p):/^bookmark:[A-Za-z0-9_=-]{1,1000}$/.test(p)?p:null;
 }

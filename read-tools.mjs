@@ -39,7 +39,7 @@ add('files','List or search accessible personal, course, group or folder files. 
 add('file','Read file metadata and its Canvas-provided download URL. Use file_content to extract supported text.',a=>`/files/${a.file_id}`,{file_id:id},['file_id']);
 add('folders','Read personal, course, group or child folders.',a=>a.context_type==='user'?'/users/self/folders':`/${a.context_type}s/${a.context_id}/folders`,{context_type:choice('user','course','group','folder'),context_id:id},['context_type']);
 add('folder','Read folder metadata.',a=>`/folders/${a.folder_id}`,{folder_id:id},['folder_id']);
-add('file_content','Read text from a Canvas file: PDF text, DOCX, PPTX, XLSX XML text, plain text or code. Max download 15 MiB; paginated text. Scanned PDFs require OCR elsewhere. No external URL input.',a=>`/files/${a.file_id}`,{file_id:id,offset:{type:'integer',minimum:0,maximum:5000000},max_chars:{type:'integer',minimum:1000,maximum:30000}},['file_id']);
+add('file_content','Read text from a Canvas file: PDF text, DOCX, PPTX, XLSX XML text, plain text or code. Max download 15 MiB; paginated text. For scanned or handwritten PDFs use canvas_file_original. No external URL input.',a=>`/files/${a.file_id}`,{file_id:id,offset:{type:'integer',minimum:0,maximum:5000000},max_chars:{type:'integer',minimum:1000,maximum:30000}},['file_id']);
 add('groups','Read groups you belong to.','/users/self/groups');
 add('group','Read group information.',a=>`/groups/${a.group_id}`,{group_id:id},['group_id']);
 add('group_members','Read members visible to you in a group.',a=>`/groups/${a.group_id}/users`,{group_id:id},['group_id']);

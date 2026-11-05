@@ -1,5 +1,5 @@
 import { CANVAS_HOST as H } from './config.mjs';
-import test from 'node:test';import assert from 'node:assert/strict';import {endpoint,callCanvas,tools} from './canvas.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';import {endpoint,callCanvas,tools,nextPage} from './canvas.mjs';
 test('every tool is explicitly read only',()=>assert.ok(tools.every(t=>t.annotations.readOnlyHint&&!t.annotations.destructiveHint)));
 test('rejects arbitrary URLs and invalid course IDs',()=>{assert.throws(()=>endpoint('canvas_assignments',{course_id:'../../users'}));assert.throws(()=>endpoint('canvas_profile',{url:'https://evil.test'}));assert.throws(()=>endpoint('delete_course',{}));});
 test('all Canvas requests use GET and refuse redirects',async()=>{let seen;await callCanvas('canvas_assignments',{course_id:123},'test-token',async(u,opt)=>{seen={u,opt};return new Response('[]',{headers:{link:`<https://${H}/api/v1/courses/123/assignments?page=2>; rel="next"`}})});assert.equal(seen.opt.method,'GET');assert.equal(seen.opt.redirect,'manual');assert.equal(seen.u.origin,`https://${H}`);assert.equal(seen.u.searchParams.get('include[]'),'submission');});
@@ -65,4 +65,27 @@ test('PDF extraction reads a real text layer and reports its limitations',async(
 test('406 diagnostics expose only fixed markers and a valid request ID',async()=>{
  await assert.rejects(callCanvas('canvas_courses',{},'private-token',async()=>new Response('<h1>Not Acceptable</h1>Apache private-token private course details',{status:406,headers:{'content-type':'text/html','server':'cloudflare','cf-ray':'a4366e427a341780-IAD'}})),e=>e.message.includes('Not Acceptable, Apache')&&e.message.includes('a4366e427a341780-IAD')&&!e.message.includes('private-token')&&!e.message.includes('private course details'));
  await assert.rejects(callCanvas('canvas_courses',{},'private-token',async()=>new Response('private-token',{status:406,headers:{'cf-ray':'private-token'}})),e=>e.message.includes('unavailable')&&!e.message.includes('private-token'));
+});
+
+test('pagination follows Canvas bookmarks instead of guessing page+1',async()=>{
+ const bm='bookmark:WyIyMDI2LTExLTA1IiwxMjM0XQ';
+ const r=await callCanvas('canvas_planner',{start_date:'2026-11-01',end_date:'2026-11-30'},'t',async()=>new Response('[]',{headers:{link:`<https://${H}/api/v1/planner/items?page=first>; rel="first", <https://${H}/api/v1/planner/items?page=${bm}&per_page=50>; rel="next"`}}));
+ assert.equal(r.next_page,bm);
+ let asked;await callCanvas('canvas_planner',{start_date:'2026-11-01',end_date:'2026-11-30',page:bm},'t',async u=>{asked=u.searchParams.get('page');return new Response('[]');});
+ assert.equal(asked,bm);
+ assert.equal(endpoint('canvas_courses',{page:3}).searchParams.get('page'),'3');
+ assert.equal(endpoint('canvas_courses',{page:'3'}).searchParams.get('page'),'3');
+ for(const bad of [0,'0','bookmark:../../x','javascript:1',10001])assert.throws(()=>endpoint('canvas_courses',{page:bad}),String(bad));
+ assert.equal(nextPage(null),null);assert.equal(nextPage(`<https://${H}/x?page=2>; rel="current"`),null);
+});
+test('401 "not authorized for this item" is not reported as an expired token',async()=>{
+ const denied=async()=>Response.json({status:'unauthorized',errors:[{message:'user not authorized to perform that action'}]},{status:401});
+ await assert.rejects(callCanvas('canvas_profile',{},'t',denied),/denied access.*connection itself is fine/);
+ const expired=async()=>Response.json({errors:[{message:'Invalid access token.'}]},{status:401,headers:{'www-authenticate':'Bearer realm="canvas-lms"'}});
+ await assert.rejects(callCanvas('canvas_profile',{},'t',expired),/authorization expired/);
+});
+test('argument errors name the offending argument without echoing values',()=>{
+ assert.throws(()=>endpoint('canvas_courses',{bogus_arg:1}),/Unexpected argument: bogus_arg/);
+ assert.throws(()=>endpoint('canvas_assignments',{}),/Missing argument: course_id/);
+ assert.throws(()=>endpoint('canvas_assignments',{course_id:'<script>'}),/^Error: Invalid course_id$/);
 });

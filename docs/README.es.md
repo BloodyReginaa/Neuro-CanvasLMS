@@ -29,7 +29,7 @@ Escrito para estudiantes de UMass Amherst y probado con el Canvas de UMass Amher
 
 ## Qué incluye
 
-- **58 herramientas de solo lectura:** cursos, módulos, páginas, archivos, tareas, entregas, calificaciones y comentarios, rúbricas, anuncios, foros, bandeja de entrada, calendario, pendientes, grupos, historial de exámenes y perfil.
+- **59 herramientas de solo lectura:** cursos, módulos, páginas, archivos, tareas, entregas, calificaciones y comentarios, rúbricas, anuncios, foros, bandeja de entrada, calendario, pendientes, grupos, historial de exámenes y perfil.
 - **Lectura real de archivos:** texto de PDF, Word, PowerPoint y Excel, y el archivo original para apuntes escaneados o a mano, para que la IA vea cada página.
 - **Solo lectura por diseño:** solo peticiones `GET` fijas. Nunca entrega tareas, envía mensajes, inicia exámenes ni modifica nada en Canvas.
 - **Solo tuyo:** tu propio despliegue, vinculado a tu propia cuenta de Canvas.
