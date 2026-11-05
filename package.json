@@ -7,7 +7,8 @@
   "scripts": {
     "test": "node --test",
     "deploy": "wrangler deploy",
-    "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run"
+    "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
+    "format": "prettier --write \"*.mjs\""
   },
   "dependencies": {
     "@cloudflare/workers-oauth-provider": "^0.10.3",
@@ -17,7 +18,10 @@
     "unpdf": "^1.8.1"
   },
   "devDependencies": {
-    "wrangler": "^4.136.3"
+    "wrangler": "^4.136.3",
+    "prettier": "^3.9.10"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }

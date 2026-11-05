@@ -2,17 +2,25 @@
 import { LANGS, LANG_NAMES, t } from './i18n.mjs';
 import { ACCENT_COLOR, CANVAS_HOST, SCHOOL_NAME } from './config.mjs';
 
-export const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+export const esc = s =>
+  String(s).replace(
+    /[&<>"']/g,
+    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+  );
 const accent = /^#[0-9a-f]{6}$/i.test(ACCENT_COLOR) ? ACCENT_COLOR : '#4f5bd5';
 const school = { school: SCHOOL_NAME };
 
 const icon = {
   mark: '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><path d="M9 10.5c2.6-.9 5-.6 7 1v11c-2-1.6-4.4-1.9-7-1v-11Zm14 0c-2.6-.9-5-.6-7 1v11c2-1.6 4.4-1.9 7-1v-11Z" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg>',
-  shield: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.4 3 8.3 7 10 4-1.7 7-5.6 7-10V6l-7-3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  shield:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.4 3 8.3 7 10 4-1.7 7-5.6 7-10V6l-7-3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   lock: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>',
-  globe: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.2-3.6-8.5s1.2-6.1 3.6-8.5Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
-  alert: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 7.5v5.5M12 16.2v.3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
-  check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12.5 4 4 8-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  globe:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.2 3.6 8.5s-1.2 6.1-3.6 8.5c-2.4-2.4-3.6-5.2-3.6-8.5s1.2-6.1 3.6-8.5Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+  alert:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 7.5v5.5M12 16.2v.3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
+  check:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12.5 4 4 8-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
 
 const CSS = `
@@ -73,7 +81,8 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:22px}
 
 function langSwitcher(lang, url) {
   const links = LANGS.map(l => {
-    const u = new URL(url); u.searchParams.set('lang', l);
+    const u = new URL(url);
+    u.searchParams.set('lang', l);
     return `<a href="${esc(u.pathname + u.search)}" hreflang="${l}" lang="${l}"${l === lang ? ' aria-current="true"' : ''}>${esc(LANG_NAMES[l])}</a>`;
   }).join('');
   return `<details class="lang"><summary aria-label="${esc(t(lang, 'language'))}">${icon.globe}${esc(LANG_NAMES[lang])}</summary><nav class="menu">${links}</nav></details>`;
@@ -85,7 +94,11 @@ export function layout(lang, url, title, body) {
 
 export function homePage(lang, url, { bound }) {
   const origin = new URL(url).origin;
-  return layout(lang, url, t(lang, 'product'), `
+  return layout(
+    lang,
+    url,
+    t(lang, 'product'),
+    `
 <h1>${esc(t(lang, 'tagline'))}</h1>
 <p class="lead">${esc(t(lang, 'home_lead'))}</p>
 <span class="pill"><span class="dot${bound ? ' ok' : ''}"></span>${esc(t(lang, bound ? 'status_bound' : 'status_unbound'))}</span>
@@ -93,12 +106,20 @@ export function homePage(lang, url, { bound }) {
 <p class="help">${esc(t(lang, 'home_add_body'))}</p>
 <code class="code">${esc(origin)}/mcp</code>
 <div class="row" style="margin-top:22px"><span>${esc(t(lang, 'canvas_site'))}</span><span>${esc(CANVAS_HOST)}</span></div>
-<div class="note">${icon.shield}<span>${esc(t(lang, 'home_safe'))}</span></div>`);
+<div class="note">${icon.shield}<span>${esc(t(lang, 'home_safe'))}</span></div>`,
+  );
 }
 
 export function authorizePage(lang, url, { csrf, returnTo }) {
-  const chips = t(lang, 'scopes').split('|').map(s => `<li>${icon.check}${esc(s)}</li>`).join('');
-  return layout(lang, url, t(lang, 'auth_title', school), `
+  const chips = t(lang, 'scopes')
+    .split('|')
+    .map(s => `<li>${icon.check}${esc(s)}</li>`)
+    .join('');
+  return layout(
+    lang,
+    url,
+    t(lang, 'auth_title', school),
+    `
 <span class="badge">${icon.shield}${esc(t(lang, 'read_only'))}</span>
 <h1>${esc(t(lang, 'auth_title', school))}</h1>
 <p class="lead">${esc(t(lang, 'auth_lead'))}</p>
@@ -114,14 +135,20 @@ export function authorizePage(lang, url, { csrf, returnTo }) {
 <div class="note">${icon.lock}<span>${esc(t(lang, 'token_privacy'))}</span></div>
 <label class="consent"><input type="checkbox" name="consent" value="yes" required><span>${esc(t(lang, 'consent'))}</span></label>
 <button type="submit">${esc(t(lang, 'submit'))}</button>
-</form>`);
+</form>`,
+  );
 }
 
 export function messagePage(lang, url, { titleKey, bodyKey, detail, backHref }) {
-  return layout(lang, url, t(lang, titleKey), `
+  return layout(
+    lang,
+    url,
+    t(lang, titleKey),
+    `
 <div class="state">${icon.alert}</div>
 <h1>${esc(t(lang, titleKey))}</h1>
 <p class="lead">${esc(t(lang, bodyKey))}</p>
 ${detail ? `<p class="detail">${esc(detail)}</p>` : ''}
-${backHref ? `<a class="btn" href="${esc(backHref)}">${esc(t(lang, 'back'))}</a>` : ''}`);
+${backHref ? `<a class="btn" href="${esc(backHref)}">${esc(t(lang, 'back'))}</a>` : ''}`,
+  );
 }
