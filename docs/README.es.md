@@ -1,32 +1,54 @@
-# Conector de IA para Canvas
+# Neuro-CanvasLMS
 
 [English](../README.md) · [简体中文](README.zh-CN.md) · **Español** · [日本語](README.ja.md) · [हिन्दी](README.hi.md)
 
-Permite que **Claude** (web, escritorio, móvil, Claude Code) o **ChatGPT** lean tu Canvas, en un chat normal y no solo en una herramienta de programación.
+**Conecta tu Canvas LMS directamente a Claude y ChatGPT.** Tus cursos, fechas de entrega, calificaciones y apuntes pasan a formar parte de lo que sabe tu IA, en cualquier chat y desde cualquier dispositivo.
 
 > "¿Qué tengo que entregar esta semana?" · "Resume la clase 5 de MATH 132." · "¿Qué comentarios recibí en la tarea 3?" · "¿Hay anuncios nuevos?"
 
+## Por qué Neuro-CanvasLMS
+
+| | |
+|---|---|
+| ☁️ **Nada se ejecuta en tu computadora** | Vive en la nube, en Cloudflare Workers. Sin aplicaciones abiertas, sin servidor local, sin terminal. |
+| 🔌 **Ningún dispositivo tiene que estar encendido** | Cierra la laptop y guarda el móvil: tu IA sigue llegando a Canvas 24/7, desde claude.ai, las apps de escritorio y móvil, Claude Code o ChatGPT. |
+| 💸 **Gratis** | Funciona con el plan gratuito de Cloudflare, más que suficiente para un estudiante. Sin facturas ni suscripciones; usas la cuenta de Claude o ChatGPT que ya tienes. |
+| 🧠 **Tus archivos viven en la conversación** | Los apuntes y PDF que lee la IA se quedan con ese chat en los servidores de tu proveedor de IA. Nada que descargar ni que ocupe tu disco, y siguen ahí cuando vuelves. |
+
+La mayoría de integraciones de Canvas con IA son herramientas *locales*: solo funcionan mientras tu computadora está encendida y ejecutándolas, y solo en apps de escritorio o de programación. Neuro-CanvasLMS es un **conector remoto**:
+
+| | Herramienta local típica | **Neuro-CanvasLMS** |
+|---|---|---|
+| Se ejecuta en | tu laptop | la nube (tu propia cuenta de Cloudflare) |
+| La laptop debe estar encendida | sí | **no** |
+| Funciona en el móvil / claude.ai web | no | **sí** |
+| Funciona en ChatGPT | no (ChatGPT solo admite conectores remotos) | **sí** |
+| Costo | gratis | **gratis** |
+
 Escrito para estudiantes de UMass Amherst y probado con el Canvas de UMass Amherst. Debería funcionar en cualquier universidad que use Canvas: solo cambias una línea.
 
-- **Solo lectura.** 58 herramientas, todas peticiones `GET` fijas. Nunca entrega tareas, envía mensajes ni modifica nada.
-- **Solo tuyo.** Se ejecuta en tu propia cuenta gratuita de Cloudflare y se vincula a tu cuenta de Canvas.
-- **Lee archivos reales.** PDF, Word, PowerPoint, Excel, incluidos apuntes escritos a mano o escaneados (la IA ve las páginas como imágenes).
-- **Lo instala la IA.** Abre esta carpeta en Claude Code (o Codex) y di *"configura el conector de Canvas"*.
+## Qué incluye
+
+- **58 herramientas de solo lectura:** cursos, módulos, páginas, archivos, tareas, entregas, calificaciones y comentarios, rúbricas, anuncios, foros, bandeja de entrada, calendario, pendientes, grupos, historial de exámenes y perfil.
+- **Lectura real de archivos:** texto de PDF, Word, PowerPoint y Excel, y el archivo original para apuntes escaneados o a mano, para que la IA vea cada página.
+- **Solo lectura por diseño:** solo peticiones `GET` fijas. Nunca entrega tareas, envía mensajes, inicia exámenes ni modifica nada en Canvas.
+- **Solo tuyo:** tu propio despliegue, vinculado a tu propia cuenta de Canvas.
+- **Lo instala la IA:** abre esta carpeta en Claude Code (o Codex) y di *"configura el conector de Canvas"*.
 
 ## Cómo funciona
 
 ```
-Claude / ChatGPT  ──OAuth──▶  tu Worker de Cloudflare  ──API de solo lectura──▶  el Canvas de tu universidad
-                               (este repo; guarda tu token de Canvas cifrado)
+Claude / ChatGPT ──OAuth──▶ Neuro-CanvasLMS en tu Cloudflare ──API de solo lectura──▶ el Canvas de tu universidad
+ (cualquier dispositivo)     (siempre activo; guarda tu token de Canvas cifrado)
 ```
 
-## Instalación (≈10 minutos; recomendado: que lo haga la IA)
+## Instalación (≈10 minutos, una sola vez; recomendado: que lo haga la IA)
 
-Necesitas: una cuenta de Canvas, una [cuenta gratuita de Cloudflare](https://dash.cloudflare.com/sign-up), [Node.js 20+](https://nodejs.org) y Claude Code (o Codex).
+Necesitas una cuenta de Canvas, una [cuenta gratuita de Cloudflare](https://dash.cloudflare.com/sign-up) y, **solo para la instalación**, una computadora con [Node.js 20+](https://nodejs.org) y Claude Code (o Codex). Después, esa computadora puede quedarse apagada.
 
 ```bash
-git clone https://github.com/BloodyReginaa/canvas-ai-connector.git
-cd canvas-ai-connector
+git clone https://github.com/BloodyReginaa/Neuro-CanvasLMS.git
+cd Neuro-CanvasLMS
 claude
 ```
 
@@ -38,14 +60,14 @@ Di: **"Ayúdame a configurar el conector de Canvas."** Sigue [`SKILL.md`](../.cl
 2. Edita `config.mjs`: `CANVAS_HOST` (p. ej. `umamherst.instructure.com`), `SCHOOL_NAME`, `ACCENT_COLOR`.
 3. `npx wrangler login`
 4. `npx wrangler kv namespace create OAUTH_KV` → copia el id en `wrangler.jsonc`.
-5. `npx wrangler deploy` → anota `https://canvas-ai-connector.<tú>.workers.dev`.
+5. `npx wrangler deploy` → anota `https://neuro-canvas-lms.<tú>.workers.dev`.
 6. Conéctalo enseguida (la primera cuenta de Canvas que autorice será la propietaria).
 </details>
 
 ## Conectarlo
 
-1. **Crea un token de Canvas:** Canvas → Cuenta → Configuración → **+ Nuevo token de acceso**. En UMass Amherst dura como máximo **30 días**. Cópialo: solo se muestra una vez.
-2. **Claude:** Configuración → Conectores → **Añadir conector personalizado** → URL `https://…workers.dev/mcp` → Conectar → pega el token en la página que se abre → Autorizar.
+1. **Crea un token de Canvas:** Canvas → Cuenta → Configuración → **+ Nuevo token de acceso**. En UMass Amherst dura como máximo **30 días**. Cópialo enseguida: solo se muestra una vez.
+2. **Claude:** Configuración → Conectores → **Añadir conector personalizado** → URL `https://…workers.dev/mcp` → Conectar → pega el token en la página que se abre → Autorizar. Funciona en todas partes donde uses Claude, incluida la app móvil y Claude Code (misma cuenta).
 3. **ChatGPT:** añade un conector personalizado (modo desarrollador) con la misma URL.
 4. Abre un chat nuevo y pregunta *"¿Qué tareas tengo esta semana?"*
 
@@ -54,17 +76,18 @@ Di: **"Ayúdame a configurar el conector de Canvas."** Sigue [`SKILL.md`](../.cl
 ## Privacidad y seguridad
 
 - El token solo va a tu Worker y al Canvas de tu universidad; se guarda cifrado en tu Cloudflare KV. Nadie más (ni los autores) puede verlo.
-- El Worker se vincula a la primera cuenta de Canvas que lo autoriza y rechaza las demás.
+- El conector se vincula a la primera cuenta de Canvas que lo autoriza y rechaza las demás.
 - Solo Claude, ChatGPT y clientes locales pueden completar OAuth.
 - El contenido de los cursos se trata como datos no confiables, nunca como instrucciones.
-- Las descargas tienen límite de tamaño (15 MiB), solo HTTPS, y bloquean redes privadas.
+- Las descargas tienen un límite de 15 MiB, solo HTTPS, y bloquean redes privadas.
 - Canvas sigue aplicando tus permisos: solo puedes leer lo que ya ves.
+- Los archivos que lee la IA los guarda tu proveedor de IA como parte de la conversación, bajo sus propias condiciones de privacidad. Borra el chat para eliminarlos.
 
 Consulta la política de tu universidad sobre tokens personales y herramientas de terceros.
 
 ## Límites
 
-- Archivos de más de 15 MiB no se pueden leer con el conector; descárgalos y ábrelos con Claude Code.
+- Archivos de más de 15 MiB no se pueden leer con el conector (límite de memoria de Cloudflare Worker); descárgalos y ábrelos con Claude Code.
 - Gradescope, WebAssign, sitios externos, contenido bloqueado e internos de New Quizzes quedan fuera.
 - Algunos cursos ocultan Archivos/Exámenes (403/404); lo enlazado desde Módulos suele funcionar.
 

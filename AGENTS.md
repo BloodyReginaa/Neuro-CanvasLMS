@@ -1,6 +1,6 @@
 # Agent instructions
 
-This repo is a read-only Canvas LMS connector (remote MCP server on Cloudflare Workers) that
+This repo, **Neuro-CanvasLMS** (`neuro-canvas-lms`), is a read-only Canvas LMS connector (remote MCP server on Cloudflare Workers) that
 each student deploys to their **own** Cloudflare account.
 
 - To set up, deploy, renew a token, update or troubleshoot: follow

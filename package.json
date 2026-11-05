@@ -1,8 +1,8 @@
 {
-  "name": "canvas-ai-connector",
+  "name": "neuro-canvas-lms",
   "version": "2.0.0",
   "private": true,
-  "description": "Read-only Canvas LMS connector (remote MCP server on Cloudflare Workers) for Claude and ChatGPT",
+  "description": "Neuro-CanvasLMS: read-only Canvas LMS connector (remote MCP server on Cloudflare Workers) for Claude and ChatGPT",
   "license": "MIT",
   "scripts": {
     "test": "node --test",

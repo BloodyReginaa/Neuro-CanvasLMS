@@ -50,7 +50,7 @@ export function endpoint(name,args={}) {
 }
 export async function callCanvas(name,args,token,fetcher=fetch){
  const u=endpoint(name,args);
- const r=await fetcher(u,{method:'GET',headers:{Authorization:`Bearer ${token}`,Accept:'application/json','User-Agent':'CanvasAIConnector/1.0 (read-only personal integration)'},redirect:'manual',signal:AbortSignal.timeout(20000)});
+ const r=await fetcher(u,{method:'GET',headers:{Authorization:`Bearer ${token}`,Accept:'application/json','User-Agent':'Neuro-CanvasLMS/2.0 (read-only personal integration)'},redirect:'manual',signal:AbortSignal.timeout(20000)});
  if(r.status===406){
   const body=(await r.text()).slice(0,16000);
   const markers=['Not Acceptable','Apache','ModSecurity','mod_security','Cloudflare','cloudflare','challenge','blocked','Access Denied','Request Rejected'].filter(x=>body.includes(x));

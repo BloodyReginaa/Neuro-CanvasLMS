@@ -6,7 +6,7 @@ description: Deploy, connect, update, renew or troubleshoot this repo's read-onl
 # Canvas connector setup
 
 You are helping a student run **their own copy** of this connector. The result: a URL like
-`https://canvas-ai-connector.<their-subdomain>.workers.dev/mcp` that they add as a custom
+`https://neuro-canvas-lms.<their-subdomain>.workers.dev/mcp` that they add as a custom
 connector in Claude or ChatGPT. Most users are not developers — explain each step in one
 plain sentence, **in the user's language**, and do the technical work yourself.
 

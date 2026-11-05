@@ -7,7 +7,7 @@ export const LANG_NAMES = { en: 'English', 'zh-CN': '简体中文', es: 'Españo
 
 const S = {
   en: {
-    product: 'Canvas AI Connector',
+    product: 'Neuro-CanvasLMS',
     tagline: 'Your Canvas, readable by your own AI assistant.',
     home_lead: 'A private, read-only bridge between your Canvas account and Claude or ChatGPT. Ask about deadlines, grades, lecture files and announcements in plain language.',
     status_bound: 'Connected to its owner',
@@ -39,7 +39,7 @@ const S = {
     language: 'Language',
   },
   'zh-CN': {
-    product: 'Canvas AI 连接器',
+    product: 'Neuro-CanvasLMS',
     tagline: '让你自己的 AI 助手读懂你的 Canvas。',
     home_lead: '在你的 Canvas 账号与 Claude 或 ChatGPT 之间建立一条私人的只读通道。用日常语言询问截止日期、成绩、讲义文件和课程公告。',
     status_bound: '已绑定所有者',
@@ -71,7 +71,7 @@ const S = {
     language: '语言',
   },
   es: {
-    product: 'Conector de IA para Canvas',
+    product: 'Neuro-CanvasLMS',
     tagline: 'Tu Canvas, al alcance de tu propio asistente de IA.',
     home_lead: 'Un puente privado y de solo lectura entre tu cuenta de Canvas y Claude o ChatGPT. Pregunta por fechas de entrega, calificaciones, apuntes y anuncios en lenguaje natural.',
     status_bound: 'Vinculado a su propietario',
@@ -103,7 +103,7 @@ const S = {
     language: 'Idioma',
   },
   ja: {
-    product: 'Canvas AI コネクタ',
+    product: 'Neuro-CanvasLMS',
     tagline: 'あなたの Canvas を、あなた自身の AI アシスタントに。',
     home_lead: 'Canvas アカウントと Claude / ChatGPT をつなぐ、個人用の読み取り専用ブリッジです。締め切り、成績、講義資料、お知らせを普段の言葉で質問できます。',
     status_bound: '所有者と連携済み',
@@ -135,7 +135,7 @@ const S = {
     language: '言語',
   },
   hi: {
-    product: 'Canvas AI कनेक्टर',
+    product: 'Neuro-CanvasLMS',
     tagline: 'आपका Canvas, आपके अपने AI सहायक के लिए।',
     home_lead: 'आपके Canvas खाते और Claude या ChatGPT के बीच एक निजी, केवल-पढ़ने वाला पुल। समय-सीमा, ग्रेड, लेक्चर फ़ाइलों और घोषणाओं के बारे में सामान्य भाषा में पूछें।',
     status_bound: 'अपने स्वामी से जुड़ा हुआ',
