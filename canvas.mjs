@@ -169,10 +169,10 @@ export async function callCanvas(name, args, token, fetcher = fetch) {
     r.status === 406 ||
     (r.status >= 500 && !(r.headers.get('content-type') ?? '').includes('json'))
   ) {
-    // An HTML error page instead of JSON means something in front of Canvas rejected the request
-    // style (see canvas-transport.mjs), not that the token or the course permission is wrong.
+    // Canvas answers its API with JSON. An HTML error page means a firewall in front of Canvas
+    // rejected the request, or Canvas failed on a malformed token (it returns an HTML 500 for that).
     throw new Error(
-      `Canvas front end rejected the request (HTTP ${r.status}, ${(r.headers.get('content-type') ?? 'unknown').split(';')[0]}). This is not a token or permission problem.`,
+      `Canvas returned an HTML error page (HTTP ${r.status}) instead of JSON: a firewall in front of Canvas rejected the request, or the token is malformed. If it persists, reconnect with a freshly created token.`,
     );
   }
   if (r.status === 401) {

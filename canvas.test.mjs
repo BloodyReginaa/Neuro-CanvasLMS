@@ -196,7 +196,7 @@ test('PDF extraction reads a real text layer and reports its limitations', async
   assert.match(r.extraction_note, /not OCRed/);
 });
 
-test('front-end HTML rejections (406 / 5xx) are reported plainly and never echo the body', async () => {
+test('HTML 406 / 5xx pages are reported plainly and never echo the body', async () => {
   for (const status of [406, 500, 503]) {
     await assert.rejects(
       callCanvas(
@@ -211,7 +211,7 @@ test('front-end HTML rejections (406 / 5xx) are reported plainly and never echo 
       ),
       e =>
         e.message.includes(`HTTP ${status}`) &&
-        e.message.includes('not a token or permission problem') &&
+        e.message.includes('HTML error page') &&
         !e.message.includes('private-token') &&
         !e.message.includes('private course details'),
     );

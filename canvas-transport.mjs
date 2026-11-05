@@ -1,12 +1,14 @@
 // Canvas API transport over a raw TLS socket (cloudflare:sockets) instead of fetch().
 //
-// WHY THIS EXISTS — do not "simplify" it back to fetch() without re-testing:
-// From a Cloudflare Worker, fetch() to the Canvas API WITH an Authorization header is rejected by
-// the front end in front of UMass Amherst Canvas (verified 2026-11: HTTP 500 HTML page for every
-// User-Agent; earlier also HTTP 406), while the same request over a plain TLS socket gets the
-// normal JSON answer. The socket path only ever talks to the configured Canvas host on 443, only
-// sends GET /api/v1/... with an allowlisted set of headers, never follows redirects, and bounds
-// response size and time. Anything else (file downloads) goes through fetch() WITHOUT credentials.
+// History: in 2026-09, fetch() from the Worker to the Canvas API got an HTML "406 Not Acceptable"
+// (even without credentials) while the same request over a TLS socket got normal JSON, so this
+// transport was written. Re-tested 2026-11-05: fetch() and the socket now behave identically for
+// the API (both 401 JSON for an invalid token; both 403 from CloudFront when there is no
+// User-Agent). The 406 is no longer reproducible and its cause is unknown (most likely a WAF rule
+// in front of Canvas that has since changed). The socket path is kept because it is proven in
+// production. It only talks to the configured Canvas host on 443, only sends GET /api/v1/...
+// with an allowlisted set of headers, never follows redirects, and bounds size and time.
+// Anything else (file downloads) goes through fetch() WITHOUT credentials.
 import { CANVAS_HOST } from './config.mjs';
 const HOST = CANVAS_HOST;
 const MAX_BODY = 16 * 1024 * 1024;
