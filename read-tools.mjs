@@ -248,12 +248,20 @@ add('folder', 'Read folder metadata.', a => `/folders/${a.folder_id}`, { folder_
 ]);
 add(
   'file_content',
-  'Read text from a Canvas file: PDF text, DOCX, PPTX, XLSX XML text, plain text or code. Max download 15 MiB; paginated text. For scanned or handwritten PDFs use canvas_file_original. No external URL input.',
+  'Read text from a Canvas file: PDF text, DOCX, PPTX, XLSX, plain text or code, and ZIP archives (unpacked on the server: listing plus the text of every code/text/document file inside; pass `entry` to read one file from the listing). Max download 15 MiB; paginated text via offset. For scanned or handwritten PDFs use canvas_file_original. No external URL input.',
   a => `/files/${a.file_id}`,
   {
     file_id: id,
     offset: { type: 'integer', minimum: 0, maximum: 5000000 },
     max_chars: { type: 'integer', minimum: 1000, maximum: 30000 },
+    entry: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 500,
+      pattern: '^[^\\x00-\\x1f]+$',
+      description:
+        'ZIP only: path of one file inside the archive, exactly as shown in the listing.',
+    },
   },
   ['file_id'],
 );

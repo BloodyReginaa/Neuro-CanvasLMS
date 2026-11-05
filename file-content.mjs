@@ -1,8 +1,10 @@
 // Text extraction for canvas_file_content: download a Canvas file (no credentials sent) and pull
-// text out of PDF (text layer only), DOCX/PPTX/XLSX (XML text) or plain-text formats.
+// text out of PDF (text layer only), DOCX/PPTX/XLSX (XML text), ZIP archives (zip-content.mjs)
+// or plain-text formats.
 import { getDocumentProxy } from 'unpdf';
 import { unzipSync, strFromU8 } from 'fflate';
 import { CANVAS_HOST } from './config.mjs';
+import { isZip, extractZip } from './zip-content.mjs';
 const MAX_BYTES = 15 * 1024 * 1024;
 // The User-Agent matters for file downloads (verified 2026-11 on UMass Amherst):
 //  - the Canvas host answers 403 "Not Authorized" when there is NO User-Agent;
@@ -70,7 +72,7 @@ function xmlText(s) {
     .replace(/[ \t]+/g, ' ')
     .trim();
 }
-export async function extractBytes(bytes, name, mime) {
+export async function extractBytes(bytes, name, mime, opts = {}) {
   if (mime.includes('pdf') || /\.pdf$/i.test(name)) {
     const pdf = await getDocumentProxy(bytes, { isEvalSupported: false, useSystemFonts: false });
     try {
@@ -121,6 +123,13 @@ export async function extractBytes(bytes, name, mime) {
         'Office XML text only. Layout, images, equations and spreadsheet cell relationships may not be preserved.',
     };
   }
+  // ZIP archives are unpacked here; nested archives are never recursed into.
+  if (!opts.insideZip && isZip(bytes, name, mime))
+    return extractZip(bytes, name, (b, n, m) => extractBytes(b, n, m, { insideZip: true }), {
+      entry: opts.entry,
+    });
+  if (opts.entry !== undefined)
+    throw new Error('Canvas file: `entry` can only be used with ZIP files.');
   if (
     mime.startsWith('text/') ||
     /\.(txt|md|csv|json|xml|html?|c|h|cpp|java|py|js|ts|css|r|sql)$/i.test(name)
@@ -204,6 +213,7 @@ export async function readFileContent(meta, args, fetcher = fetch) {
     await boundedBytes(response),
     base.name ?? '',
     base.mime_type ?? response.headers.get('content-type') ?? '',
+    { entry: args.entry },
   );
   if (extracted.text === null) return { ...base, ...extracted };
   const offset = args.offset ?? 0,

@@ -14,5 +14,5 @@ each student deploys to their **own** Cloudflare account.
 
 Code map: `worker.mjs` (OAuth + MCP entry), `canvas.mjs` + `read-tools.mjs` (tools → fixed GET
 routes), `canvas-transport.mjs` (TLS socket transport to Canvas), `file-content.mjs` (text
-extraction), `module-file.mjs` + `file-resource.mjs` (original files as MCP resources),
+extraction), `zip-content.mjs` (server-side ZIP unpacking), `module-file.mjs` + `file-resource.mjs` (original files as MCP resources),
 `owner.mjs` (owner binding, allowed OAuth clients), `i18n.mjs` + `pages.mjs` (web pages).
