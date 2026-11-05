@@ -218,7 +218,7 @@ const auth = {
     });
   },
 };
-export default new OAuthProvider({
+const provider = new OAuthProvider({
   apiRoute: '/mcp',
   apiHandler: CanvasMcp,
   defaultHandler: auth,
@@ -229,3 +229,18 @@ export default new OAuthProvider({
   allowPlainPKCE: false,
   resourceMetadata: { resource_name: `${TITLE} read-only`, scopes_supported: ['canvas:read'] },
 });
+
+// Outermost layer: one log line per request with path, method and HTTP status only (no query
+// strings, headers, bodies or tokens). This also captures requests the OAuth layer rejects (401).
+const LOGGED_PATHS = new Set(['/mcp', '/authorize', '/oauth/token', '/oauth/register']);
+export default {
+  async fetch(request, env, ctx) {
+    const response = await provider.fetch(request, env, ctx);
+    const path = new URL(request.url).pathname;
+    if (LOGGED_PATHS.has(path))
+      console.log(
+        JSON.stringify({ http: { path, method: request.method, status: response.status } }),
+      );
+    return response;
+  },
+};

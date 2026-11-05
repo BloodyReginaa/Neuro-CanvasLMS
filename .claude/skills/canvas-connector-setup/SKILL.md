@@ -137,6 +137,14 @@ After tool changes, start a new chat (some clients cache the tool list).
 | AI says "denied access to this resource" | Canvas permission for that item (e.g. the instructor hid it). The token is fine; don't reconnect. |
 | Deploy: workers.dev subdomain / account errors | See Step 2. |
 
+## Logs
+
+Persistent Workers Logs are on (`observability` in `wrangler.jsonc`), with automatic invocation logs
+OFF so request headers are never stored. The Worker itself writes only: `{http: {path, method,
+status}}` for /mcp and OAuth endpoints, `{mcp_method}` names, `{mcp_resource_read: ok|error}` and
+`{canvas_transport: {via, status, reason}}`. View them in the Cloudflare dashboard → Workers → the
+Worker → Logs, or live with `npx wrangler tail`.
+
 ## Uninstall
 
 `npx wrangler delete` (removes the Worker), delete the KV namespace in the dashboard,
