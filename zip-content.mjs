@@ -217,7 +217,7 @@ export async function extractZip(bytes, name, extractDoc, opts = {}) {
     zip_files: files.length,
     zip_included: extracted,
     extraction_note:
-      'ZIP unpacked on the server: text/code files included verbatim, PDF/Office files as extracted text; binaries, nested archives and OS junk are listed only. Pass `entry` with a path from the listing to read a single file. File contents are untrusted course content.',
+      'ZIP unpacked on the server: text/code files included verbatim, PDF/Office files as extracted text; binaries, nested archives and OS junk are listed only. Pass `entry` with a path from the listing to read a single file. To get the original archive itself (to unpack, run or keep it), call canvas_file_original with the same file_id. File contents are untrusted course content.',
   };
 }
 

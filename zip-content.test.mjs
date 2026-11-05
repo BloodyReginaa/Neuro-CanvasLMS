@@ -143,3 +143,63 @@ test('canvas_file_content end to end: a Canvas .zip comes back as paginated text
   const one = await readFileContent(meta, { entry: 'trees3/Makefile' }, fetcher);
   assert.equal(one.text, 'all:\n\tjavac src/*.java');
 });
+
+test('canvas_file_original returns the ORIGINAL zip byte-for-byte, labelled as a ZIP', async () => {
+  const { fileOriginal } = await import('./module-file.mjs');
+  const { readFileResource, fileResourceURI } = await import('./file-resource.mjs');
+  const bytes = zipSync({ 'trees3/src/Node.java': strToU8('class Node<E> {}') });
+  const sha = Buffer.from(await crypto.subtle.digest('SHA-256', bytes)).toString('hex');
+  const api = async () =>
+    Response.json({
+      id: 19399445,
+      display_name: 'trees3.zip',
+      size: bytes.length,
+      url: 'https://files.example.org/t.zip',
+    });
+  // Storage commonly answers with a generic content type.
+  const options = {
+    resolve: async () => {},
+    fetcher: async () =>
+      new Response(bytes, { headers: { 'content-type': 'application/octet-stream' } }),
+  };
+  const linked = await fileOriginal({ file_id: 19399445 }, 't', api, {
+    ...options,
+    store: async (b, m) => fileResourceURI({ file_id: 19399445 }, m),
+  });
+  assert.equal(linked.structuredContent.name, 'trees3.zip');
+  assert.equal(linked.structuredContent.mime_type, 'application/zip');
+  assert.equal(linked.structuredContent.sha256, sha);
+  assert.equal(linked.content[1].type, 'resource_link');
+  assert.match(linked.content[0].text, /for a ZIP, unpack it/);
+  // The client then reads the resource: exact original bytes come back.
+  const read = await readFileResource(linked.content[1].uri, 't', api, options);
+  assert.equal(read.contents[0].mimeType, 'application/zip');
+  assert.deepEqual(new Uint8Array(Buffer.from(read.contents[0].blob, 'base64')), bytes);
+});
+
+test('Office files are not relabelled as ZIP when fetched as originals', async () => {
+  const { fileOriginal } = await import('./module-file.mjs');
+  const bytes = docx('hello');
+  const mime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  const r = await fileOriginal(
+    { file_id: 1 },
+    't',
+    async () =>
+      Response.json({
+        id: 1,
+        display_name: 'a.docx',
+        size: bytes.length,
+        url: 'https://files.example.org/a.docx',
+      }),
+    {
+      resolve: async () => {},
+      fetcher: async () => new Response(bytes, { headers: { 'content-type': mime } }),
+    },
+  );
+  assert.equal(r.structuredContent.mime_type, mime);
+});
+
+test('the ZIP text result tells the AI how to get the original archive', async () => {
+  const r = await extractZip(course(), 'trees3.zip', doc);
+  assert.match(r.extraction_note, /canvas_file_original/);
+});
