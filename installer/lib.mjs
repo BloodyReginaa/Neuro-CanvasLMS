@@ -102,3 +102,9 @@ export function updateQuestion(running, next) {
 }
 // Only y / yes goes ahead; anything else, Enter included, changes nothing.
 export const isYes = answer => /^(?:y|yes)$/i.test(String(answer ?? '').trim());
+
+// A brand-new Cloudflare account has no workers.dev subdomain yet. wrangler asks for one only in an
+// interactive terminal; run by the installer it gives up with this message and a dashboard link.
+export const needsSubdomain = out => /register a workers\.dev subdomain/i.test(out ?? '');
+export const subdomainLink = accountId =>
+  `https://dash.cloudflare.com/${encodeURIComponent(accountId)}/workers/onboarding`;

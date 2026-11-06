@@ -47,6 +47,9 @@ const M = {
     un_done:
       'Removed. Also delete the Canvas token (Canvas → Account → Settings) and the connector in your AI app.',
     cancelled: 'Cancelled.',
+    subdomain_needed:
+      "Your Cloudflare account has no workers.dev subdomain yet (the connector's address uses it). A Cloudflare page opens in your browser: pick a name, for example your name plus a number, and save it.\n  {link}",
+    subdomain_wait: 'When it is saved, come back here and press Enter:',
     update_q:
       'Found your install "{name}" ({from}). New version: {to}. Update it? Your settings are kept and your AI apps stay connected. (y/n)',
     update_q_same:
@@ -98,6 +101,9 @@ const M = {
     un_failed: '没能删除{what}：{detail}\n  本地安装记录已保留，再运行一次同一条命令即可重试。',
     un_done: '已删除。另外请删掉 Canvas 令牌（Canvas → 账户 → 设置）和 AI 应用里的连接器。',
     cancelled: '已取消。',
+    subdomain_needed:
+      '你的 Cloudflare 账号还没有 workers.dev 子域名（连接器的网址会用到它）。浏览器会打开 Cloudflare 的设置页：起一个名字（比如你的名字加几个数字），保存。\n  {link}',
+    subdomain_wait: '保存好之后，回到这里按回车继续：',
     update_q:
       '找到你已有的安装「{name}」（{from}）。新版本：{to}。要更新吗？设置会沿用，AI 应用不用重新连接。(y/n)',
     update_q_same: '找到你已有的安装「{name}」，已经是最新版（{to}）。还要再部署一次吗？(y/n)',
@@ -158,6 +164,9 @@ const M = {
     un_done:
       'Eliminado. Borra también el token de Canvas (Canvas → Cuenta → Configuración) y el conector en tu app de IA.',
     cancelled: 'Cancelado.',
+    subdomain_needed:
+      'Tu cuenta de Cloudflare aún no tiene un subdominio workers.dev (la dirección del conector lo usa). Se abre una página de Cloudflare en el navegador: elige un nombre, por ejemplo tu nombre y un número, y guárdalo.\n  {link}',
+    subdomain_wait: 'Cuando esté guardado, vuelve aquí y pulsa Enter:',
     update_q:
       'Se encontró tu instalación "{name}" ({from}). Versión nueva: {to}. ¿Actualizarla? Se conserva tu configuración y tus apps de IA siguen conectadas. (y/n)',
     update_q_same:
@@ -218,6 +227,9 @@ const M = {
     un_done:
       '削除しました。Canvas トークン（Canvas → アカウント → 設定）と AI アプリのコネクタも削除してください。',
     cancelled: 'キャンセルしました。',
+    subdomain_needed:
+      'Cloudflare アカウントにまだ workers.dev サブドメインがありません（コネクタのアドレスに使います）。ブラウザで Cloudflare のページが開くので、名前（例：自分の名前＋数字）を決めて保存してください。\n  {link}',
+    subdomain_wait: '保存したら、ここに戻って Enter を押してください：',
     update_q:
       '既存のインストール「{name}」（{from}）が見つかりました。新しいバージョン：{to}。更新しますか？設定はそのまま使い、AI アプリの再接続も不要です。(y/n)',
     update_q_same:
@@ -278,6 +290,9 @@ const M = {
     un_done:
       'हटा दिया गया। Canvas टोकन (Canvas → Account → Settings) और अपने AI ऐप में कनेक्टर भी हटाएँ।',
     cancelled: 'रद्द किया गया।',
+    subdomain_needed:
+      'आपके Cloudflare खाते में अभी workers.dev सबडोमेन नहीं है (कनेक्टर का पता इसी से बनता है)। ब्राउज़र में Cloudflare का पेज खुलेगा: एक नाम चुनें, जैसे आपका नाम और कोई संख्या, और सेव करें।\n  {link}',
+    subdomain_wait: 'सेव करने के बाद यहाँ लौटकर Enter दबाएँ:',
     update_q:
       'आपका मौजूदा इंस्टॉल "{name}" ({from}) मिला। नया संस्करण: {to}। अपडेट करें? आपकी सेटिंग्स बनी रहेंगी और आपके AI ऐप जुड़े रहेंगे। (y/n)',
     update_q_same:

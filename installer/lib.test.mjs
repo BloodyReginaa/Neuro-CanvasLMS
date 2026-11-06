@@ -13,6 +13,8 @@ import {
   updateChoices,
   updateQuestion,
   isYes,
+  needsSubdomain,
+  subdomainLink,
 } from './lib.mjs';
 import { MESSAGES, msg } from './messages.mjs';
 
@@ -155,4 +157,16 @@ test('an update asks once, and the question fits the versions', () => {
   }
   for (const yes of ['y', 'Y', 'yes', ' YES ']) assert.ok(isYes(yes), yes);
   for (const no of ['', 'n', 'no', 'ok', 'yy', null, undefined]) assert.ok(!isYes(no), String(no));
+});
+
+test("a new Cloudflare account without a workers.dev subdomain is recognised (wrangler's own words)", () => {
+  // what wrangler prints when it cannot ask (no terminal) on an account without a subdomain
+  const out = `▲ [WARNING] You need to register a workers.dev subdomain before publishing to workers.dev
+✘ [ERROR] You can either deploy your worker to one or more routes by specifying them in your wrangler.jsonc file, or register a workers.dev subdomain here: https://dash.cloudflare.com/abc/workers/onboarding`;
+  assert.ok(needsSubdomain(out));
+  assert.ok(!needsSubdomain('✘ [ERROR] Authentication error [code: 10000]'));
+  assert.ok(!needsSubdomain(undefined));
+  assert.equal(subdomainLink('abc123'), 'https://dash.cloudflare.com/abc123/workers/onboarding');
+  for (const lang of CLI_LANGS)
+    assert.ok(msg(lang, 'subdomain_needed', { link: 'L' }).includes('L'), lang);
 });

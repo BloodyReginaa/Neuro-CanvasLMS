@@ -1,6 +1,6 @@
 {
   "name": "neuro-canvas-lms",
-  "version": "2.9.2",
+  "version": "2.9.3",
   "private": true,
   "description": "Neuro-CanvasLMS: read-only connector that lets Claude or ChatGPT read any Canvas LMS (remote MCP server on your own Cloudflare account)",
   "author": "BloodyReginaa",

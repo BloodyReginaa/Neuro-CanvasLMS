@@ -28,6 +28,8 @@ import {
   updateChoices,
   updateQuestion,
   isYes,
+  needsSubdomain,
+  subdomainLink,
 } from './lib.mjs';
 import { msg } from './messages.mjs';
 
@@ -273,7 +275,16 @@ async function install() {
   const main = path.relative(dir, path.join(ROOT, 'worker.mjs'));
   const config = connectorConfig({ name, accountId, kvId, main, template, host, school });
   fs.writeFileSync(path.join(dir, 'wrangler.jsonc'), JSON.stringify(config, null, 2));
-  const r = wrangler(['deploy', '-c', 'wrangler.jsonc'], { cwd: dir });
+  let r = wrangler(['deploy', '-c', 'wrangler.jsonc'], { cwd: dir });
+  // New Cloudflare account: the user picks a workers.dev subdomain in the dashboard, then we retry.
+  for (let i = 0; !r.ok && needsSubdomain(r.out) && i < 3; i++) {
+    const link = subdomainLink(accountId);
+    if (args.yes || !process.stdin.isTTY) fail(msg(lang, 'subdomain_needed', { link }));
+    say('subdomain_needed', { link });
+    openUrl(link);
+    await ask(msg(lang, 'subdomain_wait'));
+    r = wrangler(['deploy', '-c', 'wrangler.jsonc'], { cwd: dir });
+  }
   if (!r.ok) fail('deploy failed: ' + lastLines(r.out));
   const url = parseWorkerUrl(r.out) ?? state.url;
   if (!url) fail('could not read the connector URL: ' + lastLines(r.out));
