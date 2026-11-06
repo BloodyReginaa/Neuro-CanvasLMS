@@ -23,12 +23,15 @@ runs in your own Cloudflare account, so it also works on your phone and in ChatG
 
 ## What you get
 
-- **59 read-only tools:** courses, modules, pages, files, assignments, submissions, grades and
+- **60 read-only tools:** courses, modules, pages, files, assignments, submissions, grades and
   feedback, rubrics, announcements, discussions, inbox, calendar, to-dos, groups, quiz history
   and profile settings.
 - **Real file reading:** text from PDF, Word, PowerPoint and Excel; ZIP archives unpacked on the
   server (listing plus every code/text file); original files for scanned or handwritten notes so
   the AI can look at each page.
+- **Finds files the course hides:** many courses hide their Files list from students. The connector
+  searches the front page, syllabus, modules, assignments, announcements and linked pages, so the
+  AI can still find "Lecture 12 slides" by name.
 - **Read-only by design:** only fixed `GET` requests. It never submits work, sends messages,
   starts quizzes or changes anything in Canvas.
 - **Yours only:** your own deployment, in your own Cloudflare account, locked to your own Canvas
@@ -94,8 +97,8 @@ Check your school's policy on personal access tokens and third-party tools befor
   Download those and open them with Claude Code locally.
 - Gradescope, WebAssign, external sites, locked content and the internals of New Quizzes are out
   of reach.
-- Some courses hide their Files or Quizzes pages (403/404). Items linked from Modules or pages
-  usually still work.
+- Some courses hide their Files or Quizzes pages (403/404). Files linked anywhere in the course
+  are still found (see above); quizzes stay hidden.
 - Tested on UMass Amherst's Canvas (hosted by Instructure). Other schools should work; schools that
   host Canvas themselves may serve files from hosts this connector does not allow yet.
 

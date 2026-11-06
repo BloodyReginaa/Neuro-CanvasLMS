@@ -19,8 +19,9 @@ La mayoría de integraciones de Canvas con IA son herramientas *locales*: solo f
 
 ## Qué incluye
 
-- **59 herramientas de solo lectura:** cursos, módulos, páginas, archivos, tareas, entregas, calificaciones y comentarios, rúbricas, anuncios, foros, bandeja de entrada, calendario, pendientes, grupos, historial de exámenes y perfil.
+- **60 herramientas de solo lectura:** cursos, módulos, páginas, archivos, tareas, entregas, calificaciones y comentarios, rúbricas, anuncios, foros, bandeja de entrada, calendario, pendientes, grupos, historial de exámenes y perfil.
 - **Lectura real de archivos:** texto de PDF, Word, PowerPoint y Excel; archivos ZIP descomprimidos en el servidor (índice y el contenido de cada archivo de código/texto); el archivo original para apuntes escaneados o a mano, para que la IA vea cada página.
+- **Encuentra los archivos que el curso oculta:** muchos cursos ocultan la lista de Archivos a los estudiantes. El conector busca en la página principal, el programa, los módulos, las tareas, los anuncios y las páginas enlazadas, así que la IA sigue encontrando "las diapositivas de la clase 12" por su nombre.
 - **Solo lectura por diseño:** solo peticiones `GET` fijas. Nunca entrega tareas, envía mensajes, inicia exámenes ni modifica nada en Canvas.
 - **Solo tuyo:** tu propio despliegue, en tu propia cuenta de Cloudflare, vinculado a tu propia cuenta de Canvas. Nadie más (ni los autores) ve tu token de Canvas.
 
@@ -71,7 +72,7 @@ Consulta la política de tu universidad sobre tokens personales y herramientas d
 
 - Archivos de más de 15 MiB no se pueden leer con el conector (límite de memoria de Cloudflare Worker); descárgalos y ábrelos con Claude Code.
 - Gradescope, WebAssign, sitios externos, contenido bloqueado e internos de New Quizzes quedan fuera.
-- Algunos cursos ocultan Archivos/Exámenes (403/404); lo enlazado desde Módulos o páginas suele funcionar.
+- Algunos cursos ocultan Archivos/Exámenes (403/404). Los archivos enlazados en cualquier parte del curso se siguen encontrando (ver arriba); los exámenes siguen ocultos.
 - Probado en el Canvas de UMass Amherst (alojado por Instructure). Otras universidades deberían funcionar; las que alojan Canvas por su cuenta pueden servir archivos desde servidores que el conector aún no permite.
 
 ## Estado del proyecto

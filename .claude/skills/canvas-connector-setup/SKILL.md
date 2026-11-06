@@ -74,7 +74,7 @@ their AI app: connector → Disconnect → Connect → paste it. No reinstall ne
 | "denied access to this resource" | Canvas permission for that item (e.g. the instructor hid it). The token is fine; don't reconnect. |
 | HTTP 406 / HTML error pages from Canvas | Something in front of Canvas rejected the request. API calls already retry over a raw TLS socket (`canvas-transport.mjs`). Debug with the `CANVAS_TRANSPORT` var (`fetch` / `socket`) and `npx wrangler tail`. |
 | File download 403 (`text/html`) while metadata works | A firewall rejects the download's User-Agent (none, or one containing `UMassCanvas`). Keep `DOWNLOAD_UA` in `file-content.mjs` as shipped. |
-| HTTP 403/404 on Files or Quizzes | The course hides that page; module- or page-linked items usually still work. |
+| HTTP 403/404 on Files, Pages or Quizzes | The course hides that list. Files are still found with `canvas_find_files` (searches front page, syllabus, modules, assignments, announcements and linked pages); quizzes stay hidden. |
 | File "exceeds 15 MiB" | Worker memory limit. Download it and open it with Claude Code locally. |
 | Handwritten/scanned PDF has no text | Expected. Use `canvas_file_original` (any file id) or `canvas_module_file`; the AI reads pages as images (ask for ~150 dpi for formulas). |
 

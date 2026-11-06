@@ -153,8 +153,37 @@ export function endpoint(name, args = {}) {
   }
   return u;
 }
+// When Canvas refuses a listing, the content is usually still reachable another way. These hints
+// go into the error so the AI tries that way instead of telling the user the file is unreadable.
+const FIND_FILES_HINT =
+  ' This course probably hides that list from students; the files are usually still linked from the front page, modules, pages, the syllabus or assignments. Call canvas_find_files with the course_id (and the file name or topic as query) to find them, then read the returned file_id with canvas_file_content.';
+const HINTS = {
+  canvas_files: FIND_FILES_HINT,
+  canvas_folders: FIND_FILES_HINT,
+  canvas_folder: FIND_FILES_HINT,
+  canvas_pages:
+    ' This course probably hides its page list; single pages are still readable by page_url. Get page links from canvas_front_page or canvas_modules, or call canvas_find_files to search every linked page for files.',
+  canvas_file:
+    ' The file may be locked, unpublished or hidden for students. canvas_find_files lists the files this course links to that you can open.',
+  canvas_file_content:
+    ' The file may be locked, unpublished or hidden for students. canvas_find_files lists the files this course links to that you can open.',
+};
 export async function callCanvas(name, args, token, fetcher = fetch) {
   const u = endpoint(name, args);
+  let r;
+  try {
+    r = await canvasGet(u, token, fetcher);
+  } catch (e) {
+    if (HINTS[name] && [401, 403, 404].includes(e.status)) e.message += HINTS[name];
+    throw e;
+  }
+  if (name === 'canvas_file_content') return readFileContent(r.data, args, fetcher);
+  return r;
+}
+
+// One GET to the Canvas API: fixed headers, no redirects, Canvas errors turned into safe messages
+// (never the upstream body). `e.status` is set when Canvas refused this item (not a token problem).
+export async function canvasGet(u, token, fetcher = fetch) {
   const r = await fetcher(u, {
     method: 'GET',
     headers: {
@@ -184,20 +213,22 @@ export async function callCanvas(name, args, token, fetcher = fetch) {
     const tokenProblem =
       /invalid access token|expired/i.test(msg) ||
       /invalid_token/i.test(r.headers.get('www-authenticate') ?? '');
-    throw new Error(
-      tokenProblem
-        ? 'Canvas authorization expired; reconnect.'
-        : 'Canvas denied access to this resource (HTTP 401: not authorized for this item). The connection itself is fine.',
+    if (tokenProblem) throw new Error('Canvas authorization expired; reconnect.');
+    throw Object.assign(
+      new Error(
+        'Canvas denied access to this resource (HTTP 401: not authorized for this item). The connection itself is fine.',
+      ),
+      { status: 401 },
     );
   }
   if (!r.ok)
-    throw new Error(
-      r.status === 401
-        ? 'Canvas authorization expired; reconnect.'
-        : `Canvas returned HTTP ${r.status} (${(r.headers.get('content-type') ?? 'unknown').split(';')[0]}; ${r.headers.get('server') ?? 'unknown'})`,
+    throw Object.assign(
+      new Error(
+        `Canvas returned HTTP ${r.status} (${(r.headers.get('content-type') ?? 'unknown').split(';')[0]}; ${r.headers.get('server') ?? 'unknown'})`,
+      ),
+      { status: r.status },
     );
   const data = await r.json();
-  if (name === 'canvas_file_content') return readFileContent(data, args, fetcher);
   const next = nextPage(r.headers.get('link'));
   return { data, has_more: next !== null, next_page: next, source_url: u.href };
 }
