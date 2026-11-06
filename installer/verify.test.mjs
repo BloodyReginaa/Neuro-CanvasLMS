@@ -60,7 +60,13 @@ test('a request that never answers is cut off, and the check still ends', async 
     fetcher: (url, init) =>
       new Promise((_, reject) => {
         calls++;
-        init.signal.addEventListener('abort', () => reject(init.signal.reason));
+        // A real hanging request holds an open socket, which keeps Node running until the timeout
+        // fires (AbortSignal.timeout's own timer does not). This timer stands in for the socket.
+        const socket = setTimeout(() => {}, 60000);
+        init.signal.addEventListener('abort', () => {
+          clearTimeout(socket);
+          reject(init.signal.reason);
+        });
       }),
   });
   assert.equal(r.ok, false);
