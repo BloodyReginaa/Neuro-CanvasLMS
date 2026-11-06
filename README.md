@@ -90,6 +90,20 @@ It never asks for your Canvas token.
 **When the token expires:** make a new one, then Disconnect → Connect the connector and
 paste it. No redeploy needed.
 
+## Updates
+
+During setup you choose how new versions arrive:
+
+- **Auto-update (recommended):** a release installs itself 24 hours after it is published, is
+  health-checked, and is rolled back automatically if anything fails.
+- **Reminders:** your AI mentions a new version once; say *"update the Canvas connector"* to
+  install it (same checks and rollback).
+
+A small second Worker, the updater, does this inside your own Cloudflare account. It has no
+public URL and installs only releases signed by the maintainer's key, so not even a compromised
+GitHub account can push code to your connector. Storage, settings and your connection are kept
+across updates; you never reconnect. Change your choice any time by asking your AI.
+
 ## Privacy & security
 
 - Your token goes only to your Worker and your school's Canvas. It is stored encrypted inside

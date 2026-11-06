@@ -108,6 +108,43 @@ with the same URL (OAuth). ChatGPT menu names change often; follow what the UI s
 Test in a **new chat**: "What assignments do I have due this week?" and
 "Open the first lecture file in <course> and summarize it."
 
+## Step 6 — choose how updates arrive
+
+Ask the user, in their language, and explain both in one line each:
+
+- **Auto-update (recommended):** new releases install by themselves 24 hours after they are
+  published (an observation period), are health-checked, and are rolled back automatically if
+  anything fails. Nothing to do, ever.
+- **Reminders:** nothing changes on its own. When a release is out, the AI mentions it once and
+  the connector's home page shows it; saying "update the Canvas connector" installs it (same
+  checks and rollback).
+
+Either way a small second Worker, the **updater**, is installed. It has no public URL; only its
+timer and the connector can reach it. It installs only releases signed by the project
+maintainer's key, so even a compromised GitHub account cannot push code to users. Users can
+switch later by telling their AI "switch connector updates to automatic / reminders".
+
+1. **The user creates a Cloudflare API token** (they do this, not you): open
+   https://dash.cloudflare.com/profile/api-tokens → **Create Token** → **Create Custom Token** →
+   Permissions: `Account` · `Workers Scripts` · `Edit` → Account Resources: their account →
+   Create → copy it. Nothing else is needed; do not suggest broader templates.
+2. Fill in `updater/wrangler.jsonc`: the connector's KV id (same as `OAUTH_KV`), the account id
+   (`npx wrangler whoami`), `TARGET_SCRIPT` = the connector's Worker name (also in
+   `services[0].service`), and `UPDATE_MODE` = `"auto"` or `"notify"`. Keep `CHANNEL` `"stable"`.
+3. Deploy it and let the **user** store the token (they paste it into the prompt themselves;
+   never ask for it, never pass it on the command line):
+   ```bash
+   npx wrangler deploy -c updater/wrangler.jsonc
+   npx wrangler secret put CF_API_TOKEN -c updater/wrangler.jsonc
+   ```
+   In Claude Code the user can run the second line themselves with `! npx wrangler secret put …`.
+4. Connect the connector to the updater: uncomment the `services` block for `UPDATER` in
+   `wrangler.jsonc` and run `npx wrangler deploy` again.
+5. Check: ask the AI (new chat) "what's the Canvas connector update status?" → it calls
+   `connector_update` with `status` and reports the installed version and mode.
+
+Skipping Step 6 is fine; the connector then only updates manually (see Updating).
+
 ## Renewing an expired token
 
 Symptom: the AI reports "Canvas authorization expired; reconnect." Steps: make a new token
@@ -116,11 +153,17 @@ paste the new one. Nothing needs to be redeployed. Delete the old token in Canva
 
 ## Updating
 
+With the updater installed (Step 6) there is nothing to do: "auto" installs new releases
+itself; with "notify" the user just tells their AI "update the Canvas connector" and the
+`connector_update` tool queues it (done within ~10 minutes, health-checked, rolled back on
+failure). Ask the AI for the update `status` to see what happened.
+
+Manual update (no updater, a new major version, or a release that needs new settings):
 ```bash
 git pull && npm install && npm test && npx wrangler deploy
 ```
-`config.mjs` and `wrangler.jsonc` hold the user's values — keep them when merging.
-After tool changes, start a new chat (some clients cache the tool list).
+`config.mjs` and `wrangler.jsonc` hold the user's values — keep them when merging. After tool
+changes, start a new chat (some clients cache the tool list).
 
 ## Troubleshooting
 

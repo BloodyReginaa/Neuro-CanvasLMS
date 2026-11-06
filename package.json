@@ -1,6 +1,6 @@
 {
   "name": "neuro-canvas-lms",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "description": "Neuro-CanvasLMS: read-only Canvas LMS connector (remote MCP server on Cloudflare Workers) for Claude and ChatGPT",
   "license": "MIT",
@@ -8,7 +8,8 @@
     "test": "node --test",
     "deploy": "wrangler deploy",
     "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
-    "format": "prettier --write \"*.mjs\""
+    "format": "prettier --write \"*.mjs\" \"updater/*.mjs\" \"scripts/*.mjs\"",
+    "release": "node scripts/release.mjs"
   },
   "dependencies": {
     "@cloudflare/workers-oauth-provider": "^0.10.3",

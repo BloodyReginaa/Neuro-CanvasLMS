@@ -92,8 +92,18 @@ export function layout(lang, url, title, body) {
   return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)} · ${esc(t(lang, 'product'))}</title><style>${CSS}</style></head><body><div class="wrap"><header class="top"><div class="brand">${icon.mark}<span>${esc(t(lang, 'product'))}${SCHOOL_NAME ? `<small>${esc(SCHOOL_NAME)}</small>` : ''}</span></div>${langSwitcher(lang, url)}</header><main class="card">${body}</main><footer>${esc(t(lang, 'footer'))}</footer></div></body></html>`;
 }
 
-export function homePage(lang, url, { bound }) {
+export function homePage(lang, url, { bound, version, update }) {
   const origin = new URL(url).origin;
+  const updateLine =
+    update?.state === 'available' && update.latest
+      ? `${t(lang, 'update_available', { version: update.latest })} ${t(lang, 'update_ask')}`
+      : update?.state === 'waiting' && update.latest
+        ? t(lang, 'update_waiting', { version: update.latest })
+        : update?.state === 'rolled_back'
+          ? t(lang, 'update_rolled_back')
+          : update?.state === 'manual_required'
+            ? t(lang, 'update_manual')
+            : '';
   return layout(
     lang,
     url,
@@ -106,6 +116,8 @@ export function homePage(lang, url, { bound }) {
 <p class="help">${esc(t(lang, 'home_add_body'))}</p>
 <code class="code">${esc(origin)}/mcp</code>
 <div class="row" style="margin-top:22px"><span>${esc(t(lang, 'canvas_site'))}</span><span>${esc(CANVAS_HOST)}</span></div>
+${version ? `<div class="row"><span>${esc(t(lang, 'version_label'))}</span><span>${esc(version)}</span></div>` : ''}
+${updateLine ? `<div class="note">${icon.alert}<span>${esc(updateLine)}</span></div>` : ''}
 <div class="note">${icon.shield}<span>${esc(t(lang, 'home_safe'))}</span></div>`,
   );
 }

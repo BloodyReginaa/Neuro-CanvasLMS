@@ -12,7 +12,10 @@
   "kv_namespaces": [
     // Create with: npx wrangler kv namespace create OAUTH_KV   — then paste the id here.
     { "binding": "OAUTH_KV", "id": "REPLACE_WITH_YOUR_KV_NAMESPACE_ID" }
-  ]
+  ],
+  // Automatic updates / reminders (setup Step 6): after deploying updater/wrangler.jsonc,
+  // uncomment this so the connector's `connector_update` tool can reach the updater.
+  // "services": [{ "binding": "UPDATER", "service": "neuro-canvas-lms-updater" }],
   // Optional vars:
   //   OWNER_CANVAS_ID  — pin the owner instead of "first account to authorize wins".
   //   CANVAS_TRANSPORT — "auto" (default: fetch, retry over TLS socket if rejected), "fetch" or "socket".

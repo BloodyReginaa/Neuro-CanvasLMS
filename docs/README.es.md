@@ -73,6 +73,15 @@ Di: **"Ayúdame a configurar el conector de Canvas."** Sigue [`SKILL.md`](../.cl
 
 **Cuando caduque el token:** crea uno nuevo, desconecta y vuelve a conectar el conector, y pégalo. No hace falta volver a desplegar.
 
+## Actualizaciones
+
+En la instalación eliges cómo llegan las versiones nuevas:
+
+- **Actualización automática (recomendada):** cada versión se instala sola 24 horas después de publicarse, se comprueba y se revierte automáticamente si algo falla.
+- **Recordatorios:** tu IA te avisa una vez; di *«actualiza el conector de Canvas»* para instalarla (con las mismas comprobaciones).
+
+Lo hace un pequeño Worker (el actualizador) en tu propia cuenta de Cloudflare. No tiene URL pública e instala solo versiones firmadas con la clave del mantenedor. El almacenamiento, la configuración y tu conexión se conservan; nunca tienes que reconectar.
+
 ## Privacidad y seguridad
 
 - El token solo va a tu Worker y al Canvas de tu universidad; se guarda cifrado en tu Cloudflare KV. Nadie más (ni los autores) puede verlo.
