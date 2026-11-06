@@ -6,6 +6,7 @@
 // It never fetches anything outside the Canvas API; external links are only reported.
 import { canvasGet, origin } from './canvas.mjs';
 import { CANVAS_HOST } from './config.mjs';
+import { decodeEntities } from './html-text.mjs';
 
 // Cloudflare's free plan allows 50 outgoing requests per call; stay well below it.
 export const MAX_REQUESTS = 30;
@@ -41,14 +42,7 @@ export const findFilesTool = {
   },
 };
 
-const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
-export function decodeEntities(s) {
-  return String(s).replace(/&(#x[0-9a-f]{1,6}|#\d{1,7}|[a-z]{2,8});/gi, (m, e) => {
-    if (e[0] !== '#') return ENTITIES[e.toLowerCase()] ?? m;
-    const n = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
-    return n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : m;
-  });
-}
+export { decodeEntities };
 const attr = (tag, name) => {
   const m = tag.match(new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
   return m ? decodeEntities(m[1] ?? m[2] ?? m[3]) : null;

@@ -3,6 +3,8 @@
 //   route    — string, or a function of the validated arguments returning the API path
 //   query    — fixed query parameters, or a function mapping validated arguments to them
 // Only arguments declared in `properties` can reach Canvas; the AI cannot add query parameters.
+// A query function also gets { timeZone } (the user's Canvas time zone) as its second argument.
+import { dayRange } from './time.mjs';
 const id = { type: 'integer', minimum: 1 };
 const text = { type: 'string', minLength: 1, maxLength: 250 };
 const date = { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' };
@@ -89,7 +91,7 @@ add(
 );
 add(
   'missing_submissions',
-  'Read your missing assignments.',
+  'Assignments Canvas marks as missing (past due, not submitted in Canvas). Work handed in on an external tool such as Gradescope can be listed here by mistake: see submission_note.',
   '/users/self/missing_submissions',
   {},
   [],
@@ -126,7 +128,7 @@ add(
 );
 add(
   'discussion',
-  'Read one discussion or announcement without marking it read.',
+  'Read one discussion or announcement in full without marking it read.',
   a => ctx(a) + `/discussion_topics/${a.topic_id}`,
   { ...context, topic_id: id },
   [...Object.keys(context), 'topic_id'],
@@ -164,7 +166,7 @@ add(
 add('unread_count', 'Read Canvas Inbox unread count.', '/conversations/unread_count');
 add(
   'calendar_events',
-  'Read personal, course or group calendar events or assignment deadlines. Omit context_codes for personal calendar.',
+  'Calendar entries for a date range (YYYY-MM-DD, both days included). type "event" (default) reads calendar events such as lectures and office hours; type "assignment" reads assignment deadlines. Without context_codes only your personal calendar is read: pass course_<id> codes for course entries. For everything due across all courses, canvas_planner is simpler.',
   '/calendar_events',
   {
     start_date: date,
@@ -204,19 +206,27 @@ add(
 );
 add(
   'planner_notes',
-  'Read personal to-do notes.',
+  'Read your personal to-do notes (planner notes), optionally for a date range (YYYY-MM-DD, both days included).',
   '/planner_notes',
   { start_date: date, end_date: date },
   [],
-  a => ({ start_date: a.start_date, end_date: a.end_date }),
+  (a, o = {}) => dayRange(a.start_date, a.end_date, o.timeZone),
 );
 add(
   'planner_overrides',
   'Read completion and dismissal flags on your planner items.',
   '/planner/overrides',
 );
-add('todo', 'Read your Canvas to-do items.', '/users/self/todo');
-add('upcoming_events', 'Read upcoming Canvas events.', '/users/self/upcoming_events');
+add(
+  'todo',
+  'Your Canvas to-do list as on the dashboard: assignments still to submit (and, for teachers, to grade).',
+  '/users/self/todo',
+);
+add(
+  'upcoming_events',
+  'Your upcoming calendar events and assignment deadlines across all courses, as in the Canvas "Coming up" list (about the next week; no date input). Long descriptions are shortened. For a chosen date range use canvas_planner.',
+  '/users/self/upcoming_events',
+);
 add(
   'files',
   'List or search accessible personal, course, group or folder files. File metadata includes download links.',

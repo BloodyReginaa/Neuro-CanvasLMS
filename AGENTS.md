@@ -18,6 +18,9 @@ Code map:
 - `worker.mjs`: OAuth + MCP entry, /healthz. `config.mjs`: school settings from Worker vars.
 - `canvas.mjs` + `read-tools.mjs`: tools → fixed GET routes. `canvas-transport.mjs`: fetch with a TLS
   socket fallback to Canvas.
+- Results: `slim.mjs` (compact results: HTML → text, internal fields dropped, local times, list
+  previews; `raw: true` skips it), `html-text.mjs` (HTML → text), `time.mjs` (time zones, day
+  ranges).
 - Files: `file-content.mjs` (text extraction), `file-types.mjs` (file type detection shared by all
   readers), `zip-content.mjs` (server-side ZIP unpacking), `find-files.mjs` (finds files a course
   links to when its Files list is hidden), `external-links.mjs` (Google/Dropbox/GitHub share links →

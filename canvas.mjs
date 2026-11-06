@@ -5,6 +5,8 @@
 import { extraSpecs } from './read-tools.mjs';
 import { readFileContent } from './file-content.mjs';
 import { CANVAS_HOST } from './config.mjs';
+import { slim } from './slim.mjs';
+import { dayRange } from './time.mjs';
 export const origin = () => 'https://' + CANVAS_HOST;
 const id = { type: 'integer', minimum: 1 };
 // Canvas pages are numbers on most endpoints but opaque bookmarks on others (e.g. planner).
@@ -14,10 +16,17 @@ const page = {
   maxLength: 1010,
   description: 'Page to fetch: a number, or the next_page value returned by the previous call.',
 };
+// Results are compacted for the AI (slim.mjs); raw: true returns Canvas's JSON as Canvas sent it.
+const raw = { type: 'boolean', description: "true: Canvas's unmodified JSON (UTC times, HTML)." };
 const def = (name, description, properties = {}, required = []) => ({
   name,
   description,
-  inputSchema: { type: 'object', properties, required, additionalProperties: false },
+  inputSchema: {
+    type: 'object',
+    properties: name === 'canvas_file_content' ? properties : { ...properties, raw },
+    required,
+    additionalProperties: false,
+  },
   annotations: {
     readOnlyHint: true,
     destructiveHint: false,
@@ -42,17 +51,22 @@ export const tools = [
   ),
   def(
     'canvas_assignments',
-    'List course assignments including your submission status. Results are paginated.',
+    'List course assignments with dates and your submission status. Long descriptions are shortened in this list; canvas_assignment has the full text. Results are paginated.',
     { course_id: id, page },
     ['course_id'],
   ),
   def(
     'canvas_assignment',
-    'Read one assignment, rubric and your submission status.',
+    'Read one assignment in full: description, rubric, dates and your submission status.',
     { course_id: id, assignment_id: id },
     ['course_id', 'assignment_id'],
   ),
-  def('canvas_announcements', 'Read course announcements.', { course_id: id, page }, ['course_id']),
+  def(
+    'canvas_announcements',
+    'List course announcements. Long messages are shortened in this list; canvas_discussion reads one in full.',
+    { course_id: id, page },
+    ['course_id'],
+  ),
   def('canvas_modules', 'List course modules.', { course_id: id, page }, ['course_id']),
   def(
     'canvas_module_items',
@@ -68,10 +82,18 @@ export const tools = [
   ),
   def(
     'canvas_planner',
-    'Read upcoming planner items over a date range (YYYY-MM-DD). Includes due dates and completion information.',
+    'Everything due across all your courses in a date range: assignments, quizzes, graded discussions and to-do notes, each with its submission state (submitted, late, missing, graded, feedback). The best tool for "what is due today / this week". start_date and end_date are days (YYYY-MM-DD) in your Canvas time zone, both included: for one day pass the same date twice.',
     {
-      start_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
-      end_date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
+      start_date: {
+        type: 'string',
+        pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+        description: 'First day, included.',
+      },
+      end_date: {
+        type: 'string',
+        pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+        description: 'Last day, included.',
+      },
       page,
     },
     ['start_date', 'end_date'],
@@ -94,13 +116,15 @@ function validate(p, v, k) {
       (p.enum && !p.enum.includes(v)))
   )
     throw new Error('Invalid ' + k);
+  if (p.type === 'boolean' && typeof v !== 'boolean') throw new Error('Invalid ' + k);
   if (p.type === 'array') {
     if (!Array.isArray(v) || v.length < p.minItems || v.length > p.maxItems)
       throw new Error('Invalid ' + k);
     for (const x of v) validate(p.items, x, k);
   }
 }
-export function endpoint(name, args = {}) {
+// opts.timeZone: the user's Canvas time zone, so day ranges cover whole local days.
+export function endpoint(name, args = {}, opts = {}) {
   const tool = tools.find(t => t.name === name);
   if (!tool) throw new Error('Unknown tool');
   const schema = tool.inputSchema;
@@ -126,7 +150,7 @@ export function endpoint(name, args = {}) {
       throw new Error('Missing context_id');
     const path = typeof extra.route === 'function' ? extra.route(args) : extra.route;
     const u = new URL('/api/v1' + path, origin());
-    const query = typeof extra.query === 'function' ? extra.query(args) : extra.query;
+    const query = typeof extra.query === 'function' ? extra.query(args, opts) : extra.query;
     for (const [key, value] of Object.entries(query))
       if (value !== undefined)
         for (const x of Array.isArray(value) ? value : [value])
@@ -160,10 +184,9 @@ export function endpoint(name, args = {}) {
   if (name === 'canvas_assignments' || name === 'canvas_assignment')
     u.searchParams.append('include[]', 'submission');
   if (name === 'canvas_announcements') u.searchParams.set('only_announcements', 'true');
-  if (name === 'canvas_planner') {
-    u.searchParams.set('start_date', args.start_date);
-    u.searchParams.set('end_date', args.end_date);
-  }
+  if (name === 'canvas_planner')
+    for (const [k, v] of Object.entries(dayRange(args.start_date, args.end_date, opts.timeZone)))
+      u.searchParams.set(k, v);
   return u;
 }
 // When Canvas refuses a listing, the content is usually still reachable another way. These hints
@@ -181,8 +204,9 @@ const HINTS = {
   canvas_file_content:
     ' The file may be locked, unpublished or hidden for students. canvas_find_files lists the files this course links to that you can open.',
 };
-export async function callCanvas(name, args, token, fetcher = fetch) {
-  const u = endpoint(name, args);
+// opts.timeZone: the user's Canvas time zone (results show local times; day ranges are local days).
+export async function callCanvas(name, args, token, fetcher = fetch, opts = {}) {
+  const u = endpoint(name, args, opts);
   let r;
   try {
     r = await canvasGet(u, token, fetcher);
@@ -191,7 +215,15 @@ export async function callCanvas(name, args, token, fetcher = fetch) {
     throw e;
   }
   if (name === 'canvas_file_content') return readFileContent(r.data, args, fetcher);
-  return r;
+  if (args.raw) return r;
+  const out = slim(name, r, { timeZone: opts.timeZone });
+  if (name === 'canvas_calendar_events' && Array.isArray(out.data) && out.data.length === 0) {
+    const where = args.context_codes ? 'these calendars' : 'your personal calendar';
+    const what =
+      args.type === 'assignment' ? 'assignment deadlines' : 'calendar events (type "event")';
+    out.note = `No ${what} in ${where} for these days.${args.context_codes ? '' : ' Course entries need context_codes (course_<id>).'}${args.type === 'assignment' ? '' : ' Assignment deadlines need type "assignment".'} canvas_planner lists everything due in all courses at once.`;
+  }
+  return out;
 }
 
 // One GET to the Canvas API: fixed headers, no redirects, Canvas errors turned into safe messages
@@ -251,12 +283,17 @@ export async function canvasGet(u, token, fetcher = fetch) {
 // anyone holding the link can download the file without logging in. The connector needs it for
 // its own downloads, but it must not end up in conversations, so it is stripped from everything
 // returned to the AI. The links keep working for the user, who is logged in to Canvas.
-const VERIFIER = /(&amp;|[?&])verifier=[^&#"'\s<>]*(&amp;|&)?/gi;
+// Private calendar/announcement feed links (/feeds/…) work the same way and are removed whole.
+const VERIFIER = /(&amp;|[?&])verifier=[^&#"'\s<>()]*(&amp;|&)?/gi;
+const FEED = /https?:\/\/[^\s"'<>()]*\/feeds\/[^\s"'<>()]+/gi;
 export function withoutVerifiers(value) {
-  if (typeof value === 'string')
-    return value.includes('verifier=')
-      ? value.replace(VERIFIER, (m, before, after) => (after ? before : ''))
-      : value;
+  if (typeof value === 'string') {
+    let v = value;
+    if (v.includes('verifier='))
+      v = v.replace(VERIFIER, (m, before, after) => (after ? before : ''));
+    if (v.includes('/feeds/')) v = v.replace(FEED, '[private feed link removed]');
+    return v;
+  }
   if (Array.isArray(value)) return value.map(withoutVerifiers);
   if (value && typeof value === 'object')
     return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, withoutVerifiers(v)]));
