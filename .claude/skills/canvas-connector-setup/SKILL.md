@@ -113,6 +113,21 @@ their AI app: connector → Disconnect → Connect → paste it. No reinstall ne
 | File "exceeds 15 MiB" | Worker memory limit. Download it and open it with Claude Code locally. |
 | Handwritten/scanned PDF has no text | Expected. Use `canvas_file_original` (any file id) or `canvas_module_file`; the AI reads pages as images (ask for ~150 dpi for formulas). |
 
+## Reporting a problem
+
+When something fails in a way this guide does not cover, offer to report it to the project. Ask the
+user first: an issue is public, and it is posted from their GitHub account.
+
+- In the browser: https://github.com/BloodyReginaa/Neuro-CanvasLMS/issues/new?template=bug_report.yml
+- Or with the GitHub CLI, if the user is signed in to it:
+  `gh issue create -R BloodyReginaa/Neuro-CanvasLMS --title "[Problem] <short summary>" --body "<report>"`
+
+Include what was run (the exact command), the exact error lines, the connector version (installer
+output or `<url>/healthz`), the operating system and `node -v`, the school's Canvas address, and
+which agent did the install. **Never include** the Canvas token, passwords, Cloudflare credentials
+or links containing `verifier=`. Leave out the connector's workers.dev address unless it is
+already connected (until then, whoever authorizes first becomes its owner).
+
 ## Logs
 
 Persistent Workers Logs are on, with automatic invocation logs OFF (request headers are never
