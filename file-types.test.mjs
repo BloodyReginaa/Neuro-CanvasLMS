@@ -126,7 +126,7 @@ test('scanned PDFs say so and point to canvas_file_original', async () => {
   );
   assert.equal(mostlyText.likely_scanned, undefined);
   assert.equal(mostlyText.pages_without_text, '2');
-  assert.match(mostlyText.extraction_note, /Pages 2 have no text/);
+  assert.match(mostlyText.extraction_note, /Page 2 has no text/);
   const text = await extractBytes(pdf(['All of this is text']), 'notes.pdf', 'application/pdf');
   assert.equal(text.pages_without_text, undefined);
   // A PDF renamed without its extension and served as octet-stream is still a PDF.
@@ -207,4 +207,14 @@ test('canvas_courses can list past courses without changing the default', () => 
   assert.equal(past.searchParams.get('enrollment_state'), 'completed');
   assert.deepEqual(past.searchParams.getAll('include[]'), ['total_scores', 'term']);
   assert.throws(() => endpoint('canvas_courses', { enrollment_state: 'deleted' }), /Invalid/);
+});
+
+test('PDF text keeps its line breaks', async () => {
+  // Two lines on one page: "(first line) Tj 0 -14 Td (second line)".
+  const r = await extractBytes(
+    pdf(['int main(void) {) Tj 0 -14 Td (  return 0;) Tj 0 -14 Td (}']),
+    'code.pdf',
+    'application/pdf',
+  );
+  assert.match(r.text, /int main\(void\) \{\n\s*return 0;\n\}/);
 });

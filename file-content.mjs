@@ -110,7 +110,13 @@ async function extractPdf(bytes) {
     for (let i = 1; i <= pages; i++) {
       const page = await pdf.getPage(i);
       const c = await page.getTextContent();
-      const pageText = c.items.map(x => x.str ?? '').join(' ');
+      // Keep the PDF's own line breaks (hasEOL), so code, lists and tables stay on their lines.
+      const pageText = c.items
+        .map(x => (x.str ?? '') + (x.hasEOL ? '\n' : ' '))
+        .join('')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trimEnd();
       if (pageText.replace(/\s+/g, '').length < MIN_PAGE_CHARS) empty.push(i);
       text += `\n[Page ${i}]\n` + pageText;
       page.cleanup();
@@ -131,7 +137,7 @@ async function extractPdf(bytes) {
         result.likely_scanned = true;
         result.extraction_note = `${empty.length} of ${read} pages have no text layer: this PDF is probably scanned or handwritten, so the text above is (nearly) empty. Call canvas_file_original with this file_id and look at the pages as images.`;
       } else
-        result.extraction_note += ` Pages ${result.pages_without_text} have no text (images, scans or diagrams); canvas_file_original shows them.`;
+        result.extraction_note += ` ${empty.length === 1 ? 'Page' : 'Pages'} ${result.pages_without_text} ${empty.length === 1 ? 'has' : 'have'} no text (images, scans or diagrams); canvas_file_original shows them.`;
     }
     return result;
   } finally {
@@ -218,7 +224,8 @@ export async function readFileContent(meta, args, fetcher = fetch) {
   const base = {
     file_id: meta.id,
     name: meta.display_name ?? meta.filename,
-    source_url: meta.url,
+    // The file's page in Canvas (not its download URL, which carries a verifier pass).
+    html_url: `https://${CANVAS_HOST}/files/${meta.id}`,
     mime_type: meta['content-type'],
   };
   if (!meta.url || !allowedDownload(meta.url))

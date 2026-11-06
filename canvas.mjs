@@ -243,7 +243,24 @@ export async function canvasGet(u, token, fetcher = fetch) {
     );
   const data = await r.json();
   const next = nextPage(r.headers.get('link'));
-  return { data, has_more: next !== null, next_page: next, source_url: u.href };
+  // api_url is the API request itself (it shows JSON); links for the user are the html_url fields.
+  return { data, has_more: next !== null, next_page: next, api_url: u.href };
+}
+
+// Canvas puts `verifier=` on file links (download URLs, links inside pages). It works like a pass:
+// anyone holding the link can download the file without logging in. The connector needs it for
+// its own downloads, but it must not end up in conversations, so it is stripped from everything
+// returned to the AI. The links keep working for the user, who is logged in to Canvas.
+const VERIFIER = /(&amp;|[?&])verifier=[^&#"'\s<>]*(&amp;|&)?/gi;
+export function withoutVerifiers(value) {
+  if (typeof value === 'string')
+    return value.includes('verifier=')
+      ? value.replace(VERIFIER, (m, before, after) => (after ? before : ''))
+      : value;
+  if (Array.isArray(value)) return value.map(withoutVerifiers);
+  if (value && typeof value === 'object')
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, withoutVerifiers(v)]));
+  return value;
 }
 
 // Read the next page exactly as Canvas gives it (number or bookmark) from the Link header.

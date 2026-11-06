@@ -199,7 +199,7 @@ async function healthCheck(url) {
       else if (j.version !== VERSION) detail = `still ${j.version}`;
       else {
         const mcp = await fetch(`${url}/mcp`, { method: 'POST', body: '{}' });
-        if (mcp.status === 401) return { ok: true };
+        if (mcp.status === 401) return { ok: true, connected: j.connected === true };
         detail = `/mcp HTTP ${mcp.status}`;
       }
     } catch (e) {
@@ -253,6 +253,15 @@ async function install() {
   if (!check.ok) fail(msg(lang, 'check_bad', { detail: check.detail }));
   ok('check_ok', { version: VERSION });
 
+  // Already connected: an update needs nothing from the user, so don't send them to make a token,
+  // don't overwrite their clipboard and don't open Canvas.
+  if (check.connected) {
+    console.log('');
+    ok('updated', { version: VERSION });
+    say('updated_expired');
+    console.log('');
+    return;
+  }
   copy(`${url}/mcp`);
   console.log(`\n  ${msg(lang, 'done')}`);
   say('done_1', { canvas: `https://${host}` });

@@ -32,6 +32,10 @@ const M = {
     done_3: '3. Click "Connect", paste the Canvas token on the page that opens, and authorize.',
     done_now: 'Do this right away, and keep the URL to yourself until it is connected.',
     done_gpt: '   ChatGPT: add a custom connector (developer mode) with the same URL.',
+    updated:
+      'Updated to version {version}. Your connected Claude/ChatGPT keep working: nothing else to do.',
+    updated_expired:
+      'If your AI ever says "authorization expired": make a new Canvas token, then Disconnect → Connect the connector in your AI app and paste it.',
     done_update:
       'To update later, run the same command again: it keeps your storage and connections.',
     rerun:
@@ -75,6 +79,9 @@ const M = {
     done_3: '3. 点「连接」，在弹出的页面粘贴 Canvas 令牌并授权。',
     done_now: '现在就去连接；连好之前不要把这个网址发给别人。',
     done_gpt: '   ChatGPT：在开发者模式里用同一个网址添加自定义连接器。',
+    updated: '已更新到 {version} 版。已经连好的 Claude / ChatGPT 照常能用，不用做任何事。',
+    updated_expired:
+      '以后如果 AI 提示"authorization expired"（授权过期）：生成一个新的 Canvas 令牌，在 AI 应用里把连接器断开再连接，粘贴新令牌就行。',
     done_update: '以后想更新，再运行一次同一条命令就行：存储和连接都会保留。',
     rerun: '找到你已有的安装「{name}」。会把它更新成你现在运行的这份代码，设置和连接都会保留。',
     un_confirm: '这会删除连接器「{name}」和它的存储，你的 AI 应用会失去连接。输入名称确认：',
@@ -118,6 +125,10 @@ const M = {
       '3. Haz clic en "Conectar", pega el token de Canvas en la página que se abre y autoriza.',
     done_now: 'Hazlo ahora mismo y no compartas la URL hasta que esté conectado.',
     done_gpt: '   ChatGPT: añade un conector personalizado (modo desarrollador) con la misma URL.',
+    updated:
+      'Actualizado a la versión {version}. Tu Claude/ChatGPT conectado sigue funcionando: no tienes que hacer nada más.',
+    updated_expired:
+      'Si tu IA dice "authorization expired": crea un token nuevo de Canvas, desconecta y vuelve a conectar el conector en tu app de IA y pégalo.',
     done_update:
       'Para actualizar más adelante, vuelve a ejecutar el mismo comando: conserva tu almacenamiento y tus conexiones.',
     rerun:
@@ -165,6 +176,10 @@ const M = {
     done_3: '3.「接続」を押し、開いたページに Canvas トークンを貼り付けて認可します。',
     done_now: '今すぐ接続してください。接続が終わるまで、この URL を他人に教えないでください。',
     done_gpt: '   ChatGPT：開発者モードで同じ URL のカスタムコネクタを追加します。',
+    updated:
+      'バージョン {version} に更新しました。接続済みの Claude / ChatGPT はそのまま使えます。ほかに作業はありません。',
+    updated_expired:
+      'AI が「authorization expired」と言ったら：新しい Canvas トークンを作り、AI アプリでコネクタを切断 → 再接続して貼り付けてください。',
     done_update:
       '後で更新するときは、同じコマンドをもう一度実行するだけです。ストレージと接続はそのまま残ります。',
     rerun:
@@ -211,6 +226,10 @@ const M = {
     done_3: '3. "Connect" दबाएँ, खुले पेज पर Canvas टोकन चिपकाएँ और अधिकृत करें।',
     done_now: 'यह अभी करें, और जुड़ने तक यह URL किसी के साथ साझा न करें।',
     done_gpt: '   ChatGPT: डेवलपर मोड में उसी URL से कस्टम कनेक्टर जोड़ें।',
+    updated:
+      'संस्करण {version} में अपडेट हो गया। आपका जुड़ा हुआ Claude/ChatGPT चलता रहेगा: और कुछ नहीं करना है।',
+    updated_expired:
+      'अगर आपका AI कभी "authorization expired" कहे: नया Canvas टोकन बनाएँ, फिर AI ऐप में कनेक्टर को Disconnect → Connect करें और उसे चिपकाएँ।',
     done_update:
       'बाद में अपडेट करने के लिए वही कमांड फिर से चलाएँ: आपका स्टोरेज और कनेक्शन बने रहेंगे।',
     rerun:
