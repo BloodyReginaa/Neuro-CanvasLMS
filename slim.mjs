@@ -114,12 +114,18 @@ const PREVIEW_TOOLS = new Map(
     canvas_announcements: 'canvas_discussion',
     canvas_discussions: 'canvas_discussion',
     canvas_quizzes: 'canvas_quiz',
+    canvas_activity_stream:
+      'canvas_discussion (announcements, discussions) or canvas_submission (grades)',
   }),
 );
 const PREVIEW_KEYS = new Set(['description', 'message']);
 export const PREVIEW_BUDGET = 12000; // characters of description text per list result
 export const PREVIEW_MIN = 400; // every item keeps at least this much
 const DUPLICATE_MIN = 300; // a text repeated inside one result is written once
+
+// Grade lists: each submission carries its whole assignment; the description and rubric are left
+// out there (often most of the bytes), name, dates and points stay.
+const GRADE_LISTS = new Set(['canvas_course_submissions']);
 
 // ---- external tools -------------------------------------------------------------------------------
 const TOOL_NAMES = [
@@ -221,6 +227,12 @@ function cleanObject(o, ctx) {
         delete value.discussion_topic.message;
       }
     }
+    if (ctx.grades && k === 'assignment' && isObject(v)) {
+      value = { ...v };
+      delete value.description;
+      delete value.rubric;
+      delete value.rubric_settings;
+    }
     if (ctx.list && k === 'rubric' && Array.isArray(v)) {
       out.rubric = `[rubric with ${v.length} criteria; read it with ${ctx.full}]`;
       continue;
@@ -293,6 +305,7 @@ export function slim(name, result, { timeZone, now = new Date() } = {}) {
   const base = 'https://' + CANVAS_HOST;
   const list = PREVIEW_TOOLS.has(name) && Array.isArray(result.data);
   const ctx = {
+    grades: GRADE_LISTS.has(name),
     zone,
     base,
     api: base + '/api/',

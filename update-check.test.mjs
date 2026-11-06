@@ -8,6 +8,7 @@ import {
   UPDATE_SOURCE,
   UPDATE_KEY,
   UPDATE_COMMAND,
+  connectorVersion,
 } from './update-check.mjs';
 
 const memoryKV = (initial = {}) => {
@@ -118,4 +119,38 @@ test('the notice names both versions and the update command, only when newer', (
   assert.equal(updateNotice('2.7.1', '2.7.1'), null);
   assert.equal(updateNotice('2.7.0', '2.7.1'), null);
   assert.equal(updateNotice(null, '2.7.1'), null);
+});
+
+test('the version tool checks GitHub when asked (at most every 10 minutes) and says how to update', async () => {
+  let clock = 5000 * DAY;
+  let fetches = 0;
+  let remote = '2.9.0';
+  const fetcher = async () => (fetches++, new Response(JSON.stringify({ version: remote })));
+  const kv = memoryKV({
+    [UPDATE_KEY]: JSON.stringify({ version: '2.8.0', checked: clock - 3600000 }),
+  });
+  const latest = updateChecker({ fetcher, now: () => clock });
+  const behind = await connectorVersion(latest, kv, '2.8.2', { timeZone: 'America/New_York' });
+  assert.equal(fetches, 1); // the stored check was an hour old: asked GitHub now
+  assert.equal(behind.latest_version, '2.9.0');
+  assert.equal(behind.running_version, '2.8.2');
+  assert.equal(behind.up_to_date, false);
+  assert.ok(behind.how_to_update.includes(UPDATE_COMMAND));
+  assert.match(behind.checked_at, /^\w{3} \d{4}-\d{2}-\d{2} \d{2}:\d{2} E[SD]T$/);
+  clock += 60000;
+  remote = '2.8.2';
+  const again = await connectorVersion(latest, kv, '2.9.0');
+  assert.equal(fetches, 1); // a minute later: the fresh result is reused
+  assert.equal(again.up_to_date, true);
+  assert.equal(again.how_to_update, undefined);
+  // GitHub unreachable and nothing known: says so instead of guessing
+  const offline = updateChecker({
+    fetcher: async () => {
+      throw new Error('offline');
+    },
+    now: () => clock,
+  });
+  const unknown = await connectorVersion(offline, memoryKV(), '2.9.0');
+  assert.equal(unknown.up_to_date, null);
+  assert.match(unknown.note, /could not be reached/);
 });

@@ -70,7 +70,7 @@ add(
 );
 add(
   'course_submissions',
-  'List your own submissions and feedback for a course.',
+  "List your own submissions, scores and feedback for a course, with each assignment's name, dates and points (no assignment descriptions: canvas_assignment has them).",
   a => `/courses/${a.course_id}/students/submissions`,
   { course_id: id },
   ['course_id'],
@@ -164,6 +164,14 @@ add(
   { auto_mark_as_read: 'false' },
 );
 add('unread_count', 'Read Canvas Inbox unread count.', '/conversations/unread_count');
+add(
+  'activity_stream',
+  'What is new across all your current courses, newest first: announcements, discussion posts, graded submissions (score, grade, teacher comments) and Inbox messages. The quickest answer to "any updates?" or "what\'s new?": one call instead of checking each course. Long texts are shortened. Nothing is marked read.',
+  '/users/self/activity_stream',
+  {},
+  [],
+  { only_active_courses: 'true' },
+);
 add(
   'calendar_events',
   'Calendar entries for a date range (YYYY-MM-DD, both days included). type "event" (default) reads calendar events such as lectures and office hours; type "assignment" reads assignment deadlines. Without context_codes only your personal calendar is read: pass course_<id> codes for course entries. For everything due across all courses, canvas_planner is simpler.',

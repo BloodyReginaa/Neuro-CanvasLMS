@@ -348,3 +348,41 @@ test('Inbox messages stay plain text; private feed links and verifier passes nev
     `[a.pdf](https://${H}/courses/1/files/5) next`,
   );
 });
+
+test('grade lists leave out assignment texts; the activity stream is one call with previews', () => {
+  const r = slim(
+    'canvas_course_submissions',
+    page([
+      {
+        assignment_id: 5678,
+        score: 4,
+        grade: '4',
+        graded_at: '2026-11-05T21:39:00Z',
+        assignment: assignment({ rubric: [{ id: 'a', points: 10 }], rubric_settings: { id: 1 } }),
+      },
+    ]),
+    { timeZone: NY },
+  );
+  const a = r.data[0].assignment;
+  assert.equal(a.description, undefined);
+  assert.equal(a.rubric, undefined);
+  assert.equal(a.name, 'Lab 4: Linked Lists');
+  assert.equal(a.due_at, 'Fri 2026-11-06 23:59 EST');
+  assert.equal(r.data[0].score, 4);
+  const u = endpoint('canvas_activity_stream', {});
+  assert.equal(u.pathname, '/api/v1/users/self/activity_stream');
+  assert.equal(u.searchParams.get('only_active_courses'), 'true');
+  const long = '<p>' + 'Midterm review sessions are on Sunday and Monday. '.repeat(200) + '</p>';
+  const stream = slim(
+    'canvas_activity_stream',
+    page(
+      Array.from({ length: 30 }, (_, i) => ({
+        type: 'Announcement',
+        title: `News ${i}`,
+        message: long.replace('Midterm', `Midterm ${i}`),
+      })),
+    ),
+    { timeZone: NY },
+  );
+  assert.match(stream.data[0].message, /full text: canvas_discussion/);
+});

@@ -29,7 +29,7 @@ Code map:
   the file itself), `module-file.mjs` + `file-resource.mjs` (original files as MCP resources).
 - `owner.mjs`: owner binding, allowed OAuth clients. `i18n.mjs` + `pages.mjs`: web pages.
 - `update-check.mjs`: once a day reads the newest version number from GitHub; when it is newer the AI
-  tells the user how to update.
+  tells the user how to update. Also the `canvas_connector_version` tool.
 - `installer/`: the setup wizard (re-running it asks once, y/n, then updates with the saved
   settings; without a terminal it does not ask). `version.mjs`: shown on
   the home page and /healthz, compared with GitHub by update-check.mjs.

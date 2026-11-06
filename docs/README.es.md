@@ -19,7 +19,7 @@ La mayoría de integraciones de Canvas con IA son herramientas **locales**: solo
 
 ## Qué incluye
 
-- **61 herramientas de solo lectura:** cursos, módulos, páginas, archivos, tareas, entregas, calificaciones y comentarios, rúbricas, anuncios, foros, bandeja de entrada, calendario, pendientes, grupos, historial de exámenes y perfil.
+- **63 herramientas de solo lectura:** cursos, módulos, páginas, archivos, tareas, entregas, calificaciones y comentarios, rúbricas, anuncios, foros, bandeja de entrada, calendario, pendientes, grupos, historial de exámenes y perfil.
 - **Lectura real de archivos:** texto de PDF, Word, PowerPoint y Excel, unos 90 tipos de archivos de código y texto, y cuadernos de Jupyter (celdas y salidas); archivos ZIP descomprimidos en el servidor (índice y el contenido de cada archivo de código/texto); reconoce los PDF escaneados o escritos a mano y entrega el archivo original para que la IA vea cada página.
 - **También archivos enlazados:** las diapositivas, documentos y hojas que un módulo enlaza en Google Docs/Slides/Sheets o Google Drive, los archivos y carpetas de Dropbox, y los archivos y repositorios de GitHub se leen como texto si están compartidos públicamente ("Cualquier persona con el enlace").
 - **Encuentra los archivos que el curso oculta:** muchos cursos ocultan la lista de Archivos a los estudiantes. El conector busca en la página principal, el programa, los módulos, las tareas, los anuncios y las páginas enlazadas, así que la IA sigue encontrando "las diapositivas de la clase 12" por su nombre.
