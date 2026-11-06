@@ -100,7 +100,11 @@ const pageRanges = pages =>
 const MIN_PAGE_CHARS = 10; // fewer non-space characters than this: the page is an image or a scan
 
 async function extractPdf(bytes) {
-  const pdf = await getDocumentProxy(bytes, { isEvalSupported: false, useSystemFonts: false });
+  const pdf = await getDocumentProxy(bytes, {
+    isEvalSupported: false,
+    useSystemFonts: false,
+    verbosity: 0, // errors only: pdf.js warns about fonts it never needs for text
+  });
   try {
     let text = '';
     const empty = [];

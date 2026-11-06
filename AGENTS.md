@@ -11,7 +11,9 @@ It is a community project provided as is.
 - Reply in the user's language. Most users are students, not developers.
 - Never ask for, read, type or store the user's Canvas access token — they paste it only
   into the connector's authorization page in their browser.
-- Keep it read-only: no write routes, no generic URL-fetch tools. Run `npm test` before deploying.
+- Keep it read-only: no write routes, no generic URL-fetch tools. Run `npm test` before deploying;
+  GitHub Actions (`.github/workflows/test.yml`) runs the tests, `npm run format:check` and the
+  dry-run build on every push and pull request.
 - Never rename or remove MCP tools (clients store per-tool approvals by name); only add.
 
 Code map:

@@ -151,7 +151,7 @@ test('canvas_file_original returns the ORIGINAL zip byte-for-byte, labelled as a
   const sha = Buffer.from(await crypto.subtle.digest('SHA-256', bytes)).toString('hex');
   const api = async () =>
     Response.json({
-      id: 19399445,
+      id: 8888,
       display_name: 'trees3.zip',
       size: bytes.length,
       url: 'https://files.example.org/t.zip',
@@ -162,9 +162,9 @@ test('canvas_file_original returns the ORIGINAL zip byte-for-byte, labelled as a
     fetcher: async () =>
       new Response(bytes, { headers: { 'content-type': 'application/octet-stream' } }),
   };
-  const linked = await fileOriginal({ file_id: 19399445 }, 't', api, {
+  const linked = await fileOriginal({ file_id: 8888 }, 't', api, {
     ...options,
-    store: async (b, m) => fileResourceURI({ file_id: 19399445 }, m),
+    store: async (b, m) => fileResourceURI({ file_id: 8888 }, m),
   });
   assert.equal(linked.structuredContent.name, 'trees3.zip');
   assert.equal(linked.structuredContent.mime_type, 'application/zip');

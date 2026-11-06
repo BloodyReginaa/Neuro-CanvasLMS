@@ -26,6 +26,7 @@ import { isAllowedRedirect, resolveOwner, currentOwner } from './owner.mjs';
 import { pickLang } from './i18n.mjs';
 import { homePage, authorizePage, messagePage } from './pages.mjs';
 import { VERSION } from './version.mjs';
+import { timeZoneCache } from './time.mjs';
 
 // CANVAS_TRANSPORT (optional var): 'auto' (default), 'fetch' or 'socket' — see canvas-transport.mjs.
 const canvasTransport = createCanvasTransport(connect, fetch, {
@@ -33,26 +34,19 @@ const canvasTransport = createCanvasTransport(connect, fetch, {
     ['fetch', 'socket'].includes(workerEnv.CANVAS_TRANSPORT) ? workerEnv.CANVAS_TRANSPORT : 'auto',
   log: entry => console.log(JSON.stringify({ canvas_transport: entry })),
 });
-// The user's Canvas time zone, so results show local times and day ranges cover local days.
-// Read from the profile and kept per Worker instance for a few hours (users rarely change it).
-const ZONE_TTL = 6 * 3600 * 1000;
-let zoneCache = null;
-async function userTimeZone(p) {
-  if (zoneCache?.user === p.userId && Date.now() - zoneCache.at < ZONE_TTL) return zoneCache.zone;
-  try {
+// The user's Canvas time zone, so results show local times and day ranges cover local days
+// (time.mjs keeps it for a few hours per Worker instance).
+const zoneOf = timeZoneCache();
+const userTimeZone = p =>
+  zoneOf(p.userId, async () => {
     const profile = await callCanvas(
       'canvas_profile',
       { raw: true },
       p.canvasToken,
       canvasTransport,
     );
-    const zone = typeof profile.data?.time_zone === 'string' ? profile.data.time_zone : null;
-    zoneCache = { user: p.userId, zone, at: Date.now() };
-    return zone;
-  } catch {
-    return null; // not cached: the next call tries again (e.g. after reconnecting)
-  }
-}
+    return profile.data?.time_zone;
+  });
 // Our own messages (no upstream bodies, no tokens) may be shown to the AI so it can correct itself.
 const SAFE_ERROR =
   /^(Canvas|Invalid [a-z_]+$|Unexpected argument|Missing argument|Missing context_id|Unknown tool)/;

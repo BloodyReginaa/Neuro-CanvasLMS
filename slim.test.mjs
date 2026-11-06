@@ -6,18 +6,19 @@ import { callCanvas, endpoint, tools, withoutVerifiers } from './canvas.mjs';
 import { localTime, dayRange, isTimeZone } from './time.mjs';
 
 const NY = 'America/New_York';
-const DESC = `<p><span>This assignment is worth 100 points.</span></p>
-<p>Please download the associated code for this programming assignment:</p>
-<p>Starter Code: <a class="instructure_file_link inline_disabled" title="binary-trees-student.zip" href="https://${H}/courses/39037/files/19173789?wrap=1" target="_blank" data-api-endpoint="https://${H}/api/v1/courses/39037/files/19173789" data-api-returntype="File">binary-trees-student.zip</a></p>
-<p>Note the due date! This course has a relatively generous late policy, but we follow it strictly – read the syllabus for details.</p>
-<h2><span>Upload to Gradescope</span></h2>
-<p>You must submit your solution to this programming assignment to Gradescope below. We&nbsp;<strong>do not</strong> accept programming assignments in any other fashion!</p>`;
-// A real calendar entry for an assignment handed in on Gradescope (as /calendar_events returns it).
+const DESC = `<p><span>This lab is worth 50 points.</span></p>
+<p>Download the starter files before you begin:</p>
+<p>Starter files: <a class="instructure_file_link inline_disabled" title="lab4-starter.zip" href="https://${H}/courses/1234/files/1111?wrap=1" target="_blank" data-api-endpoint="https://${H}/api/v1/courses/1234/files/1111" data-api-returntype="File">lab4-starter.zip</a></p>
+<p>Late work loses ten percent per day – see the syllabus.</p>
+<h2><span>Submit on Gradescope</span></h2>
+<p>Hand in your code on Gradescope. We&nbsp;<strong>do not</strong> accept submissions by email!</p>`;
+// A calendar entry for an assignment handed in on Gradescope, shaped like /calendar_events answers
+// (made-up course; the fields and their nesting are Canvas's).
 const assignment = (extra = {}) => ({
-  id: 808948,
-  position: 9,
+  id: 5678,
+  position: 4,
   description: DESC,
-  points_possible: 100,
+  points_possible: 50,
   grading_type: 'points',
   created_at: '2026-06-05T17:44:35Z',
   updated_at: '2026-10-31T04:00:10Z',
@@ -31,42 +32,42 @@ const assignment = (extra = {}) => ({
   post_to_sis: false,
   allowed_attempts: -1,
   secure_params: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.FAKE-LTI-TOKEN.sig',
-  lti_context_id: '72b84440-0eb5-429d-95ad-063589a8b6e0',
-  course_id: 39037,
-  name: 'PA9 Binary Trees',
+  lti_context_id: '00000000-0000-4000-8000-000000000001',
+  course_id: 1234,
+  name: 'Lab 4: Linked Lists',
   submission_types: ['external_tool'],
   has_submitted_submissions: false,
   external_tool_tag_attributes: {
-    url: 'https://lti-gradescope.int.turnitin.com/launch/gs',
+    url: 'https://www.gradescope.com/lti/launch',
     new_tab: false,
-    resource_link_id: '285f158092ca8c3480f3d3c0ef953291985d0bc2',
-    custom_params: { tii_app_key: 'gs-proxy' },
+    resource_link_id: 'example-resource-link',
+    custom_params: { example: 'x' },
   },
   muted: true,
-  html_url: `https://${H}/courses/39037/assignments/808948`,
+  html_url: `https://${H}/courses/1234/assignments/5678`,
   url: null,
   published: true,
-  submissions_download_url: `https://${H}/courses/39037/assignments/808948/submissions?zip=1`,
+  submissions_download_url: `https://${H}/courses/1234/assignments/5678/submissions?zip=1`,
   ...extra,
 });
 const event = (extra = {}) => ({
   created_at: '2026-06-05T17:44:35Z',
-  title: 'PA9 Binary Trees',
+  title: 'Lab 4: Linked Lists',
   all_day: true,
   all_day_date: '2026-11-06',
   workflow_state: 'published',
   submission_types: 'external_tool',
-  description: DESC.replace('19173789', '18675848'),
-  id: 'assignment_808948',
+  description: DESC.replace('1111', '2222'),
+  id: 'assignment_5678',
   type: 'assignment',
   assignment: assignment(),
-  html_url: `https://${H}/courses/39037/assignments/808948`,
-  context_code: 'course_39037',
-  context_name: 'Data Structures CICS 210 (171644) FA26',
+  html_url: `https://${H}/courses/1234/assignments/5678`,
+  context_code: 'course_1234',
+  context_name: 'Example Course 101',
   context_color: null,
   end_at: '2026-11-07T04:59:59Z',
   start_at: '2026-11-07T04:59:59Z',
-  url: `https://${H}/api/v1/calendar_events/assignment_808948`,
+  url: `https://${H}/api/v1/calendar_events/assignment_5678`,
   important_dates: false,
   ...extra,
 });
@@ -135,13 +136,11 @@ test('one calendar entry: text instead of HTML, one copy, no LTI internals, loca
     '/api/v1/calendar_events',
   ])
     assert.ok(!out.includes(gone), gone);
-  assert.match(e.description, /^This assignment is worth 100 points\./);
+  assert.match(e.description, /^This lab is worth 50 points\./);
   assert.ok(
-    e.description.includes(
-      `[binary-trees-student.zip](https://${H}/courses/39037/files/18675848?wrap=1)`,
-    ),
+    e.description.includes(`[lab4-starter.zip](https://${H}/courses/1234/files/2222?wrap=1)`),
   );
-  assert.ok(e.description.includes('## Upload to Gradescope'));
+  assert.ok(e.description.includes('## Submit on Gradescope'));
   assert.ok(e.description.includes('We **do not** accept'));
   assert.equal(e.assignment.description, undefined); // the event already has it
   assert.equal(e.end_at, 'Fri 2026-11-06 23:59 EST');
@@ -177,14 +176,14 @@ test('planner: relative links become absolute, submission state and empty due da
         },
         plannable: { id: 1, title: 'Reading', due_at: null, points_possible: 0 },
         plannable_date: '2026-11-07T04:59:59Z',
-        html_url: '/courses/39037/assignments/1',
+        html_url: '/courses/1234/assignments/1',
         context_image: null,
       },
     ]),
     { timeZone: NY, now },
   );
   const item = r.data[0];
-  assert.equal(item.html_url, `https://${H}/courses/39037/assignments/1`);
+  assert.equal(item.html_url, `https://${H}/courses/1234/assignments/1`);
   assert.deepEqual(item.submissions, {
     submitted: false,
     graded: false,
@@ -280,7 +279,7 @@ test('raw: true returns Canvas JSON unchanged; it is accepted by every tool but 
     start_date: '2026-11-06',
     end_date: '2026-11-06',
     type: 'assignment',
-    context_codes: ['course_39037'],
+    context_codes: ['course_1234'],
   };
   const raw = await callCanvas('canvas_calendar_events', { ...args, raw: true }, 't', fetcher, {
     timeZone: NY,

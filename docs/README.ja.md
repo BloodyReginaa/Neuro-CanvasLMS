@@ -28,7 +28,7 @@ Canvas と AI をつなぐツールの多くは **ローカル** ツールです
 
 ## インストール（約 5 分）
 
-必要なもの：[Node.js 20+](https://nodejs.org)、無料の [Cloudflare アカウント](https://dash.cloudflare.com/sign-up)、Canvas のログイン。ターミナルで次を実行します：
+必要なもの：[Node.js 22+](https://nodejs.org)、無料の [Cloudflare アカウント](https://dash.cloudflare.com/sign-up)、Canvas のログイン。ターミナルで次を実行します：
 
 ```bash
 npx github:BloodyReginaa/Neuro-CanvasLMS

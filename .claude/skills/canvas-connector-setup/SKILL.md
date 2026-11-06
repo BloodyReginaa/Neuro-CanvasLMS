@@ -22,7 +22,7 @@ user's language**.
 
 ## Install
 
-1. Check `node -v` (needs 20+; otherwise point them to https://nodejs.org). Run `npm install`,
+1. Check `node -v` (needs 22+; otherwise point them to https://nodejs.org). Run `npm install`,
    then `npm test` (all must pass).
 2. Ask for their school's Canvas address (what they see in the browser's address bar when they use
    Canvas) and, optionally, the school's name.

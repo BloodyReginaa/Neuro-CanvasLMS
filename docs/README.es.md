@@ -28,7 +28,7 @@ La mayoría de integraciones de Canvas con IA son herramientas **locales**: solo
 
 ## Instalación (unos 5 minutos)
 
-Necesitas [Node.js 20+](https://nodejs.org), una [cuenta gratuita de Cloudflare](https://dash.cloudflare.com/sign-up) y tu acceso a Canvas. En una terminal, ejecuta:
+Necesitas [Node.js 22+](https://nodejs.org), una [cuenta gratuita de Cloudflare](https://dash.cloudflare.com/sign-up) y tu acceso a Canvas. En una terminal, ejecuta:
 
 ```bash
 npx github:BloodyReginaa/Neuro-CanvasLMS

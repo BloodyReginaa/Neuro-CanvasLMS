@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { fileResourceURI, parseFileResourceURI, readFileResource } from './file-resource.mjs';
 import { Buffer } from 'node:buffer';
 const bytes = Buffer.from('%PDF-1.4 original bytes');
-const args = { course_id: 41051, module_id: 545828, item_id: 3555793 };
+const args = { course_id: 1234, module_id: 5555, item_id: 6666 };
 const sha256 = Buffer.from(await crypto.subtle.digest('SHA-256', bytes)).toString('hex');
 const uri = fileResourceURI(args, { sha256, name: '5-volumes.pdf' });
 const options = {
@@ -27,8 +27,8 @@ test('resource URI accepts only module IDs, hash and encoded filename', () => {
   for (const bad of [
     'https://example.org/a',
     uri + '?url=https://example.org',
-    uri.replace('/41051/', '/0/'),
-    uri.replace('/41051/', '/99999999999999999999/'),
+    uri.replace('/1234/', '/0/'),
+    uri.replace('/1234/', '/99999999999999999999/'),
   ])
     assert.throws(() => parseFileResourceURI(bad));
 });
@@ -49,25 +49,21 @@ test('resource read rejects changed file and lost Canvas access', async () => {
 });
 
 test('file_id resources round-trip and re-check Canvas on every read', async () => {
-  const furi = fileResourceURI({ file_id: 19374724 }, { sha256, name: '12 Notes.pdf' });
-  assert.equal(furi, `canvas-file://file/19374724/${sha256}/12%20Notes.pdf`);
+  const furi = fileResourceURI({ file_id: 7777 }, { sha256, name: '12 Notes.pdf' });
+  assert.equal(furi, `canvas-file://file/7777/${sha256}/12%20Notes.pdf`);
   assert.deepEqual(parseFileResourceURI(furi), {
     kind: 'file',
-    args: { file_id: 19374724 },
+    args: { file_id: 7777 },
     sha256,
     name: '12 Notes.pdf',
   });
-  for (const bad of [
-    furi.replace('/19374724/', '/0/'),
-    furi + '/x',
-    'canvas-file://file/1/' + sha256,
-  ])
+  for (const bad of [furi.replace('/7777/', '/0/'), furi + '/x', 'canvas-file://file/1/' + sha256])
     assert.throws(() => parseFileResourceURI(bad));
   let apiCalls = 0;
   const fileApi = async u => {
     apiCalls++;
     return Response.json({
-      id: 19374724,
+      id: 7777,
       display_name: '12 Notes.pdf',
       size: bytes.length,
       url: 'https://files.example.org/x.pdf',

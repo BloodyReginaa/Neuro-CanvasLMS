@@ -28,7 +28,7 @@ AI के लिए ज़्यादातर Canvas इंटीग्रे�
 
 ## इंस्टॉल (लगभग 5 मिनट)
 
-ज़रूरत: [Node.js 20+](https://nodejs.org), मुफ़्त [Cloudflare खाता](https://dash.cloudflare.com/sign-up) और आपका Canvas लॉगिन। टर्मिनल में चलाएँ:
+ज़रूरत: [Node.js 22+](https://nodejs.org), मुफ़्त [Cloudflare खाता](https://dash.cloudflare.com/sign-up) और आपका Canvas लॉगिन। टर्मिनल में चलाएँ:
 
 ```bash
 npx github:BloodyReginaa/Neuro-CanvasLMS

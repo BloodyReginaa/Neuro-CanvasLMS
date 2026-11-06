@@ -90,3 +90,23 @@ export function dayRange(start, end, zone) {
   else if (end !== undefined) out.end_date = end;
   return out;
 }
+
+// The user's Canvas time zone, cached per user. read() fetches it (from the Canvas profile); a
+// zone is kept for `ttl` milliseconds, since users rarely change it. A failed read is not kept, so
+// the next call tries again (e.g. after the user reconnects with a new token). A value that is not
+// a known IANA zone counts as "no zone": results then keep Canvas's UTC times.
+export function timeZoneCache({ ttl = 6 * 3600 * 1000, now = Date.now } = {}) {
+  let cached = null;
+  return async (user, read) => {
+    if (cached && cached.user === user && now() - cached.at < ttl) return cached.zone;
+    let zone;
+    try {
+      zone = await read();
+    } catch {
+      return null;
+    }
+    zone = isTimeZone(zone) ? zone : null;
+    cached = { user, zone, at: now() };
+    return zone;
+  };
+}

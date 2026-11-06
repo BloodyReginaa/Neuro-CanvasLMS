@@ -28,7 +28,7 @@ Most Canvas integrations for AI are **local** tools: they only work while your o
 
 ## Install (about 5 minutes)
 
-You need [Node.js 20+](https://nodejs.org), a free [Cloudflare account](https://dash.cloudflare.com/sign-up) and your Canvas login. In a terminal, run:
+You need [Node.js 22+](https://nodejs.org), a free [Cloudflare account](https://dash.cloudflare.com/sign-up) and your Canvas login. In a terminal, run:
 
 ```bash
 npx github:BloodyReginaa/Neuro-CanvasLMS

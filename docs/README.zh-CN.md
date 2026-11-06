@@ -28,7 +28,7 @@
 
 ## 安装（约 5 分钟）
 
-你需要：[Node.js 20+](https://nodejs.org)、免费的 [Cloudflare 账号](https://dash.cloudflare.com/sign-up)，以及能登录 Canvas。在终端里运行：
+你需要：[Node.js 22+](https://nodejs.org)、免费的 [Cloudflare 账号](https://dash.cloudflare.com/sign-up)，以及能登录 Canvas。在终端里运行：
 
 ```bash
 npx github:BloodyReginaa/Neuro-CanvasLMS

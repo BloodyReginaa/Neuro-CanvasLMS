@@ -15,7 +15,7 @@ import { MESSAGES, msg } from './messages.mjs';
 
 test('school Canvas addresses are accepted however people paste them', () => {
   for (const [input, host] of [
-    ['https://umamherst.instructure.com/courses/41051/modules', 'umamherst.instructure.com'],
+    ['https://umamherst.instructure.com/courses/1234/modules', 'umamherst.instructure.com'],
     ['Canvas.Example.EDU', 'canvas.example.edu'],
     ['  canvas.harvard.edu/  ', 'canvas.harvard.edu'],
     ['http://school.instructure.com', 'school.instructure.com'],

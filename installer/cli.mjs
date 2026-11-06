@@ -212,7 +212,7 @@ async function healthCheck(url) {
 async function install() {
   console.log(`\n  ${msg(lang, 'title')}\n`);
   const [major] = process.versions.node.split('.').map(Number);
-  if (major < 20) fail(msg(lang, 'node_old', { need: 20, have: process.versions.node }));
+  if (major < 22) fail(msg(lang, 'node_old', { need: 22, have: process.versions.node }));
   const name = args.name ?? DEFAULT_NAME;
   if (!validWorkerName(name)) fail('invalid --name');
   const dir = path.join(HOME, name);

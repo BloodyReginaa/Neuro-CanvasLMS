@@ -1,6 +1,6 @@
 {
   "name": "neuro-canvas-lms",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "private": true,
   "description": "Neuro-CanvasLMS: read-only connector that lets Claude or ChatGPT read any Canvas LMS (remote MCP server on your own Cloudflare account)",
   "author": "BloodyReginaa",
@@ -14,6 +14,7 @@
     "deploy": "wrangler deploy",
     "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
     "format": "prettier --write \"*.mjs\" \"bin/*.mjs\" \"scripts/*.mjs\" \"installer/*.mjs\"",
+    "format:check": "prettier --check \"*.mjs\" \"bin/*.mjs\" \"scripts/*.mjs\" \"installer/*.mjs\"",
     "setup": "node bin/neuro-canvas-lms.mjs"
   },
   "dependencies": {
@@ -28,7 +29,7 @@
     "prettier": "^3.9.10"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "bin": {
     "neuro-canvas-lms": "bin/neuro-canvas-lms.mjs"

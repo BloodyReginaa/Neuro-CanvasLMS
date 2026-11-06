@@ -7,7 +7,7 @@ import {
   publicAddress,
   resolvePublic,
 } from './module-file.mjs';
-const args = { course_id: 41051, module_id: 545828, item_id: 3555793 };
+const args = { course_id: 1234, module_id: 5555, item_id: 6666 };
 const pdf = Buffer.from('%PDF-1.7\noriginal-binary\x00\xff');
 const external = {
   id: args.item_id,
