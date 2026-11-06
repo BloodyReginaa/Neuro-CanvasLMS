@@ -47,6 +47,8 @@ const M = {
     un_done:
       'Removed. Also delete the Canvas token (Canvas → Account → Settings) and the connector in your AI app.',
     cancelled: 'Cancelled.',
+    cert_wait:
+      'The new workers.dev address is still getting its HTTPS certificate. The first time this can take a few minutes; waiting…',
     pick_account_flag:
       'This Cloudflare login has several accounts. Run the same command again with one of these added:\n{list}',
     canvas_flag:
@@ -105,6 +107,7 @@ const M = {
     un_failed: '没能删除{what}：{detail}\n  本地安装记录已保留，再运行一次同一条命令即可重试。',
     un_done: '已删除。另外请删掉 Canvas 令牌（Canvas → 账户 → 设置）和 AI 应用里的连接器。',
     cancelled: '已取消。',
+    cert_wait: '新的 workers.dev 地址还在申请 HTTPS 证书，第一次可能要几分钟，正在等待…',
     pick_account_flag:
       '这个 Cloudflare 登录下有多个账号。请在同一条命令后加上其中一个，再运行一次：\n{list}',
     canvas_flag:
@@ -172,6 +175,8 @@ const M = {
     un_done:
       'Eliminado. Borra también el token de Canvas (Canvas → Cuenta → Configuración) y el conector en tu app de IA.',
     cancelled: 'Cancelado.',
+    cert_wait:
+      'La nueva dirección workers.dev todavía está obteniendo su certificado HTTPS. La primera vez puede tardar unos minutos; esperando…',
     pick_account_flag:
       'Este inicio de sesión de Cloudflare tiene varias cuentas. Ejecuta el mismo comando otra vez añadiendo una de estas:\n{list}',
     canvas_flag:
@@ -239,6 +244,8 @@ const M = {
     un_done:
       '削除しました。Canvas トークン（Canvas → アカウント → 設定）と AI アプリのコネクタも削除してください。',
     cancelled: 'キャンセルしました。',
+    cert_wait:
+      '新しい workers.dev アドレスの HTTPS 証明書を準備しています。初回は数分かかることがあります。待機しています…',
     pick_account_flag:
       'この Cloudflare ログインには複数のアカウントがあります。同じコマンドに次のどれかを付けて、もう一度実行してください：\n{list}',
     canvas_flag:
@@ -306,6 +313,8 @@ const M = {
     un_done:
       'हटा दिया गया। Canvas टोकन (Canvas → Account → Settings) और अपने AI ऐप में कनेक्टर भी हटाएँ।',
     cancelled: 'रद्द किया गया।',
+    cert_wait:
+      'नए workers.dev पते का HTTPS प्रमाणपत्र अभी तैयार हो रहा है। पहली बार इसमें कुछ मिनट लग सकते हैं; प्रतीक्षा हो रही है…',
     pick_account_flag:
       'इस Cloudflare लॉगिन में कई खाते हैं। वही कमांड इनमें से एक जोड़कर फिर से चलाएँ:\n{list}',
     canvas_flag:

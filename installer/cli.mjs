@@ -30,6 +30,9 @@ import {
   isYes,
   needsSubdomain,
   subdomainLink,
+  isWarmingUp,
+  CHECK_WAIT,
+  WARMUP_WAIT,
 } from './lib.mjs';
 import { msg } from './messages.mjs';
 
@@ -229,20 +232,34 @@ async function runningVersion(url) {
 
 async function healthCheck(url) {
   let detail = 'no answer';
-  for (let i = 0; i < 20; i++) {
+  let told = false;
+  const start = Date.now();
+  for (let i = 0; Date.now() - start < (isWarmingUp(detail) ? WARMUP_WAIT : CHECK_WAIT); i++) {
     if (i) await new Promise(r => setTimeout(r, 3000));
     try {
-      const h = await fetch(`${url}/healthz`, { headers: { 'Cache-Control': 'no-cache' } });
+      const h = await fetch(`${url}/healthz`, {
+        headers: { 'Cache-Control': 'no-cache' },
+        signal: AbortSignal.timeout(10000),
+      });
       const j = h.ok ? await h.json() : null;
       if (!j?.ok) detail = `/healthz HTTP ${h.status}`;
       else if (j.version !== VERSION) detail = `still ${j.version}`;
       else {
-        const mcp = await fetch(`${url}/mcp`, { method: 'POST', body: '{}' });
+        const mcp = await fetch(`${url}/mcp`, {
+          method: 'POST',
+          body: '{}',
+          signal: AbortSignal.timeout(10000),
+        });
         if (mcp.status === 401) return { ok: true, connected: j.connected === true };
         detail = `/mcp HTTP ${mcp.status}`;
       }
     } catch (e) {
-      detail = e.message;
+      // fetch says only "fetch failed"; the cause names the real problem (TLS, DNS, …)
+      detail = e.cause?.code ?? e.cause?.message ?? e.message;
+      if (isWarmingUp(detail) && !told) {
+        say('cert_wait');
+        told = true;
+      }
     }
   }
   return { ok: false, detail };

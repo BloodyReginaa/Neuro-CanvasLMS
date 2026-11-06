@@ -15,6 +15,9 @@ import {
   isYes,
   needsSubdomain,
   subdomainLink,
+  isWarmingUp,
+  CHECK_WAIT,
+  WARMUP_WAIT,
 } from './lib.mjs';
 import { MESSAGES, msg } from './messages.mjs';
 
@@ -169,4 +172,21 @@ test("a new Cloudflare account without a workers.dev subdomain is recognised (wr
   assert.equal(subdomainLink('abc123'), 'https://dash.cloudflare.com/abc123/workers/onboarding');
   for (const lang of CLI_LANGS)
     assert.ok(msg(lang, 'subdomain_needed', { link: 'L' }).includes('L'), lang);
+});
+
+test('a new address still waiting for its certificate or DNS gets minutes, not one', () => {
+  for (const d of [
+    'ERR_SSL_SSLV3_ALERT_HANDSHAKE_FAILURE',
+    'EPROTO',
+    'ENOTFOUND',
+    'EAI_AGAIN',
+    'ECONNRESET',
+    'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+    'CERT_HAS_EXPIRED',
+  ])
+    assert.ok(isWarmingUp(d), d);
+  for (const d of ['/healthz HTTP 500', 'still 2.9.3', '/mcp HTTP 404', 'no answer', undefined])
+    assert.ok(!isWarmingUp(d), String(d));
+  assert.ok(WARMUP_WAIT >= 5 * CHECK_WAIT);
+  for (const lang of CLI_LANGS) assert.ok(msg(lang, 'cert_wait').includes('HTTPS'), lang);
 });

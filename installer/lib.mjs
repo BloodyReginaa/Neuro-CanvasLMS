@@ -108,3 +108,12 @@ export const isYes = answer => /^(?:y|yes)$/i.test(String(answer ?? '').trim());
 export const needsSubdomain = out => /register a workers\.dev subdomain/i.test(out ?? '');
 export const subdomainLink = accountId =>
   `https://dash.cloudflare.com/${encodeURIComponent(accountId)}/workers/onboarding`;
+
+// A new workers.dev address answers only once its DNS and HTTPS certificate are ready, which can
+// take minutes on a brand-new subdomain. These errors mean "not ready yet", not "broken".
+export const isWarmingUp = detail =>
+  /SSL|TLS|CERT|UNABLE_TO_VERIFY|SELF_SIGNED|EPROTO|handshake|ENOTFOUND|EAI_AGAIN|ECONNRESET|ECONNREFUSED|certificate/i.test(
+    detail ?? '',
+  );
+export const CHECK_WAIT = 60 * 1000; // a normal deploy answers within a minute
+export const WARMUP_WAIT = 5 * 60 * 1000; // a new address may need a few minutes for its certificate

@@ -52,6 +52,9 @@ same command again.
    ```
    From a clone instead: `npm install`, `npm test` (all must pass), then
    `npm run setup -- --canvas-host "<address>" --school "<name or empty>"`.
+   Give it a timeout of 10 minutes. On a brand-new workers.dev address the HTTPS certificate can
+   take a few minutes; the installer then says it is waiting for it and keeps checking for up to
+   5 minutes. Let it finish; do not restart it.
 5. If it stops, do what its message says, then run the same command again:
    - **Several Cloudflare accounts:** it lists them as `--account-id <id>  <name>`. Ask the user
      which account to use and add that flag. Never pick one yourself.
@@ -102,6 +105,7 @@ their AI app: connector → Disconnect → Connect → paste it. No reinstall ne
 | Homepage says "not configured" / `/healthz` not ok | `CANVAS_HOST` var missing: run the installer again. |
 | Verification failed, HTTP 401 | Token wrong, incomplete or expired → new token. |
 | "denied access to this resource" | Canvas permission for that item (e.g. the instructor hid it). The token is fine; don't reconnect. |
+| New connector address fails with `ERR_SSL_VERSION_OR_CIPHER_MISMATCH`, a TLS handshake error or "not found" right after the first deploy | The new workers.dev subdomain is still getting its certificate/DNS (minutes). The installer waits up to 5 minutes; if it still fails, wait a few minutes and open `<url>/healthz` or run the installer again. Nothing is broken. |
 | HTTP 406 / HTML error pages from Canvas | Something in front of Canvas rejected the request. API calls already retry over a raw TLS socket (`canvas-transport.mjs`). Debug with the `CANVAS_TRANSPORT` var (`fetch` / `socket`) and `npx wrangler tail`. |
 | File download 403 (`text/html`) while metadata works | A firewall rejects the download's User-Agent (none, or one containing `UMassCanvas`). Keep `DOWNLOAD_UA` in `file-content.mjs` as shipped. |
 | "not shared as Anyone with the link" on a module link | The Google/Dropbox file is private. Only the teacher can change that; give the user the link to open it signed in. |
