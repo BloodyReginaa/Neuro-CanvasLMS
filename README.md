@@ -31,7 +31,7 @@ Most Canvas integrations for AI are **local** tools: they only work while your o
 You need [Node.js 22+](https://nodejs.org), a free [Cloudflare account](https://dash.cloudflare.com/sign-up) and your Canvas login. In a terminal, run:
 
 ```bash
-npx -y github:BloodyReginaa/Neuro-CanvasLMS
+npx -y neuro-canvas-lms
 ```
 
 The installer signs you in to Cloudflare (a browser page opens; click **Authorize**), asks for your school's Canvas address, deploys the connector to your own account and checks that it works. Then:
@@ -48,7 +48,7 @@ The installer signs you in to Cloudflare (a browser page opens; click **Authoriz
 ## Update, uninstall
 
 - **Update:** run the same `npx` command again. It asks once whether to update (type y), then reuses your settings, deploys the current code and keeps your storage and connections, so you never reconnect. When a new version is out, your AI tells you. After updating, ChatGPT needs a refresh of the connector in its settings to see new features; Claude picks them up in a new chat.
-- **Uninstall:** `npx -y github:BloodyReginaa/Neuro-CanvasLMS uninstall`, then delete the Canvas token and the connector in your AI app.
+- **Uninstall:** `npx -y neuro-canvas-lms uninstall`, then delete the Canvas token and the connector in your AI app.
 
 ## How it works
 
@@ -65,7 +65,7 @@ Claude / ChatGPT ──OAuth──▶ Neuro-CanvasLMS on your Cloudflare ──r
 - Course content is treated as untrusted data, never as instructions.
 - File downloads are capped at 15 MiB, HTTPS-only, and blocked from reaching private networks.
 - Canvas still enforces your own permissions: you can only read what you can already see.
-- Once a day the connector reads the latest version number from this project's GitHub page, so your AI can tell you about updates. Nothing about you is sent.
+- Once a day the connector reads the latest version number from npm, where it is published, so your AI can tell you about updates. Nothing about you is sent.
 - Files the AI reads are kept by your AI provider as part of the conversation, under that provider's own privacy terms. Delete the chat to remove them.
 
 Check your school's policy on personal access tokens and third-party tools before use.

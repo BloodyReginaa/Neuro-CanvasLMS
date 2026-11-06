@@ -31,7 +31,7 @@ Canvas と AI をつなぐツールの多くは **ローカル** ツールです
 必要なもの：[Node.js 22+](https://nodejs.org)、無料の [Cloudflare アカウント](https://dash.cloudflare.com/sign-up)、Canvas のログイン。ターミナルで次を実行します：
 
 ```bash
-npx -y github:BloodyReginaa/Neuro-CanvasLMS
+npx -y neuro-canvas-lms
 ```
 
 インストーラーが Cloudflare にサインインし（ブラウザでページが開くので **Authorize** をクリック）、学校の Canvas アドレスを尋ね、あなたのアカウントにコネクタをデプロイして動作確認します。その後：
@@ -48,7 +48,7 @@ npx -y github:BloodyReginaa/Neuro-CanvasLMS
 ## 更新・アンインストール
 
 - **更新：** 同じ `npx` コマンドをもう一度実行。更新するかを一度だけ確認し（y を入力）、保存済みの設定で現在のコードをデプロイし、ストレージと接続はそのまま残ります。再接続は不要です。新しいバージョンが出ると AI が知らせてくれます。更新後、ChatGPT では設定からこのコネクタを更新すると新機能が使えます。Claude は新しいチャットで反映されます。
-- **アンインストール：** `npx -y github:BloodyReginaa/Neuro-CanvasLMS uninstall` を実行し、Canvas トークンと AI アプリのコネクタを削除してください。
+- **アンインストール：** `npx -y neuro-canvas-lms uninstall` を実行し、Canvas トークンと AI アプリのコネクタを削除してください。
 
 ## 仕組み
 
@@ -65,7 +65,7 @@ Claude / ChatGPT ──OAuth──▶ あなたの Cloudflare 上の Neuro-Canva
 - コース内容は信頼できないデータとして扱い、指示としては実行しません。
 - ダウンロードは上限 15 MiB・HTTPS のみ・プライベートネットワーク遮断。
 - Canvas の権限はそのまま適用され、もともと見られる内容しか読めません。
-- コネクタは 1 日 1 回、このプロジェクトの GitHub から最新のバージョン番号を読み取り、AI が更新を知らせられるようにします。あなたに関する情報は何も送りません。
+- コネクタは 1 日 1 回、公開先の npm から最新のバージョン番号を読み取り、AI が更新を知らせられるようにします。あなたに関する情報は何も送りません。
 - AI が読んだファイルは、会話の一部として AI プロバイダーがそのプライバシー規約に従って保存します。チャットを削除すれば消えます。
 
 利用前に、個人アクセストークンや外部ツールに関する学校の規定を確認してください。

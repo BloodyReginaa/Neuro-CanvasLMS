@@ -1,6 +1,6 @@
 {
   // Manual deployment template. Most people should just run the installer instead:
-  //   npx -y github:BloodyReginaa/Neuro-CanvasLMS        (or: npm run setup)
+  //   npx -y neuro-canvas-lms        (or: npm run setup)
   // which fills all of this in for you.
   "$schema": "node_modules/wrangler/config-schema.json",
   // Becomes https://<name>.<your-subdomain>.workers.dev — change it if you like.

@@ -1,11 +1,11 @@
 // Tells the user when a newer version of the connector is out. Every deployment keeps running the
 // code it was installed with and nobody announces updates, so once a day the connector reads the
-// version number in this project's package.json on GitHub. Only that number is used: nothing
+// newest version published on npm (where `npx -y neuro-canvas-lms` installs from). Only that number is used: nothing
 // about the user is sent, and no text from GitHub reaches the AI (the notice is written here).
 // The check runs in the background after a request; a failed check just shows no notice.
-export const UPDATE_SOURCE =
-  'https://raw.githubusercontent.com/BloodyReginaa/Neuro-CanvasLMS/main/package.json';
-export const UPDATE_COMMAND = 'npx -y github:BloodyReginaa/Neuro-CanvasLMS';
+// npm, not GitHub: an update is announced only once `npx` can actually install it.
+export const UPDATE_SOURCE = 'https://registry.npmjs.org/neuro-canvas-lms/latest';
+export const UPDATE_COMMAND = 'npx -y neuro-canvas-lms';
 export const UPDATE_KEY = 'update:latest'; // in OAUTH_KV: { version, checked }
 import { localTime } from './time.mjs';
 
@@ -95,7 +95,7 @@ export function updateNotice(latest, current) {
 export const versionTool = {
   name: 'canvas_connector_version',
   description:
-    'Which version of this Canvas connector (Neuro-CanvasLMS) is running and whether a newer one is out, checked against the project on GitHub, with the command to update. Use it when the user asks whether the connector itself has an update. Does not read Canvas.',
+    'Which version of this Canvas connector (Neuro-CanvasLMS) is running and whether a newer one is out, checked against npm, where it is published, with the command to update. Use it when the user asks whether the connector itself has an update. Does not read Canvas.',
   inputSchema: { type: 'object', properties: {}, required: [], additionalProperties: false },
   annotations: {
     readOnlyHint: true,
@@ -105,7 +105,7 @@ export const versionTool = {
   },
 };
 
-// The version tool's answer. latest is an updateChecker(); timeZone shows when GitHub was checked.
+// The version tool's answer. latest is an updateChecker(); timeZone shows when npm was checked.
 export async function connectorVersion(latest, kv, running, { timeZone } = {}) {
   const { version, checked } = await latest.now(kv);
   const out = {
@@ -118,7 +118,7 @@ export async function connectorVersion(latest, kv, running, { timeZone } = {}) {
       : null,
     project: PROJECT_URL,
   };
-  if (!version) out.note = 'GitHub could not be reached to check; try again later.';
+  if (!version) out.note = 'npm could not be reached to check; try again later.';
   else if (newer(version, running))
     out.how_to_update = `Run ${UPDATE_COMMAND} in a terminal on the computer the connector was installed from (Node.js 22 or newer), then answer y. It keeps the connection; nothing needs to be reconnected. Afterwards, in ChatGPT the user refreshes this connector in ChatGPT's settings so it sees the new version; in Claude, a new chat picks it up.`;
   return out;

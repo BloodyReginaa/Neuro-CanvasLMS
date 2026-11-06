@@ -31,7 +31,7 @@
 你需要：[Node.js 22+](https://nodejs.org)、免费的 [Cloudflare 账号](https://dash.cloudflare.com/sign-up)，以及能登录 Canvas。在终端里运行：
 
 ```bash
-npx -y github:BloodyReginaa/Neuro-CanvasLMS
+npx -y neuro-canvas-lms
 ```
 
 安装向导会：登录 Cloudflare（浏览器会打开一个页面，点 **Authorize**）、问你学校的 Canvas 网址、部署到你自己的账号、检查是否正常。然后：
@@ -48,7 +48,7 @@ npx -y github:BloodyReginaa/Neuro-CanvasLMS
 ## 更新、卸载
 
 - **更新：** 再运行一次同样的 `npx` 命令。它会先问一次要不要更新（输入 y），然后沿用之前的设置，部署当前的代码，存储和连接都会保留，不需要重新连接。有新版本时，AI 会告诉你。更新后，ChatGPT 要在设置里把这个连接器刷新一下才能用上新功能；Claude 新开一个对话就行。
-- **卸载：** `npx -y github:BloodyReginaa/Neuro-CanvasLMS uninstall`，然后删掉 Canvas 令牌和 AI 应用里的连接器。
+- **卸载：** `npx -y neuro-canvas-lms uninstall`，然后删掉 Canvas 令牌和 AI 应用里的连接器。
 
 ## 原理
 
@@ -65,7 +65,7 @@ Claude / ChatGPT ──OAuth──▶ 你 Cloudflare 上的 Neuro-CanvasLMS ─�
 - 课程内容一律视为不可信数据，不会被当作指令执行。
 - 文件下载上限 15 MiB，仅限 HTTPS，并禁止访问内网地址。
 - Canvas 依然执行你本人的权限：你只能读到自己本来就能看到的内容。
-- 连接器每天从本项目的 GitHub 读一次最新版本号，用来让 AI 提醒你更新。不会发送任何关于你的信息。
+- 连接器每天从 npm（它发布的地方）读一次最新版本号，用来让 AI 提醒你更新。不会发送任何关于你的信息。
 - AI 读过的文件由 AI 服务商作为对话的一部分保存，适用该服务商自己的隐私条款；删除对话即可删除。
 
 使用前请确认你所在学校关于个人访问令牌和第三方工具的规定。

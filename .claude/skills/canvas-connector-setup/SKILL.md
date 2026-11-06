@@ -6,7 +6,7 @@ description: Install, update, reconnect, uninstall or troubleshoot this repo's r
 # Canvas connector setup
 
 The user runs **their own copy** of this connector in their own Cloudflare account. The
-installer (`npm run setup`, same as `npx -y github:BloodyReginaa/Neuro-CanvasLMS`) does all the
+installer (`npm run setup`, same as `npx -y neuro-canvas-lms`) does all the
 technical work. Most users are not developers: explain each step in one plain sentence, **in the
 user's language**.
 
@@ -38,7 +38,7 @@ same command again.
    deploys for about a minute.
 4. Run, **without a clone** (`-y` only skips npm's own download prompt):
    ```bash
-   npx -y github:BloodyReginaa/Neuro-CanvasLMS --canvas-host "<address>" --school "<name or empty>"
+   npx -y neuro-canvas-lms --canvas-host "<address>" --school "<name or empty>"
    ```
    From a clone instead: `npm install`, `npm test` (all must pass), then
    `npm run setup -- --canvas-host "<address>" --school "<name or empty>"`.
@@ -68,7 +68,7 @@ the owner. (To pin the owner, add `OWNER_CANVAS_ID` to the vars in
 
 ## Update / reinstall / uninstall
 
-- **Update:** run `npx -y github:BloodyReginaa/Neuro-CanvasLMS` again (from a clone: `git pull`,
+- **Update:** run `npx -y neuro-canvas-lms` again (from a clone: `git pull`,
   then `npm run setup`). It reuses the saved settings; without a terminal it does not ask first.
   Then tell ChatGPT users to refresh the connector in ChatGPT's settings (ChatGPT keeps its own copy
   of the tool list); in Claude a new chat is enough.

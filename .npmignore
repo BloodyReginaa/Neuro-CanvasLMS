@@ -1,4 +1,4 @@
-# What `npx github:BloodyReginaa/Neuro-CanvasLMS` downloads: the connector and its installer only.
+# What the npm package (npx -y neuro-canvas-lms) contains: the connector and its installer only.
 # npm ignores .gitignore when this file exists, so its entries are repeated first.
 node_modules/
 .wrangler/

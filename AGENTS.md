@@ -7,7 +7,7 @@ It is a community project provided as is.
 
 - To install, update, reconnect, uninstall or troubleshoot: follow
   `.claude/skills/canvas-connector-setup/SKILL.md` (Claude Code loads it as a skill; other agents
-  should read it). The installer is `npm run setup` / `npx -y github:BloodyReginaa/Neuro-CanvasLMS`.
+  should read it). The installer is `npm run setup` / `npx -y neuro-canvas-lms`.
 - Reply in the user's language. Most users are students, not developers.
 - Never ask for, read, type or store the user's Canvas access token — they paste it only
   into the connector's authorization page in their browser.
@@ -28,8 +28,8 @@ Code map:
   links to when its Files list is hidden), `external-links.mjs` (Google/Dropbox/GitHub share links →
   the file itself), `module-file.mjs` + `file-resource.mjs` (original files as MCP resources).
 - `owner.mjs`: owner binding, allowed OAuth clients. `i18n.mjs` + `pages.mjs`: web pages.
-- `update-check.mjs`: once a day reads the newest version number from GitHub; when it is newer the AI
+- `update-check.mjs`: once a day reads the newest version number from npm; when it is newer the AI
   tells the user how to update. Also the `canvas_connector_version` tool.
 - `installer/`: the setup wizard (re-running it asks once, y/n, then updates with the saved
   settings; without a terminal it does not ask). `version.mjs`: shown on
-  the home page and /healthz, compared with GitHub by update-check.mjs.
+  the home page and /healthz, compared with npm by update-check.mjs.
