@@ -1,6 +1,8 @@
 // Pure helpers for the installer (no I/O), so every piece is unit-tested.
 import { isValidCanvasHost } from '../config.mjs';
 
+import { newer } from '../update-check.mjs';
+
 export const DEFAULT_NAME = 'neuro-canvas-lms';
 
 // Accepts what people paste: "https://canvas.example.edu/courses/1", "canvas.example.edu", ...
@@ -89,3 +91,14 @@ export function updateChoices(state = {}, args = {}) {
     accountId: args.accountId ?? (updating ? state.accountId : undefined),
   };
 }
+
+// Re-running asks once before it updates. Which question depends on the version the connector runs
+// now (null when it did not answer) and the version of the code being installed.
+export function updateQuestion(running, next) {
+  if (!running) return 'update_q_unknown';
+  if (newer(next, running)) return 'update_q';
+  if (newer(running, next)) return 'update_q_older';
+  return 'update_q_same';
+}
+// Only y / yes goes ahead; anything else, Enter included, changes nothing.
+export const isYes = answer => /^(?:y|yes)$/i.test(String(answer ?? '').trim());

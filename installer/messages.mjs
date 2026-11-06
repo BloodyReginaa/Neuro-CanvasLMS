@@ -38,8 +38,6 @@ const M = {
       'Updates never need reconnecting. Only when your Canvas token expires (your AI then says "authorization expired"): make a new Canvas token, then Disconnect → Connect the connector in your AI app and paste it.',
     done_update:
       'To update later, run the same command again: it keeps your storage and connections.',
-    rerun:
-      'Found your existing install "{name}". Updating it to the code you are running now with its saved settings: no questions, and your AI apps stay connected.',
     un_confirm:
       'This deletes the connector "{name}" and its storage. Your AI apps will lose the connection. Type the name to confirm:',
     un_failed:
@@ -47,6 +45,15 @@ const M = {
     un_done:
       'Removed. Also delete the Canvas token (Canvas → Account → Settings) and the connector in your AI app.',
     cancelled: 'Cancelled.',
+    update_q:
+      'Found your install "{name}" ({from}). New version: {to}. Update it? Your settings are kept and your AI apps stay connected. (y/n)',
+    update_q_same:
+      'Found your install "{name}", already on the newest version ({to}). Deploy it again anyway? (y/n)',
+    update_q_older:
+      'Found your install "{name}" ({from}), which is newer than the code you are running ({to}). Continuing would put the older version back. Continue? (y/n)',
+    update_q_unknown:
+      'Found your install "{name}". Update it to {to}? Your settings are kept and your AI apps stay connected. (y/n)',
+    update_cancelled: 'Nothing changed. Run the same command again whenever you want to update.',
     failed:
       'Something went wrong: {detail}\n  Nothing is lost: run the same command again to continue.',
   },
@@ -83,12 +90,18 @@ const M = {
     updated_expired:
       '更新永远不需要重新连接。只有 Canvas 令牌过期时（AI 会提示"authorization expired"，授权过期）才需要：生成一个新的 Canvas 令牌，在 AI 应用里把连接器断开再连接，粘贴新令牌就行。',
     done_update: '以后想更新，再运行一次同一条命令就行：存储和连接都会保留。',
-    rerun:
-      '找到你已有的安装「{name}」。会用保存的设置把它更新成你现在运行的这份代码：不用回答任何问题，AI 应用也不用重新连接。',
     un_confirm: '这会删除连接器「{name}」和它的存储，你的 AI 应用会失去连接。输入名称确认：',
     un_failed: '没能删除{what}：{detail}\n  本地安装记录已保留，再运行一次同一条命令即可重试。',
     un_done: '已删除。另外请删掉 Canvas 令牌（Canvas → 账户 → 设置）和 AI 应用里的连接器。',
     cancelled: '已取消。',
+    update_q:
+      '找到你已有的安装「{name}」（{from}）。新版本：{to}。要更新吗？设置会沿用，AI 应用不用重新连接。(y/n)',
+    update_q_same: '找到你已有的安装「{name}」，已经是最新版（{to}）。还要再部署一次吗？(y/n)',
+    update_q_older:
+      '找到你已有的安装「{name}」（{from}），比你现在运行的这份代码（{to}）还新。继续会换回旧版本。要继续吗？(y/n)',
+    update_q_unknown:
+      '找到你已有的安装「{name}」。要更新到 {to} 吗？设置会沿用，AI 应用不用重新连接。(y/n)',
+    update_cancelled: '什么都没改。想更新时再运行一次同一条命令就行。',
     failed: '出错了：{detail}\n  没有任何东西丢失：再运行一次同一条命令就能接着装。',
   },
   es: {
@@ -132,8 +145,6 @@ const M = {
       'Las actualizaciones nunca requieren reconectar. Solo cuando tu token de Canvas caduca (tu IA dice "authorization expired"): crea un token nuevo de Canvas, desconecta y vuelve a conectar el conector en tu app de IA y pégalo.',
     done_update:
       'Para actualizar más adelante, vuelve a ejecutar el mismo comando: conserva tu almacenamiento y tus conexiones.',
-    rerun:
-      'Se encontró tu instalación "{name}". Se actualiza al código que estás ejecutando con la configuración guardada: sin preguntas, y tus apps de IA siguen conectadas.',
     un_confirm:
       'Esto elimina el conector "{name}" y su almacenamiento. Tus apps de IA perderán la conexión. Escribe el nombre para confirmar:',
     un_failed:
@@ -141,6 +152,15 @@ const M = {
     un_done:
       'Eliminado. Borra también el token de Canvas (Canvas → Cuenta → Configuración) y el conector en tu app de IA.',
     cancelled: 'Cancelado.',
+    update_q:
+      'Se encontró tu instalación "{name}" ({from}). Versión nueva: {to}. ¿Actualizarla? Se conserva tu configuración y tus apps de IA siguen conectadas. (y/n)',
+    update_q_same:
+      'Se encontró tu instalación "{name}", que ya está en la versión más reciente ({to}). ¿Desplegarla de nuevo de todos modos? (y/n)',
+    update_q_older:
+      'Se encontró tu instalación "{name}" ({from}), más nueva que el código que estás ejecutando ({to}). Si continúas, volverá la versión anterior. ¿Continuar? (y/n)',
+    update_q_unknown:
+      'Se encontró tu instalación "{name}". ¿Actualizarla a {to}? Se conserva tu configuración y tus apps de IA siguen conectadas. (y/n)',
+    update_cancelled: 'No se cambió nada. Ejecuta el mismo comando cuando quieras actualizar.',
     failed:
       'Algo salió mal: {detail}\n  No se perdió nada: vuelve a ejecutar el mismo comando para continuar.',
   },
@@ -183,8 +203,6 @@ const M = {
       '更新で再接続が必要になることはありません。Canvas トークンの期限が切れたとき（AI が「authorization expired」と言います）だけ：新しい Canvas トークンを作り、AI アプリでコネクタを切断 → 再接続して貼り付けてください。',
     done_update:
       '後で更新するときは、同じコマンドをもう一度実行するだけです。ストレージと接続はそのまま残ります。',
-    rerun:
-      '既存のインストール「{name}」が見つかりました。保存済みの設定で、今実行しているコードに更新します。質問はなく、AI アプリの再接続も不要です。',
     un_confirm:
       'コネクタ「{name}」とそのストレージを削除します。AI アプリとの接続は切れます。確認のため名前を入力してください：',
     un_failed:
@@ -192,6 +210,16 @@ const M = {
     un_done:
       '削除しました。Canvas トークン（Canvas → アカウント → 設定）と AI アプリのコネクタも削除してください。',
     cancelled: 'キャンセルしました。',
+    update_q:
+      '既存のインストール「{name}」（{from}）が見つかりました。新しいバージョン：{to}。更新しますか？設定はそのまま使い、AI アプリの再接続も不要です。(y/n)',
+    update_q_same:
+      '既存のインストール「{name}」はすでに最新版（{to}）です。もう一度デプロイしますか？(y/n)',
+    update_q_older:
+      '既存のインストール「{name}」（{from}）は、今実行しているコード（{to}）より新しいです。続けると古いバージョンに戻ります。続けますか？(y/n)',
+    update_q_unknown:
+      '既存のインストール「{name}」が見つかりました。{to} に更新しますか？設定はそのまま使い、AI アプリの再接続も不要です。(y/n)',
+    update_cancelled:
+      '何も変更していません。更新したいときに同じコマンドをもう一度実行してください。',
     failed:
       'エラーが発生しました：{detail}\n  何も失われていません。同じコマンドをもう一度実行すると続きから進みます。',
   },
@@ -233,8 +261,6 @@ const M = {
       'अपडेट के बाद दोबारा जोड़ने की ज़रूरत कभी नहीं होती। सिर्फ़ जब Canvas टोकन की अवधि खत्म हो (AI "authorization expired" कहेगा): नया Canvas टोकन बनाएँ, फिर AI ऐप में कनेक्टर को Disconnect → Connect करें और उसे चिपकाएँ।',
     done_update:
       'बाद में अपडेट करने के लिए वही कमांड फिर से चलाएँ: आपका स्टोरेज और कनेक्शन बने रहेंगे।',
-    rerun:
-      'आपका मौजूदा इंस्टॉल "{name}" मिला। इसे सहेजी गई सेटिंग्स के साथ अभी चल रहे कोड पर अपडेट किया जा रहा है: कोई सवाल नहीं, और आपके AI ऐप जुड़े रहेंगे।',
     un_confirm:
       'यह कनेक्टर "{name}" और उसका स्टोरेज हटा देगा। आपके AI ऐप का कनेक्शन टूट जाएगा। पुष्टि के लिए नाम लिखें:',
     un_failed:
@@ -242,6 +268,15 @@ const M = {
     un_done:
       'हटा दिया गया। Canvas टोकन (Canvas → Account → Settings) और अपने AI ऐप में कनेक्टर भी हटाएँ।',
     cancelled: 'रद्द किया गया।',
+    update_q:
+      'आपका मौजूदा इंस्टॉल "{name}" ({from}) मिला। नया संस्करण: {to}। अपडेट करें? आपकी सेटिंग्स बनी रहेंगी और आपके AI ऐप जुड़े रहेंगे। (y/n)',
+    update_q_same:
+      'आपका मौजूदा इंस्टॉल "{name}" पहले से नवीनतम संस्करण ({to}) पर है। फिर भी दोबारा डिप्लॉय करें? (y/n)',
+    update_q_older:
+      'आपका मौजूदा इंस्टॉल "{name}" ({from}) आपके अभी चल रहे कोड ({to}) से नया है। आगे बढ़ने पर पुराना संस्करण वापस आ जाएगा। जारी रखें? (y/n)',
+    update_q_unknown:
+      'आपका मौजूदा इंस्टॉल "{name}" मिला। इसे {to} पर अपडेट करें? आपकी सेटिंग्स बनी रहेंगी और आपके AI ऐप जुड़े रहेंगे। (y/n)',
+    update_cancelled: 'कुछ नहीं बदला। जब अपडेट करना हो, वही कमांड फिर से चलाएँ।',
     failed:
       'कुछ गलत हो गया: {detail}\n  कुछ भी नहीं खोया: जारी रखने के लिए वही कमांड फिर से चलाएँ।',
   },

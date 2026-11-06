@@ -11,6 +11,8 @@ import {
   CLI_LANGS,
   parseArgs,
   updateChoices,
+  updateQuestion,
+  isYes,
 } from './lib.mjs';
 import { MESSAGES, msg } from './messages.mjs';
 
@@ -140,4 +142,17 @@ test('re-running on an existing install updates it without asking anything', () 
     assert.equal(first.askSchool, true);
     assert.equal(first.accountId, undefined);
   }
+});
+
+test('an update asks once, and the question fits the versions', () => {
+  assert.equal(updateQuestion('2.8.0', '2.8.2'), 'update_q');
+  assert.equal(updateQuestion('2.8.2', '2.8.2'), 'update_q_same');
+  assert.equal(updateQuestion('2.9.0', '2.8.2'), 'update_q_older'); // an old copy would downgrade
+  assert.equal(updateQuestion(null, '2.8.2'), 'update_q_unknown');
+  for (const lang of CLI_LANGS) {
+    const q = msg(lang, 'update_q', { name: 'neuro-canvas-lms', from: '2.8.0', to: '2.8.2' });
+    assert.ok(q.includes('2.8.0') && q.includes('2.8.2') && q.endsWith('(y/n)'), lang);
+  }
+  for (const yes of ['y', 'Y', 'yes', ' YES ']) assert.ok(isYes(yes), yes);
+  for (const no of ['', 'n', 'no', 'ok', 'yy', null, undefined]) assert.ok(!isYes(no), String(no));
 });

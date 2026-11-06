@@ -47,7 +47,7 @@ El instalador inicia sesión en Cloudflare (se abre una página en el navegador;
 
 ## Actualizar, desinstalar
 
-- **Actualizar:** vuelve a ejecutar el mismo comando `npx`. Reutiliza tu configuración sin preguntar nada, despliega el código actual y conserva tu almacenamiento y conexiones; nunca tienes que reconectar. Cuando sale una versión nueva, tu IA te avisa.
+- **Actualizar:** vuelve a ejecutar el mismo comando `npx`. Pregunta una vez si quieres actualizar (escribe y) y luego reutiliza tu configuración, despliega el código actual y conserva tu almacenamiento y conexiones; nunca tienes que reconectar. Cuando sale una versión nueva, tu IA te avisa.
 - **Desinstalar:** `npx -y github:BloodyReginaa/Neuro-CanvasLMS uninstall`, y después borra el token de Canvas y el conector en tu app de IA.
 
 ## Cómo funciona

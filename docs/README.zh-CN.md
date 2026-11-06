@@ -47,7 +47,7 @@ npx -y github:BloodyReginaa/Neuro-CanvasLMS
 
 ## 更新、卸载
 
-- **更新：** 再运行一次同样的 `npx` 命令。它沿用之前的设置，不会提问，部署当前的代码，存储和连接都会保留，不需要重新连接。有新版本时，AI 会告诉你。
+- **更新：** 再运行一次同样的 `npx` 命令。它会先问一次要不要更新（输入 y），然后沿用之前的设置，部署当前的代码，存储和连接都会保留，不需要重新连接。有新版本时，AI 会告诉你。
 - **卸载：** `npx -y github:BloodyReginaa/Neuro-CanvasLMS uninstall`，然后删掉 Canvas 令牌和 AI 应用里的连接器。
 
 ## 原理

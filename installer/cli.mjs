@@ -26,6 +26,8 @@ import {
   CLI_LANGS,
   parseArgs,
   updateChoices,
+  updateQuestion,
+  isYes,
 } from './lib.mjs';
 import { msg } from './messages.mjs';
 
@@ -81,6 +83,12 @@ async function ask(question, fallback = '') {
   const answer = await new Promise(res => r.question(`  ${question}\n  › `, res));
   r.close();
   return answer.trim() || fallback;
+}
+// y/n question: only y goes ahead. Without a terminal (or with --yes) the run was started on
+// purpose, e.g. by an agent, so it goes ahead.
+async function confirm(question) {
+  if (args.yes || !process.stdin.isTTY) return true;
+  return isYes(await ask(question, ''));
 }
 async function choose(question, options) {
   if (args.yes || !process.stdin.isTTY) return 0;
@@ -193,6 +201,20 @@ function ensureKv(name, state) {
   return id;
 }
 
+// The version an installed connector runs now, from its health check (null if it does not answer).
+async function runningVersion(url) {
+  try {
+    const r = await fetch(`${url}/healthz`, {
+      headers: { 'Cache-Control': 'no-cache' },
+      signal: AbortSignal.timeout(8000),
+    });
+    const j = await r.json();
+    return typeof j?.version === 'string' ? j.version : null;
+  } catch {
+    return null;
+  }
+}
+
 async function healthCheck(url) {
   let detail = 'no answer';
   for (let i = 0; i < 20; i++) {
@@ -225,7 +247,12 @@ async function install() {
   const statePath = path.join(dir, 'state.json');
   const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : {};
   const plan = updateChoices(state, args);
-  if (plan.updating) say('rerun', { name });
+  if (plan.updating) {
+    const from = await runningVersion(state.url);
+    const question = updateQuestion(from, VERSION);
+    if (!(await confirm(msg(lang, question, { name, from: from ?? '', to: VERSION }))))
+      return say('update_cancelled');
+  }
 
   const accountId = await ensureLogin(plan.accountId);
   accountEnv = { CLOUDFLARE_ACCOUNT_ID: accountId };

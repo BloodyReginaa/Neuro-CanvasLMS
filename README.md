@@ -47,7 +47,7 @@ Prefer to let an AI do it? Clone this repo, open it in Claude Code (or Codex) an
 
 ## Update, uninstall
 
-- **Update:** run the same `npx` command again. It reuses your settings and asks nothing, deploys the current code and keeps your storage and connections, so you never reconnect. When a new version is out, your AI tells you.
+- **Update:** run the same `npx` command again. It asks once whether to update (type y), then reuses your settings, deploys the current code and keeps your storage and connections, so you never reconnect. When a new version is out, your AI tells you.
 - **Uninstall:** `npx -y github:BloodyReginaa/Neuro-CanvasLMS uninstall`, then delete the Canvas token and the connector in your AI app.
 
 ## How it works
