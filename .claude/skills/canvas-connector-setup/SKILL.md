@@ -28,7 +28,15 @@ plain sentence, **in the user's language**, and do the technical work yourself.
 node -v          # need >= 20; if missing, suggest https://nodejs.org (LTS) or `brew install node`
 git --version
 ```
-Run `npm install` in the repo root. Then `npm test` — all tests must pass before deploying.
+Install the **latest signed release**, not whatever is on `main` (main can hold unreleased work
+that still carries the previous version number; updaters only ever install signed releases):
+```bash
+git fetch --tags --quiet
+LATEST=$(git tag -l 'v*' --sort=-v:refname | head -1)
+git checkout --quiet "$LATEST" && echo "Installing $LATEST"
+```
+If there is no tag yet, stay on `main`. Then run `npm install` in the repo root, then
+`npm test` — all tests must pass before deploying.
 
 ## Step 1 — the user's Canvas site
 
@@ -160,7 +168,8 @@ failure). Ask the AI for the update `status` to see what happened.
 
 Manual update (no updater, a new major version, or a release that needs new settings):
 ```bash
-git pull && npm install && npm test && npx wrangler deploy
+git fetch --tags && git checkout "$(git tag -l 'v*' --sort=-v:refname | head -1)"
+npm install && npm test && npx wrangler deploy
 ```
 `config.mjs` and `wrangler.jsonc` hold the user's values — keep them when merging. After tool
 changes, start a new chat (some clients cache the tool list).

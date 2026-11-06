@@ -9,7 +9,8 @@
     "deploy": "wrangler deploy",
     "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
     "format": "prettier --write \"*.mjs\" \"updater/*.mjs\" \"scripts/*.mjs\"",
-    "release": "node scripts/release.mjs"
+    "release": "node scripts/release.mjs",
+    "yank": "node scripts/yank.mjs"
   },
   "dependencies": {
     "@cloudflare/workers-oauth-provider": "^0.10.3",

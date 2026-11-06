@@ -56,7 +56,7 @@ claude
 
 <details><summary><b>手动安装</b></summary>
 
-1. `npm install && npm test`
+1. `git checkout "$(git tag -l 'v*' --sort=-v:refname | head -1)"` (latest release), then `npm install && npm test`
 2. 编辑 `config.mjs`：`CANVAS_HOST`（如 `umamherst.instructure.com`）、`SCHOOL_NAME`、`ACCENT_COLOR`。
 3. `npx wrangler login`
 4. `npx wrangler kv namespace create OAUTH_KV`，把输出的 id 填进 `wrangler.jsonc`。

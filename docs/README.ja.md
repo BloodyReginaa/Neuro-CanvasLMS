@@ -56,7 +56,7 @@ claude
 
 <details><summary><b>手動セットアップ</b></summary>
 
-1. `npm install && npm test`
+1. `git checkout "$(git tag -l 'v*' --sort=-v:refname | head -1)"` (latest release), then `npm install && npm test`
 2. `config.mjs` を編集：`CANVAS_HOST`（例 `umamherst.instructure.com`）、`SCHOOL_NAME`、`ACCENT_COLOR`。
 3. `npx wrangler login`
 4. `npx wrangler kv namespace create OAUTH_KV` → 表示された id を `wrangler.jsonc` に記入。

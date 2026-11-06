@@ -56,7 +56,7 @@ Di: **"Ayúdame a configurar el conector de Canvas."** Sigue [`SKILL.md`](../.cl
 
 <details><summary><b>Instalación manual</b></summary>
 
-1. `npm install && npm test`
+1. `git checkout "$(git tag -l 'v*' --sort=-v:refname | head -1)"` (latest release), then `npm install && npm test`
 2. Edita `config.mjs`: `CANVAS_HOST` (p. ej. `umamherst.instructure.com`), `SCHOOL_NAME`, `ACCENT_COLOR`.
 3. `npx wrangler login`
 4. `npx wrangler kv namespace create OAUTH_KV` → copia el id en `wrangler.jsonc`.
