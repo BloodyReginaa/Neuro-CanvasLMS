@@ -7,8 +7,9 @@ export const esc = s =>
     /[&<>"']/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
-const accent = /^#[0-9a-f]{6}$/i.test(ACCENT_COLOR) ? ACCENT_COLOR : '#4f5bd5';
-const school = { school: SCHOOL_NAME };
+// Read at render time: the school settings come from the Worker's vars (config.mjs).
+const accent = () => (/^#[0-9a-f]{6}$/i.test(ACCENT_COLOR) ? ACCENT_COLOR : '#4f5bd5');
+const school = () => ({ school: SCHOOL_NAME });
 
 const icon = {
   mark: '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><path d="M9 10.5c2.6-.9 5-.6 7 1v11c-2-1.6-4.4-1.9-7-1v-11Zm14 0c-2.6-.9-5-.6-7 1v11c2-1.6 4.4-1.9 7-1v-11Z" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg>',
@@ -23,8 +24,8 @@ const icon = {
     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12.5 4 4 8-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
 
-const CSS = `
-:root{--accent:${accent};--bg:#f5f6fa;--card:#fff;--ink:#141a2a;--muted:#5d6577;--line:#e6e8ef;--soft:color-mix(in srgb,var(--accent) 8%,#fff);--ok:#1f9d61;--warn:#c27c0e;--bad:#c2410c;color-scheme:light dark}
+const css = () => `
+:root{--accent:${accent()};--bg:#f5f6fa;--card:#fff;--ink:#141a2a;--muted:#5d6577;--line:#e6e8ef;--soft:color-mix(in srgb,var(--accent) 8%,#fff);--ok:#1f9d61;--warn:#c27c0e;--bad:#c2410c;color-scheme:light dark}
 @media (prefers-color-scheme:dark){:root{--bg:#0e1118;--card:#161a24;--ink:#e9ecf3;--muted:#9aa3b5;--line:#262c3a;--soft:color-mix(in srgb,var(--accent) 16%,#161a24)}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -89,21 +90,11 @@ function langSwitcher(lang, url) {
 }
 
 export function layout(lang, url, title, body) {
-  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)} · ${esc(t(lang, 'product'))}</title><style>${CSS}</style></head><body><div class="wrap"><header class="top"><div class="brand">${icon.mark}<span>${esc(t(lang, 'product'))}${SCHOOL_NAME ? `<small>${esc(SCHOOL_NAME)}</small>` : ''}</span></div>${langSwitcher(lang, url)}</header><main class="card">${body}</main><footer>${esc(t(lang, 'footer'))}</footer></div></body></html>`;
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)} · ${esc(t(lang, 'product'))}</title><style>${css()}</style></head><body><div class="wrap"><header class="top"><div class="brand">${icon.mark}<span>${esc(t(lang, 'product'))}${SCHOOL_NAME ? `<small>${esc(SCHOOL_NAME)}</small>` : ''}</span></div>${langSwitcher(lang, url)}</header><main class="card">${body}</main><footer>${esc(t(lang, 'footer'))}</footer></div></body></html>`;
 }
 
-export function homePage(lang, url, { bound, version, update }) {
+export function homePage(lang, url, { bound, version }) {
   const origin = new URL(url).origin;
-  const updateLine =
-    update?.state === 'available' && update.latest
-      ? `${t(lang, 'update_available', { version: update.latest })} ${t(lang, 'update_ask')}`
-      : update?.state === 'waiting' && update.latest
-        ? t(lang, 'update_waiting', { version: update.latest })
-        : update?.state === 'rolled_back'
-          ? t(lang, 'update_rolled_back')
-          : update?.state === 'manual_required'
-            ? t(lang, 'update_manual')
-            : '';
   return layout(
     lang,
     url,
@@ -115,9 +106,8 @@ export function homePage(lang, url, { bound, version, update }) {
 <h2>${esc(t(lang, 'home_add_title'))}</h2>
 <p class="help">${esc(t(lang, 'home_add_body'))}</p>
 <code class="code">${esc(origin)}/mcp</code>
-<div class="row" style="margin-top:22px"><span>${esc(t(lang, 'canvas_site'))}</span><span>${esc(CANVAS_HOST)}</span></div>
+<div class="row" style="margin-top:22px"><span>${esc(t(lang, 'canvas_site'))}</span><span>${esc(CANVAS_HOST || t(lang, 'not_configured'))}</span></div>
 ${version ? `<div class="row"><span>${esc(t(lang, 'version_label'))}</span><span>${esc(version)}</span></div>` : ''}
-${updateLine ? `<div class="note">${icon.alert}<span>${esc(updateLine)}</span></div>` : ''}
 <div class="note">${icon.shield}<span>${esc(t(lang, 'home_safe'))}</span></div>`,
   );
 }
@@ -130,14 +120,14 @@ export function authorizePage(lang, url, { csrf, returnTo }) {
   return layout(
     lang,
     url,
-    t(lang, 'auth_title', school),
+    t(lang, 'auth_title', school()),
     `
 <span class="badge">${icon.shield}${esc(t(lang, 'read_only'))}</span>
-<h1>${esc(t(lang, 'auth_title', school))}</h1>
+<h1>${esc(t(lang, 'auth_title', school()))}</h1>
 <p class="lead">${esc(t(lang, 'auth_lead'))}</p>
 <h2>${esc(t(lang, 'scopes_title'))}</h2>
 <ul class="chips">${chips}</ul>
-<div class="row" style="margin-top:22px"><span>${esc(t(lang, 'canvas_site'))}</span><span>${esc(CANVAS_HOST)}</span></div>
+<div class="row" style="margin-top:22px"><span>${esc(t(lang, 'canvas_site'))}</span><span>${esc(CANVAS_HOST || t(lang, 'not_configured'))}</span></div>
 <div class="row"><span>${esc(t(lang, 'returning_to'))}</span><span>${esc(returnTo)}</span></div>
 <form method="post">
 <input type="hidden" name="csrf" value="${esc(csrf)}">

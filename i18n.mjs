@@ -50,13 +50,7 @@ const S = {
     client_body: 'Only Claude, ChatGPT and local AI clients can connect to this connector.',
     footer: 'Open source · read-only · runs on your own Cloudflare account',
     version_label: 'Version',
-    update_available: 'Version {version} is available.',
-    update_ask: 'Ask your AI to “update the Canvas connector”.',
-    update_waiting:
-      'Version {version} will install automatically after its 24-hour observation period.',
-    update_rolled_back:
-      'An automatic update failed its check and was rolled back. Everything still works.',
-    update_manual: 'This update needs one manual step. See the README.',
+    not_configured: 'Not configured yet. Run the installer.',
     language: 'Language',
   },
   'zh-CN': {
@@ -93,11 +87,7 @@ const S = {
     client_body: '只有 Claude、ChatGPT 和本地 AI 客户端可以连接此连接器。',
     footer: '开源 · 只读 · 运行在你自己的 Cloudflare 账号上',
     version_label: '版本',
-    update_available: '新版本 {version} 已发布。',
-    update_ask: '对你的 AI 说“更新 Canvas 连接器”即可安装。',
-    update_waiting: '新版本 {version} 会在 24 小时观察期后自动安装。',
-    update_rolled_back: '一次自动更新没通过自检，已经自动回滚，一切照常可用。',
-    update_manual: '这次更新需要手动操作一步，请看 README。',
+    not_configured: '还没配置，请运行安装向导。',
     language: '语言',
   },
   es: {
@@ -137,13 +127,7 @@ const S = {
     client_body: 'Solo Claude, ChatGPT y clientes de IA locales pueden conectarse.',
     footer: 'Código abierto · solo lectura · en tu propia cuenta de Cloudflare',
     version_label: 'Versión',
-    update_available: 'La versión {version} está disponible.',
-    update_ask: 'Pide a tu IA: «actualiza el conector de Canvas».',
-    update_waiting:
-      'La versión {version} se instalará automáticamente tras 24 horas de observación.',
-    update_rolled_back:
-      'Una actualización automática no pasó la comprobación y se revirtió. Todo sigue funcionando.',
-    update_manual: 'Esta actualización requiere un paso manual. Consulta el README.',
+    not_configured: 'Aún no configurado. Ejecuta el instalador.',
     language: 'Idioma',
   },
   ja: {
@@ -185,12 +169,7 @@ const S = {
     client_body: '接続できるのは Claude、ChatGPT、ローカルの AI クライアントのみです。',
     footer: 'オープンソース · 読み取り専用 · あなたの Cloudflare アカウントで動作',
     version_label: 'バージョン',
-    update_available: 'バージョン {version} が利用できます。',
-    update_ask: 'AI に「Canvas コネクタを更新して」と伝えてください。',
-    update_waiting: 'バージョン {version} は 24 時間の観察期間後に自動でインストールされます。',
-    update_rolled_back:
-      '自動更新がチェックに失敗したため元に戻しました。引き続き問題なく使えます。',
-    update_manual: 'この更新には手動の手順が必要です。README を確認してください。',
+    not_configured: '未設定です。インストーラーを実行してください。',
     language: '言語',
   },
   hi: {
@@ -231,12 +210,7 @@ const S = {
     client_body: 'केवल Claude, ChatGPT और लोकल AI क्लाइंट ही इस कनेक्टर से जुड़ सकते हैं।',
     footer: 'ओपन सोर्स · केवल पढ़ना · आपके अपने Cloudflare खाते पर चलता है',
     version_label: 'संस्करण',
-    update_available: 'संस्करण {version} उपलब्ध है।',
-    update_ask: 'अपने AI से कहें: “Canvas कनेक्टर अपडेट करो”।',
-    update_waiting: 'संस्करण {version} 24 घंटे की निगरानी अवधि के बाद अपने आप इंस्टॉल हो जाएगा।',
-    update_rolled_back:
-      'एक स्वचालित अपडेट जाँच में विफल रहा और वापस ले लिया गया। सब कुछ पहले की तरह काम कर रहा है।',
-    update_manual: 'इस अपडेट के लिए एक मैन्युअल कदम ज़रूरी है। README देखें।',
+    not_configured: 'अभी कॉन्फ़िगर नहीं है। इंस्टॉलर चलाएँ।',
     language: 'भाषा',
   },
 };

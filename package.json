@@ -1,29 +1,36 @@
 {
   "name": "neuro-canvas-lms",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
-  "description": "Neuro-CanvasLMS: read-only Canvas LMS connector (remote MCP server on Cloudflare Workers) for Claude and ChatGPT",
+  "description": "Neuro-CanvasLMS: read-only connector that lets Claude or ChatGPT read any Canvas LMS (remote MCP server on your own Cloudflare account)",
+  "author": "BloodyReginaa",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BloodyReginaa/Neuro-CanvasLMS.git"
+  },
   "license": "MIT",
   "scripts": {
-    "test": "node --test",
+    "test": "node --import ./test-setup.mjs --test",
     "deploy": "wrangler deploy",
     "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
-    "format": "prettier --write \"*.mjs\" \"updater/*.mjs\" \"scripts/*.mjs\"",
-    "release": "node scripts/release.mjs",
-    "yank": "node scripts/yank.mjs"
+    "format": "prettier --write \"*.mjs\" \"scripts/*.mjs\" \"installer/*.mjs\"",
+    "setup": "node bin/neuro-canvas-lms.mjs"
   },
   "dependencies": {
     "@cloudflare/workers-oauth-provider": "^0.10.3",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "fflate": "^0.8.3",
     "ipaddr.js": "2.2.0",
-    "unpdf": "^1.8.1"
+    "unpdf": "^1.8.1",
+    "wrangler": "^4.136.3"
   },
   "devDependencies": {
-    "wrangler": "^4.136.3",
     "prettier": "^3.9.10"
   },
   "engines": {
     "node": ">=20"
+  },
+  "bin": {
+    "neuro-canvas-lms": "bin/neuro-canvas-lms.mjs"
   }
 }

@@ -1,4 +1,7 @@
 {
+  // Manual deployment template. Most people should just run the installer instead:
+  //   npx github:BloodyReginaa/Neuro-CanvasLMS        (or: npm run setup)
+  // which fills all of this in for you.
   "$schema": "node_modules/wrangler/config-schema.json",
   // Becomes https://<name>.<your-subdomain>.workers.dev — change it if you like.
   "name": "neuro-canvas-lms",
@@ -10,14 +13,17 @@
   // OFF so request headers (which carry OAuth access tokens) are never stored.
   "observability": { "enabled": true, "logs": { "enabled": true, "invocation_logs": false } },
   "kv_namespaces": [
-    // Create with: npx wrangler kv namespace create neuro-canvas-lms-oauth   — then paste the id here.
-    { "binding": "OAUTH_KV", "id": "REPLACE_WITH_YOUR_KV_NAMESPACE_ID" }
+    // Create with: npx wrangler kv namespace create neuro-canvas-lms-oauth — then paste the id here.
+    { "binding": "OAUTH_KV", "id": "REPLACE_WITH_YOUR_KV_NAMESPACE_ID" },
   ],
-  // Automatic updates / reminders (setup Step 6): after deploying updater/wrangler.jsonc,
-  // uncomment this so the connector's `connector_update` tool can reach the updater.
-  // "services": [{ "binding": "UPDATER", "service": "neuro-canvas-lms-updater" }],
-  // Optional vars:
-  //   OWNER_CANVAS_ID  — pin the owner instead of "first account to authorize wins".
-  //   CANVAS_TRANSPORT — "auto" (default: fetch, retry over TLS socket if rejected), "fetch" or "socket".
-  // ,"vars": { "OWNER_CANVAS_ID": "123456" }
+  "vars": {
+    // Your school's Canvas host, e.g. "canvas.example.edu" (what you see in the address bar).
+    "CANVAS_HOST": "REPLACE_WITH_YOUR_CANVAS_HOST",
+    // Optional: shown on the connector's pages.
+    "SCHOOL_NAME": "",
+    // Optional:
+    //   "ACCENT_COLOR": "#4f5bd5",  page colour
+    //   "OWNER_CANVAS_ID": "123456", pin the owner instead of "first account to authorize wins"
+    //   "CANVAS_TRANSPORT": "auto",  "auto" (fetch, retry over TLS socket if rejected), "fetch" or "socket"
+  },
 }

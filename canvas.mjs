@@ -5,7 +5,7 @@
 import { extraSpecs } from './read-tools.mjs';
 import { readFileContent } from './file-content.mjs';
 import { CANVAS_HOST } from './config.mjs';
-export const ORIGIN = 'https://' + CANVAS_HOST;
+export const origin = () => 'https://' + CANVAS_HOST;
 const id = { type: 'integer', minimum: 1 };
 // Canvas pages are numbers on most endpoints but opaque bookmarks on others (e.g. planner).
 const page = {
@@ -113,7 +113,7 @@ export function endpoint(name, args = {}) {
     )
       throw new Error('Missing context_id');
     const path = typeof extra.route === 'function' ? extra.route(args) : extra.route;
-    const u = new URL('/api/v1' + path, ORIGIN);
+    const u = new URL('/api/v1' + path, origin());
     const query = typeof extra.query === 'function' ? extra.query(args) : extra.query;
     for (const [key, value] of Object.entries(query))
       if (value !== undefined)
@@ -137,7 +137,7 @@ export function endpoint(name, args = {}) {
     canvas_page: `/courses/${c}/pages/${encodeURIComponent(args.page_url ?? '')}`,
     canvas_planner: '/planner/items',
   };
-  const u = new URL('/api/v1' + routes[name], ORIGIN);
+  const u = new URL('/api/v1' + routes[name], origin());
   u.searchParams.set('per_page', '50');
   u.searchParams.set('page', String(args.page ?? 1));
   if (name === 'canvas_courses') {

@@ -12,7 +12,6 @@
 // allowlisted set of headers, never follow redirects, and bound size and time.
 // Anything else (file downloads) goes through fetch() WITHOUT credentials.
 import { CANVAS_HOST } from './config.mjs';
-const HOST = CANVAS_HOST;
 const MAX_BODY = 16 * 1024 * 1024;
 const MAX_WIRE = MAX_BODY + 1024 * 1024;
 const MAX_HEADERS = 32768;
@@ -182,14 +181,14 @@ export function createCanvasTransport(
 ) {
   async function viaSocket(url, headers, signal) {
     signal?.throwIfAborted();
-    const socket = connect({ hostname: HOST, port: 443 }, { secureTransport: 'on' });
+    const socket = connect({ hostname: CANVAS_HOST, port: 443 }, { secureTransport: 'on' });
     socket.closed.catch(() => {});
     const close = () => socket.close().catch(() => {});
     const timer = setTimeout(close, 20000);
     signal?.addEventListener('abort', close, { once: true });
     try {
       await socket.opened;
-      const lines = [`GET ${url.pathname}${url.search} HTTP/1.1`, `Host: ${HOST}`];
+      const lines = [`GET ${url.pathname}${url.search} HTTP/1.1`, `Host: ${CANVAS_HOST}`];
       for (const [key, value] of headers) lines.push(`${key}: ${value}`);
       lines.push('Accept-Encoding: identity', 'Connection: close', '', '');
       const writer = socket.writable.getWriter();
@@ -217,7 +216,7 @@ export function createCanvasTransport(
   return async function canvasTransport(input, options = {}) {
     const url = new URL(input);
     // File downloads and other hosts: plain fetch, and credentials may never go there.
-    if (url.origin !== `https://${HOST}` || !url.pathname.startsWith('/api/v1/')) {
+    if (url.origin !== `https://${CANVAS_HOST}` || !url.pathname.startsWith('/api/v1/')) {
       if (new Headers(options.headers).has('authorization'))
         throw new Error('Canvas transport: credentials cannot leave the fixed API origin.');
       return fetcher(input, options);

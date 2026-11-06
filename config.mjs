@@ -1,12 +1,19 @@
-// The ONLY file you normally need to edit (the setup skill does it for you).
+// School settings come ONLY from the deployment's Worker vars (CANVAS_HOST, SCHOOL_NAME,
+// ACCENT_COLOR), which the installer sets. Nothing school-specific is built in, so one signed
+// release works for every Canvas school and updates never touch a school's settings.
+// Without CANVAS_HOST the connector is "not configured": /healthz fails and nothing reaches Canvas.
+export let CANVAS_HOST = '';
+export let SCHOOL_NAME = '';
+export let ACCENT_COLOR = '#4f5bd5';
+export const isConfigured = () => CANVAS_HOST !== '';
 
-// Your school's Canvas hostname, without https://
-// Find it by opening Canvas in a browser and copying the host from the address bar,
-// e.g. 'umamherst.instructure.com' or 'canvas.example.edu'.
-export const CANVAS_HOST = 'umamherst.instructure.com';
+const HOST_RE = /^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
+export const isValidCanvasHost = h => typeof h === 'string' && HOST_RE.test(h);
 
-// Your school's name, shown on the connector's pages and in the AI's tool list.
-export const SCHOOL_NAME = 'UMass Amherst';
-
-// Accent color for the connector's pages (6-digit hex).
-export const ACCENT_COLOR = '#881c1c';
+// Called at the start of every request with the Worker's env. Invalid values are ignored.
+export function applyConfig(env = {}) {
+  if (isValidCanvasHost(env.CANVAS_HOST?.toLowerCase()))
+    CANVAS_HOST = env.CANVAS_HOST.toLowerCase();
+  if (typeof env.SCHOOL_NAME === 'string') SCHOOL_NAME = env.SCHOOL_NAME.trim().slice(0, 80);
+  if (/^#[0-9a-f]{6}$/i.test(env.ACCENT_COLOR ?? '')) ACCENT_COLOR = env.ACCENT_COLOR;
+}
