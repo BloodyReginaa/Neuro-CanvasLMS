@@ -138,6 +138,13 @@ async function ensureLogin(saved) {
   if (saved && accounts.some(a => a.id === saved)) return saved;
   if (!accounts.length) fail('no Cloudflare account found');
   if (accounts.length === 1) return accounts[0].id;
+  // Run by an agent (no terminal) or with --yes: never pick an account silently.
+  if (args.yes || !process.stdin.isTTY)
+    fail(
+      msg(lang, 'pick_account_flag', {
+        list: accounts.map(a => `    --account-id ${a.id}   ${a.name}`).join('\n'),
+      }),
+    );
   const i = await choose(
     msg(lang, 'pick_account'),
     accounts.map(a => `${a.name} (${a.id})`),
@@ -159,6 +166,9 @@ async function checkCanvas(host) {
   }
 }
 async function askCanvasHost(previous, { quiet = false } = {}) {
+  // Run by an agent (no terminal) or with --yes on a first install: the address must be a flag.
+  if (!args.canvasHost && !previous && (args.yes || !process.stdin.isTTY))
+    fail(msg(lang, 'canvas_flag'));
   for (let i = 0; i < 5; i++) {
     const input =
       args.canvasHost ??

@@ -41,7 +41,7 @@ npx -y github:BloodyReginaa/Neuro-CanvasLMS
 3. **ChatGPT：** 在开发者模式里用同一个网址添加自定义连接器。
 4. 新开一个对话，问："我这周有哪些作业？"
 
-想让 AI 帮你装？把仓库克隆下来，用 Claude Code（或 Codex）打开，说"帮我配置 Canvas 连接器"。它会按照 [`SKILL.md`](../.claude/skills/canvas-connector-setup/SKILL.md) 来做。
+**让 AI 帮你装：** 把这个仓库的链接发给任何能运行终端命令的 AI 助手（Claude Code、Codex 等），说"帮我安装 Canvas 连接器"。不需要克隆仓库。**AI 助手请按照 [`SKILL.md`](../.claude/skills/canvas-connector-setup/SKILL.md) 操作**：一条带参数的 `npx` 命令就能装好，全程不碰 Canvas 令牌。
 
 **Canvas 令牌过期后：** 生成一个新令牌，在 AI 应用里把连接器"断开 → 重新连接"并粘贴即可，不需要重装。
 

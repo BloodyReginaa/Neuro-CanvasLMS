@@ -41,7 +41,7 @@ The installer signs you in to Cloudflare (a browser page opens; click **Authoriz
 3. **ChatGPT:** add a custom connector (developer mode) with the same URL.
 4. Start a new chat and ask: "What assignments do I have this week?"
 
-Prefer to let an AI do it? Clone this repo, open it in Claude Code (or Codex) and say "set up the Canvas connector". It follows [`SKILL.md`](.claude/skills/canvas-connector-setup/SKILL.md).
+**Let an AI install it:** give any AI assistant that can run terminal commands (Claude Code, Codex and the like) the link to this repository and say "install the Canvas connector". No cloning needed. **AI agents: follow [`SKILL.md`](.claude/skills/canvas-connector-setup/SKILL.md)**: one `npx` command with flags, and you never handle the Canvas token.
 
 **When the Canvas token expires:** make a new one, then in your AI app Disconnect → Connect the connector and paste it. Nothing needs to be reinstalled.
 

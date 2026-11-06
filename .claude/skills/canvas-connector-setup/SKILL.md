@@ -22,28 +22,45 @@ user's language**.
 
 ## Install
 
-1. Check `node -v` (needs 22+; otherwise point them to https://nodejs.org). Run `npm install`,
-   then `npm test` (all must pass).
-2. Ask for their school's Canvas address (what they see in the browser's address bar when they use
-   Canvas) and, optionally, the school's name.
-3. **Before running the installer, tell them:** a Cloudflare page will open, maybe in a background
-   tab, and they must click the blue **Authorize** button within about 2 minutes. If it times out,
-   they close the old consent tabs and you run the installer again.
-4. Run it (non-interactive form, so it works from an agent):
+Works from any AI agent that can run terminal commands (Claude Code, Codex and others), **with or
+without a clone of this repo**. Run without an interactive terminal (as agents do), the installer
+never asks questions: everything comes from flags, and when something is missing it stops with a
+message (in the user's language) naming exactly what to add. Nothing is lost when it stops; run the
+same command again.
+
+1. Check `node -v`: it needs 22 or newer. Otherwise send the user to https://nodejs.org and stop.
+2. Ask the user for their school's **Canvas address**: what the browser's address bar shows when
+   they use Canvas (e.g. `canvas.example.edu` or `<school>.instructure.com`, not the school portal
+   or login page). Optionally the school's name. Never guess the address.
+3. **Before running, tell the user:** a Cloudflare page opens in the browser (maybe in a background
+   tab). They sign in, or sign up for free, and click the blue **Authorize** button within about
+   2 minutes. Give the command a long timeout (5 minutes or more): it waits for that click, then
+   deploys for about a minute.
+4. Run, **without a clone** (`-y` only skips npm's own download prompt):
    ```bash
-   npm run setup -- --canvas-host "<address they gave>" --school "<name or empty>" --yes
+   npx -y github:BloodyReginaa/Neuro-CanvasLMS --canvas-host "<address>" --school "<name or empty>"
    ```
-   It signs in, checks that the address is a real Canvas API (401 JSON), creates storage
-   (`<name>-oauth`), deploys, health-checks, and prints the connector URL. If the Cloudflare
-   login has several accounts, add `--account-id <id>` (from `npx wrangler whoami`).
-5. Then the user, in their browser:
+   From a clone instead: `npm install`, `npm test` (all must pass), then
+   `npm run setup -- --canvas-host "<address>" --school "<name or empty>"`.
+5. If it stops, do what its message says, then run the same command again:
+   - **Several Cloudflare accounts:** it lists them as `--account-id <id>  <name>`. Ask the user
+     which account to use and add that flag. Never pick one yourself.
+   - **New Cloudflare account without a workers.dev subdomain:** give the user the printed
+     dashboard link; they choose a name (e.g. their name plus a number) and save it.
+   - **"does not look like a Canvas site":** the address is wrong (school portal or SSO page).
+     Ask the user again.
+   - **Cloudflare sign-in timed out:** they close old Cloudflare tabs; run again and they click
+     Authorize sooner.
+6. On success it prints the connector URL (`https://<name>.<subdomain>.workers.dev/mcp`, also copied
+   to the clipboard) and the next steps. Relay them; **the user does these in their browser, never
+   you**:
    - Canvas → Account → Settings → **+ New Access Token** (schools may cap it, e.g. 30 days at
-     UMass Amherst; copy it right away).
-   - Claude: Settings → Connectors → **Add custom connector** → the printed `…/mcp` URL →
-     **Connect** → paste the Canvas token → Authorize. Works on every device with the same account,
-     including Claude Code (check with `/mcp`).
+     UMass Amherst; copy it right away, Canvas shows it once).
+   - Claude: Settings → Connectors → **Add custom connector** → the `…/mcp` URL → **Connect** →
+     paste the Canvas token on the connector's own page → Authorize. Works on every device with the
+     same account, including Claude Code (check with `/mcp`).
    - ChatGPT: custom connector in developer mode, same URL. Menu names change; follow the UI.
-6. Test in a **new chat**: "What assignments do I have due this week?"
+7. Test in a **new chat**: "What assignments do I have due this week?"
 
 Connect right after installing: until the first authorization, whoever authorizes first becomes
 the owner. (To pin the owner, add `OWNER_CANVAS_ID` to the vars in
@@ -51,7 +68,8 @@ the owner. (To pin the owner, add `OWNER_CANVAS_ID` to the vars in
 
 ## Update / reinstall / uninstall
 
-- **Update:** `git pull`, then run the installer again (or `npx -y github:BloodyReginaa/Neuro-CanvasLMS`).
+- **Update:** run `npx -y github:BloodyReginaa/Neuro-CanvasLMS` again (from a clone: `git pull`,
+  then `npm run setup`). It reuses the saved settings; without a terminal it does not ask first.
   Then tell ChatGPT users to refresh the connector in ChatGPT's settings (ChatGPT keeps its own copy
   of the tool list); in Claude a new chat is enough.
   It reuses the storage, so connections keep working. Start a new chat afterwards (clients cache

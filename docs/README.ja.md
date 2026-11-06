@@ -41,7 +41,7 @@ npx -y github:BloodyReginaa/Neuro-CanvasLMS
 3. **ChatGPT：** 開発者モードで同じ URL のカスタムコネクタを追加。
 4. 新しいチャットで「今週の課題は？」と聞いてみてください。
 
-AI に任せたい場合は、このリポジトリをクローンして Claude Code（または Codex）で開き、「Canvas コネクタをセットアップして」と伝えてください。[`SKILL.md`](../.claude/skills/canvas-connector-setup/SKILL.md) に沿って進めます。
+**AI にインストールさせる：** ターミナルのコマンドを実行できる AI アシスタント（Claude Code、Codex など）にこのリポジトリのリンクを渡し、「Canvas コネクタをインストールして」と伝えてください。クローンは不要です。**AI エージェントは [`SKILL.md`](../.claude/skills/canvas-connector-setup/SKILL.md) に従ってください**：オプション付きの `npx` コマンド 1 つで済み、Canvas トークンには一切触れません。
 
 **Canvas トークンの期限が切れたら：** 新しいトークンを作り、AI アプリでコネクタを切断 → 再接続して貼り付けるだけ。再インストールは不要です。
 

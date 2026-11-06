@@ -41,7 +41,7 @@ El instalador inicia sesión en Cloudflare (se abre una página en el navegador;
 3. **ChatGPT:** añade un conector personalizado (modo desarrollador) con la misma URL.
 4. Abre un chat nuevo y pregunta: "¿Qué tareas tengo esta semana?"
 
-¿Prefieres que lo haga una IA? Clona el repositorio, ábrelo en Claude Code (o Codex) y di "configura el conector de Canvas". Sigue [`SKILL.md`](../.claude/skills/canvas-connector-setup/SKILL.md).
+**Que lo instale una IA:** dale a cualquier asistente de IA que pueda ejecutar comandos en la terminal (Claude Code, Codex y similares) el enlace de este repositorio y di "instala el conector de Canvas". No hace falta clonarlo. **Agentes de IA: sigan [`SKILL.md`](../.claude/skills/canvas-connector-setup/SKILL.md)**: un solo comando `npx` con opciones, sin tocar nunca el token de Canvas.
 
 **Cuando caduque el token de Canvas:** crea uno nuevo, desconecta y vuelve a conectar el conector en tu app de IA, y pégalo. No hace falta reinstalar.
 

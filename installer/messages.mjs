@@ -47,6 +47,10 @@ const M = {
     un_done:
       'Removed. Also delete the Canvas token (Canvas → Account → Settings) and the connector in your AI app.',
     cancelled: 'Cancelled.',
+    pick_account_flag:
+      'This Cloudflare login has several accounts. Run the same command again with one of these added:\n{list}',
+    canvas_flag:
+      "Without an interactive terminal the Canvas address must be given: add --canvas-host <address>, e.g. --canvas-host canvas.example.edu (what the browser's address bar shows when you use Canvas).",
     subdomain_needed:
       "Your Cloudflare account has no workers.dev subdomain yet (the connector's address uses it). A Cloudflare page opens in your browser: pick a name, for example your name plus a number, and save it.\n  {link}",
     subdomain_wait: 'When it is saved, come back here and press Enter:',
@@ -101,6 +105,10 @@ const M = {
     un_failed: '没能删除{what}：{detail}\n  本地安装记录已保留，再运行一次同一条命令即可重试。',
     un_done: '已删除。另外请删掉 Canvas 令牌（Canvas → 账户 → 设置）和 AI 应用里的连接器。',
     cancelled: '已取消。',
+    pick_account_flag:
+      '这个 Cloudflare 登录下有多个账号。请在同一条命令后加上其中一个，再运行一次：\n{list}',
+    canvas_flag:
+      '没有交互终端时，需要直接给出 Canvas 网址：在命令后加上 --canvas-host <网址>，比如 --canvas-host canvas.example.edu（就是用 Canvas 时浏览器地址栏里的网址）。',
     subdomain_needed:
       '你的 Cloudflare 账号还没有 workers.dev 子域名（连接器的网址会用到它）。浏览器会打开 Cloudflare 的设置页：起一个名字（比如你的名字加几个数字），保存。\n  {link}',
     subdomain_wait: '保存好之后，回到这里按回车继续：',
@@ -164,6 +172,10 @@ const M = {
     un_done:
       'Eliminado. Borra también el token de Canvas (Canvas → Cuenta → Configuración) y el conector en tu app de IA.',
     cancelled: 'Cancelado.',
+    pick_account_flag:
+      'Este inicio de sesión de Cloudflare tiene varias cuentas. Ejecuta el mismo comando otra vez añadiendo una de estas:\n{list}',
+    canvas_flag:
+      'Sin una terminal interactiva hay que indicar la dirección de Canvas: añade --canvas-host <dirección>, por ejemplo --canvas-host canvas.example.edu (lo que muestra la barra de direcciones cuando usas Canvas).',
     subdomain_needed:
       'Tu cuenta de Cloudflare aún no tiene un subdominio workers.dev (la dirección del conector lo usa). Se abre una página de Cloudflare en el navegador: elige un nombre, por ejemplo tu nombre y un número, y guárdalo.\n  {link}',
     subdomain_wait: 'Cuando esté guardado, vuelve aquí y pulsa Enter:',
@@ -227,6 +239,10 @@ const M = {
     un_done:
       '削除しました。Canvas トークン（Canvas → アカウント → 設定）と AI アプリのコネクタも削除してください。',
     cancelled: 'キャンセルしました。',
+    pick_account_flag:
+      'この Cloudflare ログインには複数のアカウントがあります。同じコマンドに次のどれかを付けて、もう一度実行してください：\n{list}',
+    canvas_flag:
+      '対話型ターミナルがない場合は Canvas のアドレスを指定する必要があります：--canvas-host <アドレス> を付けてください（例：--canvas-host canvas.example.edu。Canvas を使うときにブラウザのアドレスバーに表示されるもの）。',
     subdomain_needed:
       'Cloudflare アカウントにまだ workers.dev サブドメインがありません（コネクタのアドレスに使います）。ブラウザで Cloudflare のページが開くので、名前（例：自分の名前＋数字）を決めて保存してください。\n  {link}',
     subdomain_wait: '保存したら、ここに戻って Enter を押してください：',
@@ -290,6 +306,10 @@ const M = {
     un_done:
       'हटा दिया गया। Canvas टोकन (Canvas → Account → Settings) और अपने AI ऐप में कनेक्टर भी हटाएँ।',
     cancelled: 'रद्द किया गया।',
+    pick_account_flag:
+      'इस Cloudflare लॉगिन में कई खाते हैं। वही कमांड इनमें से एक जोड़कर फिर से चलाएँ:\n{list}',
+    canvas_flag:
+      'इंटरैक्टिव टर्मिनल के बिना Canvas का पता देना ज़रूरी है: --canvas-host <पता> जोड़ें, जैसे --canvas-host canvas.example.edu (Canvas इस्तेमाल करते समय ब्राउज़र के एड्रेस बार में जो दिखता है)।',
     subdomain_needed:
       'आपके Cloudflare खाते में अभी workers.dev सबडोमेन नहीं है (कनेक्टर का पता इसी से बनता है)। ब्राउज़र में Cloudflare का पेज खुलेगा: एक नाम चुनें, जैसे आपका नाम और कोई संख्या, और सेव करें।\n  {link}',
     subdomain_wait: 'सेव करने के बाद यहाँ लौटकर Enter दबाएँ:',
