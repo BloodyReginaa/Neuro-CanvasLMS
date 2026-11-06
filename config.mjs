@@ -1,6 +1,6 @@
 // School settings come ONLY from the deployment's Worker vars (CANVAS_HOST, SCHOOL_NAME,
-// ACCENT_COLOR), which the installer sets. Nothing school-specific is built in, so one signed
-// release works for every Canvas school and updates never touch a school's settings.
+// ACCENT_COLOR), which the installer sets. Nothing school-specific is built in, so the same code
+// works for every Canvas school and updates never touch a school's settings.
 // Without CANVAS_HOST the connector is "not configured": /healthz fails and nothing reaches Canvas.
 export let CANVAS_HOST = '';
 export let SCHOOL_NAME = '';

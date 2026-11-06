@@ -275,3 +275,31 @@ test('denied listings tell the AI to try canvas_find_files instead of giving up'
     e => e.message === 'Canvas authorization expired; reconnect.',
   );
 });
+
+test('numbers match whole numbers only; school.instructure.com links count as this Canvas', async () => {
+  const routes = {
+    '/api/v1/courses/7/front_page': {
+      json: {
+        url: 'front-page',
+        body: `<a href="/courses/7/files/1">Lecture 5.pdf</a>
+          <a href="/courses/7/files/2">Lecture 15.pdf</a>
+          <a href="/courses/7/files/3">2025 schedule.pdf</a>
+          <a href="/courses/7/files/4">hw5.zip</a>
+          <a href="https://school.instructure.com/courses/7/files/5">Lecture 5 notes.pdf</a>
+          <a href="https://school.instructure.com/courses/7/pages/extra">Extra</a>`,
+      },
+    },
+    '/api/v1/courses/7/pages/extra': {
+      json: { url: 'extra', body: '<a href="/courses/7/files/6">Lecture 5 code.zip</a>' },
+    },
+  };
+  const ids = async query =>
+    (await findFiles({ course_id: 7, query }, 'tok', fakeCanvas(routes))).files
+      .map(f => f.file_id)
+      .sort();
+  assert.deepEqual(await ids('lecture 5'), [1, 5, 6]);
+  assert.deepEqual(await ids('lecture5'), [1, 5, 6]);
+  assert.deepEqual(await ids('5'), [1, 4, 5, 6]);
+  assert.deepEqual(await ids('15'), [2]);
+  assert.deepEqual(await ids('2025'), [3]);
+});

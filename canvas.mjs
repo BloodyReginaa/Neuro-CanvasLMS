@@ -27,7 +27,19 @@ const def = (name, description, properties = {}, required = []) => ({
 });
 export const tools = [
   def('canvas_profile', 'Read the connected Canvas profile.'),
-  def('canvas_courses', 'List enrolled courses; use returned course IDs.', { page }),
+  def(
+    'canvas_courses',
+    'List enrolled courses; use returned course IDs. Current courses by default; enrollment_state "completed" lists past (concluded) courses, "invited_or_pending" lists course invitations.',
+    {
+      enrollment_state: {
+        type: 'string',
+        enum: ['active', 'completed', 'invited_or_pending'],
+        description:
+          'Which courses: active (default, current), completed (past) or invited_or_pending.',
+      },
+      page,
+    },
+  ),
   def(
     'canvas_assignments',
     'List course assignments including your submission status. Results are paginated.',
@@ -141,8 +153,9 @@ export function endpoint(name, args = {}) {
   u.searchParams.set('per_page', '50');
   u.searchParams.set('page', String(args.page ?? 1));
   if (name === 'canvas_courses') {
-    u.searchParams.set('enrollment_state', 'active');
+    u.searchParams.set('enrollment_state', args.enrollment_state ?? 'active');
     u.searchParams.append('include[]', 'total_scores');
+    if (args.enrollment_state === 'completed') u.searchParams.append('include[]', 'term');
   }
   if (name === 'canvas_assignments' || name === 'canvas_assignment')
     u.searchParams.append('include[]', 'submission');

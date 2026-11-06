@@ -57,11 +57,15 @@ const plainText = html =>
   decodeEntities(String(html).replace(/<[^>]*>/g, ' '))
     .replace(/\s+/g, ' ')
     .trim();
+// Links to this Canvas. A school on its own domain is also reachable as <school>.instructure.com and
+// course content may use either; only the IDs are taken from a link, every read still goes to
+// CANVAS_HOST.
 const canvasURL = raw => {
   if (!raw) return null;
   try {
     const u = new URL(raw, origin());
-    return u.protocol === 'https:' && u.hostname === CANVAS_HOST ? u : null;
+    const ours = u.hostname === CANVAS_HOST || u.hostname.endsWith('.instructure.com');
+    return u.protocol === 'https:' && ours ? u : null;
   } catch {
     return null;
   }
@@ -134,10 +138,18 @@ const norm = s =>
   String(s ?? '')
     .toLowerCase()
     .replace(/[_\-.,:;()[\]]+/g, ' ');
+// Every query word must appear. A number must be the whole number: "5" matches "Lecture 5" and
+// "hw5" but not "Lecture 15" or "2025". Spaces are ignored too, so "lecture5" finds "Lecture 5".
+const escape = w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const wordPattern = w =>
+  new RegExp((/^\d/.test(w) ? '(?<!\\d)' : '') + escape(w) + (/\d$/.test(w) ? '(?!\\d)' : ''));
 const matchesAll = (words, hay) => {
   const h = norm(hay);
   const squeezed = h.replace(/\s+/g, '');
-  return words.every(w => h.includes(w) || squeezed.includes(w));
+  return words.every(w => {
+    const p = wordPattern(w);
+    return p.test(h) || (!/^\d+$/.test(w) && p.test(squeezed));
+  });
 };
 const placeText = p => [p.title, p.module].filter(Boolean).join(' ');
 

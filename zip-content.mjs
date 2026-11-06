@@ -9,6 +9,17 @@
 // whose declared size exceeds the limits are never decompressed, and an entry whose real size or
 // CRC-32 differs from the archive's records is discarded (zip-bomb and corruption guard). Paths are only ever shown as text.
 import { unzipSync } from 'fflate';
+import {
+  TEXT_EXT,
+  TEXT_NAMES,
+  DOC_EXT,
+  ARCHIVE_EXT,
+  BINARY_EXT,
+  ext,
+  looksLikeText,
+  isZipBytes,
+  notebookText,
+} from './file-types.mjs';
 
 export const ZIP_LIMITS = {
   listed: 1000, // entries shown in the listing
@@ -19,66 +30,21 @@ export const ZIP_LIMITS = {
   guessBytes: 256 * 1024, // unknown extensions: only sniffed when this small
 };
 
-const TEXT_EXT = new Set(
-  (
-    'txt md markdown rst csv tsv json jsonl xml yaml yml toml ini cfg conf properties env sample ' +
-    'html htm css scss sass less svg js mjs cjs ts tsx jsx vue java kt kts scala groovy gradle ' +
-    'c h cc cpp cxx hpp hh cs go rs py pyi ipynb rb php pl pm sh bash zsh fish bat cmd ps1 sql r ' +
-    'rmd m mm swift lua tex bib sty cls asm s v sv vhd hs ml mli ex exs erl clj lisp scm rkt dart ' +
-    'jl f f90 pro make mk cmake in am gitignore gitattributes editorconfig dockerfile log out diff patch'
-  ).split(' '),
-);
-const TEXT_NAMES = new Set(['makefile', 'dockerfile', 'readme', 'license', 'notice', 'copying']);
-const DOC_EXT = new Set(['pdf', 'docx', 'pptx', 'xlsx']);
-const ARCHIVE_EXT = new Set([
-  'zip',
-  'jar',
-  'war',
-  'ear',
-  '7z',
-  'rar',
-  'tar',
-  'gz',
-  'tgz',
-  'bz2',
-  'xz',
-  'zst',
-]);
-const BINARY_EXT = new Set(
-  (
-    'class o obj a lib so dylib dll exe bin out.o pyc pyo wasm png jpg jpeg gif bmp webp ico tif ' +
-    'tiff heic psd ai eps mp3 wav flac aac ogg m4a mp4 mov avi mkv webm ttf otf woff woff2 eot ' +
-    'db sqlite doc ppt xls key pages numbers dmg iso'
-  ).split(' '),
-);
 const JUNK =
   /(^|\/)(__MACOSX|\.git|node_modules|\.idea|\.vscode|\.gradle|__pycache__|\.DS_Store|Thumbs\.db)(\/|$)/;
 
 export function isZip(bytes, name, mime) {
   if (/\.(docx|pptx|xlsx|jar|war|ear)$/i.test(name)) return false;
   if (/\.zip$/i.test(name) || /\b(x-)?zip(-compressed)?\b/i.test(mime)) return true;
-  return bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04;
+  return isZipBytes(bytes);
 }
 
-const ext = path => {
-  const base = path.split('/').pop().toLowerCase();
-  if (TEXT_NAMES.has(base.split('.')[0]) && !base.includes('.')) return base;
-  return base.includes('.') ? base.split('.').pop() : '';
-};
 const kb = n =>
   n < 1024
     ? `${n} B`
     : n < 1048576
       ? `${(n / 1024).toFixed(1)} KB`
       : `${(n / 1048576).toFixed(1)} MB`;
-
-function looksLikeText(bytes) {
-  const sample = bytes.subarray(0, 8192);
-  if (sample.includes(0)) return false;
-  const text = new TextDecoder().decode(sample);
-  const bad = (text.match(/�/g) ?? []).length;
-  return bad <= text.length * 0.02;
-}
 
 // CRC-32 of each entry, read straight from the central directory. fflate does not verify CRCs and
 // stops at the declared size, so a forged "small" size would otherwise yield a silently truncated
@@ -240,6 +206,13 @@ async function readEntry(bytes, f, extractDoc, { budget, forced = false }) {
       const r = await extractDoc(data, f.name, '');
       if (r.text === null || r.text === undefined)
         return { text: null, status: 'skipped (no extractable text)' };
+      if (r.likely_scanned)
+        return {
+          text: r.text,
+          used: data.length,
+          status:
+            'included (scanned PDF: almost no text layer; get the archive with canvas_file_original to see the pages)',
+        };
       return { text: r.text, used: data.length, status: 'included (document text)' };
     } catch {
       return { text: null, status: 'skipped (document could not be read)' };
@@ -250,5 +223,15 @@ async function readEntry(bytes, f, extractDoc, { budget, forced = false }) {
       text: null,
       status: forced ? 'not text (binary content)' : 'skipped (binary content)',
     };
-  return { text: new TextDecoder().decode(data), used: data.length, status: 'included' };
+  const text = new TextDecoder().decode(data);
+  if (e === 'ipynb') {
+    const cells = notebookText(text);
+    if (cells !== null)
+      return {
+        text: cells,
+        used: data.length,
+        status: 'included (notebook cells and text outputs)',
+      };
+  }
+  return { text, used: data.length, status: 'included' };
 }

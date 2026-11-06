@@ -20,7 +20,7 @@ La mayoría de integraciones de Canvas con IA son herramientas *locales*: solo f
 ## Qué incluye
 
 - **60 herramientas de solo lectura:** cursos, módulos, páginas, archivos, tareas, entregas, calificaciones y comentarios, rúbricas, anuncios, foros, bandeja de entrada, calendario, pendientes, grupos, historial de exámenes y perfil.
-- **Lectura real de archivos:** texto de PDF, Word, PowerPoint y Excel; archivos ZIP descomprimidos en el servidor (índice y el contenido de cada archivo de código/texto); el archivo original para apuntes escaneados o a mano, para que la IA vea cada página.
+- **Lectura real de archivos:** texto de PDF, Word, PowerPoint y Excel, unos 90 tipos de archivos de código y texto, y cuadernos de Jupyter (celdas y salidas); archivos ZIP descomprimidos en el servidor (índice y el contenido de cada archivo de código/texto); reconoce los PDF escaneados o escritos a mano y entrega el archivo original para que la IA vea cada página.
 - **Encuentra los archivos que el curso oculta:** muchos cursos ocultan la lista de Archivos a los estudiantes. El conector busca en la página principal, el programa, los módulos, las tareas, los anuncios y las páginas enlazadas, así que la IA sigue encontrando "las diapositivas de la clase 12" por su nombre.
 - **Solo lectura por diseño:** solo peticiones `GET` fijas. Nunca entrega tareas, envía mensajes, inicia exámenes ni modifica nada en Canvas.
 - **Solo tuyo:** tu propio despliegue, en tu propia cuenta de Cloudflare, vinculado a tu propia cuenta de Canvas. Nadie más (ni los autores) ve tu token de Canvas.

@@ -7,6 +7,7 @@ import { DOWNLOAD_UA, loginRedirect } from './file-content.mjs';
 import ipaddr from 'ipaddr.js';
 import { Buffer } from 'node:buffer';
 import { callCanvas } from './canvas.mjs';
+import { isZipBytes, officeKind, OFFICE_MIME } from './file-types.mjs';
 export const MAX_FILE_BYTES = 15 * 1024 * 1024;
 const cloudFetch = (input, init) => fetch(input, init);
 const id = { type: 'integer', minimum: 1 };
@@ -172,15 +173,11 @@ export async function downloadOriginal(
     let mime = (r.headers.get('content-type') ?? 'application/octet-stream').split(';')[0].trim();
     if (bytes.subarray(0, 5).toString() === '%PDF-') mime = 'application/pdf';
     // Storage often labels archives as application/octet-stream; name them properly so the client
-    // knows it received a ZIP (Office files are ZIPs too, so leave those alone).
-    else if (
-      bytes[0] === 0x50 &&
-      bytes[1] === 0x4b &&
-      bytes[2] === 0x03 &&
-      bytes[3] === 0x04 &&
-      !/officedocument|opendocument/.test(mime)
-    )
-      mime = /zip/.test(mime) ? mime : 'application/zip';
+    // knows what it received. Office files are ZIPs too: label those as Word/PowerPoint/Excel.
+    else if (isZipBytes(bytes) && !/officedocument|opendocument/.test(mime)) {
+      const office = officeKind(bytes, '', mime);
+      mime = office ? OFFICE_MIME[office] : /zip/.test(mime) ? mime : 'application/zip';
+    }
     if (
       mime === 'text/html' ||
       /^\s*(?:<!doctype html|<html)/i.test(bytes.subarray(0, 256).toString())
@@ -216,6 +213,8 @@ export function filenameFor(result, fallback) {
       .trim()
       .slice(0, 180) || 'canvas-file';
   if (result.mime === 'application/pdf' && !/\.pdf$/i.test(name)) name += '.pdf';
+  const office = Object.keys(OFFICE_MIME).find(k => OFFICE_MIME[k] === result.mime);
+  if (office && !name.toLowerCase().endsWith('.' + office)) name += '.' + office;
   return name;
 }
 export async function moduleFile(args, token, apiFetch, options = {}) {

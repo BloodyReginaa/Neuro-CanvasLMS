@@ -26,9 +26,10 @@ runs in your own Cloudflare account, so it also works on your phone and in ChatG
 - **60 read-only tools:** courses, modules, pages, files, assignments, submissions, grades and
   feedback, rubrics, announcements, discussions, inbox, calendar, to-dos, groups, quiz history
   and profile settings.
-- **Real file reading:** text from PDF, Word, PowerPoint and Excel; ZIP archives unpacked on the
-  server (listing plus every code/text file); original files for scanned or handwritten notes so
-  the AI can look at each page.
+- **Real file reading:** text from PDF, Word, PowerPoint and Excel, about 90 kinds of code and
+  text files, and Jupyter notebooks (cells and outputs); ZIP archives unpacked on the server
+  (listing plus every code/text file); scanned or handwritten PDFs are recognised and their
+  original pages handed to the AI to look at.
 - **Finds files the course hides:** many courses hide their Files list from students. The connector
   searches the front page, syllabus, modules, assignments, announcements and linked pages, so the
   AI can still find "Lecture 12 slides" by name.
