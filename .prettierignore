@@ -1,0 +1,3 @@
+# Markdown keeps compact tables; prettier would pad them with long runs of spaces.
+*.md
+.wrangler/

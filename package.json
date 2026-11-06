@@ -13,7 +13,7 @@
     "test": "node --import ./test-setup.mjs --test",
     "deploy": "wrangler deploy",
     "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
-    "format": "prettier --write \"*.mjs\" \"scripts/*.mjs\" \"installer/*.mjs\"",
+    "format": "prettier --write \"*.mjs\" \"bin/*.mjs\" \"scripts/*.mjs\" \"installer/*.mjs\"",
     "setup": "node bin/neuro-canvas-lms.mjs"
   },
   "dependencies": {

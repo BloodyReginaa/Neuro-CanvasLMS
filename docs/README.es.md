@@ -15,7 +15,7 @@
 | 💸 **Gratis** | Funciona con el plan gratuito de Cloudflare, más que suficiente para un estudiante. |
 | 🧠 **Tus archivos viven en la conversación** | Los apuntes y PDF que lee la IA se quedan con ese chat en los servidores de tu proveedor de IA. Nada que descargar. |
 
-La mayoría de integraciones de Canvas con IA son herramientas *locales*: solo funcionan mientras tu computadora las ejecuta, y solo en apps de escritorio o de programación. Neuro-CanvasLMS es un **conector remoto** que vive en tu propia cuenta de Cloudflare, así que también funciona en el móvil y en ChatGPT.
+La mayoría de integraciones de Canvas con IA son herramientas **locales**: solo funcionan mientras tu computadora las ejecuta, y solo en apps de escritorio o de programación. Neuro-CanvasLMS es un **conector remoto** que vive en tu propia cuenta de Cloudflare, así que también funciona en el móvil y en ChatGPT.
 
 ## Qué incluye
 
@@ -39,9 +39,9 @@ El instalador inicia sesión en Cloudflare (se abre una página en el navegador;
 1. **Crea un token de Canvas:** Canvas → Cuenta → Configuración → **+ Nuevo token de acceso**. Tu universidad puede limitar su duración (30 días en UMass Amherst). Cópialo enseguida: solo se muestra una vez.
 2. **Claude:** Configuración → Conectores → **Añadir conector personalizado** → pega la URL que mostró el instalador (ya está copiada) → **Conectar** → pega el token de Canvas → Autorizar. Funciona en todas partes donde uses Claude, incluida la app móvil y Claude Code.
 3. **ChatGPT:** añade un conector personalizado (modo desarrollador) con la misma URL.
-4. Abre un chat nuevo y pregunta *"¿Qué tareas tengo esta semana?"*
+4. Abre un chat nuevo y pregunta: "¿Qué tareas tengo esta semana?"
 
-¿Prefieres que lo haga una IA? Clona el repositorio, ábrelo en Claude Code (o Codex) y di *"configura el conector de Canvas"*. Sigue [`SKILL.md`](../.claude/skills/canvas-connector-setup/SKILL.md).
+¿Prefieres que lo haga una IA? Clona el repositorio, ábrelo en Claude Code (o Codex) y di "configura el conector de Canvas". Sigue [`SKILL.md`](../.claude/skills/canvas-connector-setup/SKILL.md).
 
 **Cuando caduque el token de Canvas:** crea uno nuevo, desconecta y vuelve a conectar el conector en tu app de IA, y pégalo. No hace falta reinstalar.
 
@@ -59,7 +59,7 @@ Claude / ChatGPT ──OAuth──▶ Neuro-CanvasLMS en tu Cloudflare ──API
 
 ## Privacidad y seguridad
 
-- El token solo va a tu Worker y al Canvas de tu universidad; se guarda cifrado en tu propio Cloudflare KV.
+- El token solo va a tu Worker y al Canvas de tu universidad, y se guarda cifrado dentro del registro de autorización en tu propio Cloudflare KV.
 - El conector se vincula a tu cuenta de Canvas al conectarlo y rechaza las demás.
 - Solo Claude, ChatGPT y clientes locales pueden completar OAuth.
 - El contenido de los cursos se trata como datos no confiables, nunca como instrucciones.
@@ -78,8 +78,8 @@ Consulta la política de tu universidad sobre tokens personales y herramientas d
 
 ## Estado del proyecto
 
-Proyecto comunitario con licencia MIT y **proporcionado tal cual**: sin mantenimiento, actualizaciones ni soporte garantizados. Se agradecen issues, pull requests y forks. Si deja de funcionar en tu universidad, el código es tuyo para arreglarlo.
+Proyecto comunitario con licencia MIT y **proporcionado tal cual**: sin mantenimiento, actualizaciones ni soporte garantizados. Se agradecen issues, pull requests y forks. Si deja de funcionar en tu universidad, el código es tuyo para arreglarlo. También puedes abrir un issue y el autor se encargará de arreglarlo.
 
 ## Desarrollo
 
-`npm test` · `npm run check` · `npm run setup` (el instalador, desde un clon). Los textos de la interfaz están en `i18n.mjs`. Mapa del código en [`AGENTS.md`](../AGENTS.md). Desarrollado con ayuda de asistentes de programación con IA.
+`npm test` · `npm run check` (compilación de prueba) · `npm run setup` (el instalador, desde un clon). Los textos de la interfaz están en `i18n.mjs` (English, 简体中文, Español, 日本語, हिन्दी). Mapa del código en [`AGENTS.md`](../AGENTS.md). Desarrollado con ayuda de asistentes de programación con IA.

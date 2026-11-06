@@ -82,5 +82,4 @@ Claude / ChatGPT ──OAuth──▶ 你 Cloudflare 上的 Neuro-CanvasLMS ─�
 
 ## 开发
 
-`npm test` · `npm run check`（试构建）· `npm run setup`（从克隆的仓库运行安装向导）。
-界面文字在 `i18n.mjs`（English、简体中文、Español、日本語、हिन्दी）。代码结构见 [`AGENTS.md`](../AGENTS.md)。在 AI 编程助手的帮助下开发。
+`npm test` · `npm run check`（试构建）· `npm run setup`（从克隆的仓库运行安装向导）。界面文字在 `i18n.mjs`（English、简体中文、Español、日本語、हिन्दी）。代码结构见 [`AGENTS.md`](../AGENTS.md)。在 AI 编程助手的帮助下开发。
