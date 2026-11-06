@@ -32,10 +32,20 @@ same command again.
 2. Ask the user for their school's **Canvas address**: what the browser's address bar shows when
    they use Canvas (e.g. `canvas.example.edu` or `<school>.instructure.com`, not the school portal
    or login page). Optionally the school's name. Never guess the address.
-3. **Before running, tell the user:** a Cloudflare page opens in the browser (maybe in a background
-   tab). They sign in, or sign up for free, and click the blue **Authorize** button within about
-   2 minutes. Give the command a long timeout (5 minutes or more): it waits for that click, then
-   deploys for about a minute.
+3. **Cloudflare sign-in comes first, in the user's own browser.** Run `npx -y wrangler whoami`.
+   If it shows an email, they are signed in: go on. If not, ask the user to run
+   `npx -y wrangler login` **themselves, in their own terminal** (PowerShell on Windows,
+   Terminal on macOS). Their usual browser opens Cloudflare: they sign in (or sign up for free)
+   and click the blue **Authorize** button; the terminal then says "Successfully logged in".
+   Wait until they confirm, then check `wrangler whoami` again.
+   - Do not do this sign-in in a browser built into your own app or sandbox: the user is not
+     signed in to Cloudflare there ("Authentication error", "Application authorization failed").
+   - Never start a second sign-in while one is pending. Each attempt has its own callback; an
+     Authorize click on an older tab fails with "callback does not match the pending login".
+     If that happens: the user closes every Cloudflare tab and runs `npx -y wrangler login` once.
+   - Only if the user wants you to run the sign-in yourself: tell them first that a Cloudflare page
+     opens and they click **Authorize** within about 2 minutes, and give the command a long
+     timeout (5 minutes or more).
 4. Run, **without a clone** (`-y` only skips npm's own download prompt):
    ```bash
    npx -y neuro-canvas-lms --canvas-host "<address>" --school "<name or empty>"
@@ -49,8 +59,8 @@ same command again.
      dashboard link; they choose a name (e.g. their name plus a number) and save it.
    - **"does not look like a Canvas site":** the address is wrong (school portal or SSO page).
      Ask the user again.
-   - **Cloudflare sign-in timed out:** they close old Cloudflare tabs; run again and they click
-     Authorize sooner.
+   - **Cloudflare sign-in failed or timed out:** see step 3 (the user signs in once, in their own
+     terminal and browser).
 6. On success it prints the connector URL (`https://<name>.<subdomain>.workers.dev/mcp`, also copied
    to the clipboard) and the next steps. Relay them; **the user does these in their browser, never
    you**:
@@ -88,7 +98,7 @@ their AI app: connector → Disconnect → Connect → paste it. No reinstall ne
 |---|---|
 | "bound to a different Canvas account" | Someone else authorized first, or the user changed accounts. Reset: `npx wrangler kv key delete --namespace-id <id> --remote owner:canvas_user_id` (id in `~/.neuro-canvas-lms/<name>/state.json`), then connect again. |
 | Installer: "does not look like a Canvas site" | They pasted the school portal or SSO page. Find the real Canvas host (often `<school>.instructure.com`). |
-| Cloudflare sign-in timed out | Close old consent tabs, run the installer again, click Authorize within ~2 minutes. |
+| Cloudflare sign-in failed: "Authentication error", "authorization failed", "callback does not match the pending login", or timed out | The consent page opened in a browser without the user's Cloudflare session, or an older attempt's tab was used. Stop any running installer, close every Cloudflare tab; the user runs `npx -y wrangler login` once in their own terminal and clicks Authorize in their usual browser. Then run the installer again. |
 | Homepage says "not configured" / `/healthz` not ok | `CANVAS_HOST` var missing: run the installer again. |
 | Verification failed, HTTP 401 | Token wrong, incomplete or expired → new token. |
 | "denied access to this resource" | Canvas permission for that item (e.g. the instructor hid it). The token is fine; don't reconnect. |
