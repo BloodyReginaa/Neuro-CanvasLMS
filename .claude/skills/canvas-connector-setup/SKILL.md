@@ -59,9 +59,12 @@ optionally `ACCENT_COLOR` (6-digit hex, e.g. the school color). Re-run `npm test
 The user needs a free Cloudflare account (https://dash.cloudflare.com/sign-up). Then:
 
 ```bash
-npx wrangler login      # opens the browser; the USER clicks Allow
+npx wrangler login      # opens the browser; the USER clicks the blue Authorize button
 npx wrangler whoami
 ```
+- Tell the user BEFORE running it: a Cloudflare page opens (maybe in a background tab) and must be
+  authorized within about 2 minutes. If it times out, have them close the old consent tabs (they
+  no longer work) and run `npx wrangler login` again.
 - If `whoami` lists several accounts, ask which one and add `"account_id": "<id>"` to `wrangler.jsonc`.
 - First-time accounts must have a workers.dev subdomain. If deploy later complains about it,
   ask the user to open Cloudflare dashboard → Workers & Pages once (it offers to create one).
@@ -69,9 +72,12 @@ npx wrangler whoami
 ## Step 3 — storage and deploy
 
 ```bash
-npx wrangler kv namespace create OAUTH_KV
+npx wrangler kv namespace create neuro-canvas-lms-oauth
 ```
-Copy the printed `id` into `wrangler.jsonc` → `kv_namespaces[0].id`
+The title only has to be unique in the account (if it already exists — e.g. a previous install —
+pick another, like `neuro-canvas-lms-oauth-2`; never reuse another Worker's namespace). Ignore the
+suggested binding name it prints; the binding stays `OAUTH_KV`. Copy the printed `id` into
+`wrangler.jsonc` → `kv_namespaces[0].id`
 (replace `REPLACE_WITH_YOUR_KV_NAMESPACE_ID`). Optionally let the user rename `"name"`.
 
 ```bash

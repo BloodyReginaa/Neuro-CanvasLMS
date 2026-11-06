@@ -59,7 +59,7 @@ claude
 1. `git checkout "$(git tag -l 'v*' --sort=-v:refname | head -1)"` (latest release), then `npm install && npm test`
 2. 编辑 `config.mjs`：`CANVAS_HOST`（如 `umamherst.instructure.com`）、`SCHOOL_NAME`、`ACCENT_COLOR`。
 3. `npx wrangler login`
-4. `npx wrangler kv namespace create OAUTH_KV`，把输出的 id 填进 `wrangler.jsonc`。
+4. `npx wrangler kv namespace create neuro-canvas-lms-oauth`，把输出的 id 填进 `wrangler.jsonc`。
 5. `npx wrangler deploy`，记下 `https://neuro-canvas-lms.<你>.workers.dev`。
 6. 立刻完成连接（第一个授权的 Canvas 账号会成为所有者）。
 </details>

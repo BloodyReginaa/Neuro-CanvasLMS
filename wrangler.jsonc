@@ -10,7 +10,7 @@
   // OFF so request headers (which carry OAuth access tokens) are never stored.
   "observability": { "enabled": true, "logs": { "enabled": true, "invocation_logs": false } },
   "kv_namespaces": [
-    // Create with: npx wrangler kv namespace create OAUTH_KV   — then paste the id here.
+    // Create with: npx wrangler kv namespace create neuro-canvas-lms-oauth   — then paste the id here.
     { "binding": "OAUTH_KV", "id": "REPLACE_WITH_YOUR_KV_NAMESPACE_ID" }
   ],
   // Automatic updates / reminders (setup Step 6): after deploying updater/wrangler.jsonc,

@@ -72,7 +72,7 @@ It never asks for your Canvas token.
 1. `git checkout "$(git tag -l 'v*' --sort=-v:refname | head -1)"` (latest release), then `npm install && npm test`
 2. Edit `config.mjs`: `CANVAS_HOST` (e.g. `umamherst.instructure.com`), `SCHOOL_NAME`, `ACCENT_COLOR`.
 3. `npx wrangler login`
-4. `npx wrangler kv namespace create OAUTH_KV`, then put the id into `wrangler.jsonc`.
+4. `npx wrangler kv namespace create neuro-canvas-lms-oauth`, then put the id into `wrangler.jsonc`.
 5. `npx wrangler deploy` and note `https://neuro-canvas-lms.<you>.workers.dev`.
 6. Connect right away. The first Canvas account to authorize becomes the owner.
 </details>

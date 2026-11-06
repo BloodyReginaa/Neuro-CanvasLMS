@@ -59,7 +59,7 @@ claude
 1. `git checkout "$(git tag -l 'v*' --sort=-v:refname | head -1)"` (latest release), then `npm install && npm test`
 2. `config.mjs` बदलें: `CANVAS_HOST` (जैसे `umamherst.instructure.com`), `SCHOOL_NAME`, `ACCENT_COLOR`।
 3. `npx wrangler login`
-4. `npx wrangler kv namespace create OAUTH_KV` → मिली id को `wrangler.jsonc` में डालें।
+4. `npx wrangler kv namespace create neuro-canvas-lms-oauth` → मिली id को `wrangler.jsonc` में डालें।
 5. `npx wrangler deploy` → `https://neuro-canvas-lms.<आप>.workers.dev` नोट करें।
 6. तुरंत जोड़ें (सबसे पहले अधिकृत करने वाला Canvas खाता स्वामी बनता है)।
 </details>
