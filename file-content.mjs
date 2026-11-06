@@ -195,7 +195,11 @@ export async function extractBytes(bytes, shown, mime = '', opts = {}) {
     };
   const declared = isTextMime(mime) || TEXT_EXT.has(e) || TEXT_NAMES.has(e);
   if (declared || (!BINARY_EXT.has(e) && !ARCHIVE_EXT.has(e) && looksLikeText(bytes))) {
-    const text = new TextDecoder().decode(bytes);
+    // No byte-order mark; Google's plain-text exports use vertical tabs as line breaks.
+    const text = new TextDecoder()
+      .decode(bytes)
+      .replace(/^\uFEFF/, '')
+      .replace(/\v/g, '\n');
     if (e === 'ipynb' || /ipynb/i.test(mime)) {
       const cells = notebookText(text);
       if (cells !== null)
@@ -290,6 +294,11 @@ export async function readFileContent(meta, args, fetcher = fetch) {
     base.mime_type ?? response.headers.get('content-type') ?? '',
     { entry: args.entry, storedName: meta.filename },
   );
+  return paginated(base, extracted, args);
+}
+
+// One window of the extracted text (offset / max_chars), with how to get the next one.
+export function paginated(base, extracted, args = {}) {
   if (extracted.text === null) return { ...base, ...extracted };
   const offset = args.offset ?? 0,
     max = args.max_chars ?? 20000,

@@ -120,7 +120,7 @@ test('finds files through every entry point when the course hides Files and Page
   // External links are listed, never fetched; module ones say how to read them.
   const reading = r.external_links.find(x => x.url.includes('reading.pdf'));
   assert.deepEqual(reading.read_with, {
-    tool: 'canvas_module_file',
+    tool: 'canvas_module_file_content',
     course_id: 7,
     module_id: 1,
     item_id: 12,

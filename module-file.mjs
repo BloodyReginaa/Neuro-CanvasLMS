@@ -3,11 +3,17 @@
 // MCP resources/read (file-resource.mjs), which re-checks Canvas access every time.
 // Downloads: HTTPS only, public DNS destinations only (checked on every redirect hop), max 5
 // redirects, 25 s, 15 MiB, HTML login pages rejected, and Canvas credentials are never attached.
-import { DOWNLOAD_UA, loginRedirect } from './file-content.mjs';
 import ipaddr from 'ipaddr.js';
 import { Buffer } from 'node:buffer';
 import { callCanvas } from './canvas.mjs';
 import { isZipBytes, officeKind, OFFICE_MIME } from './file-types.mjs';
+import {
+  directFileURL,
+  webPageReason,
+  googleKind,
+  regeneratedOnDownload,
+} from './external-links.mjs';
+import { DOWNLOAD_UA, loginRedirect, extractBytes, paginated } from './file-content.mjs';
 export const MAX_FILE_BYTES = 15 * 1024 * 1024;
 const cloudFetch = (input, init) => fetch(input, init);
 const id = { type: 'integer', minimum: 1 };
@@ -84,22 +90,15 @@ export async function resolvePublic(host, fetcher = cloudFetch, signal) {
   if (!ips.length || ips.some(x => !publicAddress(x)))
     throw new Error('Canvas file: non-public DNS destination blocked.');
 }
-export function downloadURL(raw) {
-  const u = safeURL(raw);
-  if (
-    ['www.dropbox.com', 'dropbox.com'].includes(u.hostname) &&
-    /^\/(s|scl\/fi)\//.test(u.pathname)
-  ) {
-    u.searchParams.delete('raw');
-    u.searchParams.set('dl', '1');
-  }
-  return u.href;
+// Share links (Google, Dropbox, GitHub) → the address of the file itself; see external-links.mjs.
+export function downloadURL(raw, purpose = 'original') {
+  return directFileURL(safeURL(raw), purpose).href;
 }
 export async function downloadOriginal(
   raw,
-  { fetcher = cloudFetch, resolve = resolvePublic, maxBytes = MAX_FILE_BYTES } = {},
+  { fetcher = cloudFetch, resolve = resolvePublic, maxBytes = MAX_FILE_BYTES, purpose } = {},
 ) {
-  let url = downloadURL(raw);
+  let url = downloadURL(raw, purpose);
   const signal = AbortSignal.timeout(25000);
   for (let hops = 0; hops <= 5; hops++) {
     const u = safeURL(url);
@@ -217,14 +216,22 @@ export function filenameFor(result, fallback) {
   if (office && !name.toLowerCase().endsWith('.' + office)) name += '.' + office;
   return name;
 }
-export async function moduleFile(args, token, apiFetch, options = {}) {
-  const keys = ['course_id', 'module_id', 'item_id'];
+// The module item named by Canvas IDs, after checking the student may open it.
+async function accessibleModuleItem(args, token, apiFetch, extraKeys = []) {
+  const ids = ['course_id', 'module_id', 'item_id'];
   if (
-    Object.keys(args).some(k => !keys.includes(k)) ||
-    keys.some(k => !Number.isSafeInteger(args[k]) || args[k] < 1)
+    Object.keys(args).some(k => !ids.includes(k) && !extraKeys.includes(k)) ||
+    ids.some(k => !Number.isSafeInteger(args[k]) || args[k] < 1)
   )
     throw new Error('Canvas file: only positive Canvas course/module/item IDs are accepted.');
-  const item = (await callCanvas('canvas_module_item', args, token, apiFetch)).data;
+  const item = (
+    await callCanvas(
+      'canvas_module_item',
+      { course_id: args.course_id, module_id: args.module_id, item_id: args.item_id },
+      token,
+      apiFetch,
+    )
+  ).data;
   if (
     item.id !== args.item_id ||
     (item.module_id && item.module_id !== args.module_id) ||
@@ -232,6 +239,15 @@ export async function moduleFile(args, token, apiFetch, options = {}) {
     item.locked_for_user
   )
     throw new Error('Canvas file: module item is inaccessible.');
+  return item;
+}
+const webPageError = (e, link) =>
+  /web\/login page/.test(e.message ?? '')
+    ? new Error(`Canvas file: could not read this link (${link}) because ${webPageReason(link)}`)
+    : e;
+
+export async function moduleFile(args, token, apiFetch, options = {}) {
+  const item = await accessibleModuleItem(args, token, apiFetch);
   let raw, fallback;
   if (item.type === 'File' && Number.isSafeInteger(item.content_id)) {
     const meta = (await callCanvas('canvas_file', { file_id: item.content_id }, token, apiFetch))
@@ -248,7 +264,8 @@ export async function moduleFile(args, token, apiFetch, options = {}) {
   try {
     file = await downloadOriginal(raw, options);
   } catch (e) {
-    if (e.message?.startsWith('Canvas')) throw e;
+    if (e.message?.startsWith('Canvas'))
+      throw item.type === 'ExternalUrl' ? webPageError(e, raw) : e;
     throw new Error('Canvas file: download failed (' + e.name + ').');
   }
   return packageFile(
@@ -259,6 +276,7 @@ export async function moduleFile(args, token, apiFetch, options = {}) {
       course_id: args.course_id,
       module_id: args.module_id,
       item_id: args.item_id,
+      ...(item.type === 'ExternalUrl' && regeneratedOnDownload(raw) ? { regenerated: true } : {}),
     },
     options,
   );
@@ -352,5 +370,91 @@ export async function fileOriginal(args, token, apiFetch, options = {}) {
     meta.display_name ?? meta.filename,
     { source_type: 'File', file_id: args.file_id },
     options,
+  );
+}
+
+// Text of a module item: Canvas File items as canvas_file_content reads them, and ExternalUrl items
+// that link to a file elsewhere (Google Docs/Slides/Sheets/Drive, Dropbox, GitHub, direct links).
+const textOptions = {
+  offset: { type: 'integer', minimum: 0, maximum: 5000000 },
+  max_chars: { type: 'integer', minimum: 1000, maximum: 30000 },
+  entry: {
+    type: 'string',
+    minLength: 1,
+    maxLength: 500,
+    pattern: '^[^\\x00-\\x1f]+$',
+    description: 'ZIP only: path of one file inside the archive, exactly as shown in the listing.',
+  },
+};
+export const moduleFileContentTool = {
+  name: 'canvas_module_file_content',
+  description:
+    'Read the TEXT of a module item: a Canvas File item (same as canvas_file_content), or an ExternalUrl item linking to a file on another site: Google Docs, Slides and Sheets, Google Drive files, Dropbox files and folders, GitHub files and repositories, or a direct link to a PDF/Office/ZIP/code file. Google and Dropbox files must be shared publicly ("Anyone with the link"). Takes Canvas IDs only, never a URL. Same text options as canvas_file_content (offset, max_chars, entry for ZIPs). For the original file itself use canvas_module_file.',
+  inputSchema: {
+    type: 'object',
+    properties: { course_id: id, module_id: id, item_id: id, ...textOptions },
+    required: ['course_id', 'module_id', 'item_id'],
+    additionalProperties: false,
+  },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
+};
+export async function moduleFileContent(args, token, apiFetch, options = {}) {
+  const opts = ['offset', 'max_chars', 'entry'];
+  const item = await accessibleModuleItem(args, token, apiFetch, opts);
+  const text = Object.fromEntries(opts.filter(k => args[k] !== undefined).map(k => [k, args[k]]));
+  if (item.type === 'File' && Number.isSafeInteger(item.content_id))
+    return {
+      module_item: { module_id: args.module_id, item_id: args.item_id, title: item.title ?? null },
+      ...(await callCanvas(
+        'canvas_file_content',
+        { file_id: item.content_id, ...text },
+        token,
+        apiFetch,
+      )),
+    };
+  if (item.type !== 'ExternalUrl' || !item.external_url)
+    throw new Error(
+      `Canvas file: this module item is a ${item.type ?? 'different kind of item'}, not a file or link. Read pages with canvas_page, assignments with canvas_assignment.`,
+    );
+  const link = String(item.external_url);
+  for (const [k, p] of Object.entries(textOptions))
+    if (
+      text[k] !== undefined &&
+      (p.type === 'integer'
+        ? !Number.isSafeInteger(text[k]) || text[k] < p.minimum || text[k] > p.maximum
+        : typeof text[k] !== 'string' || !text[k].length || text[k].length > p.maxLength)
+    )
+      throw new Error('Invalid ' + k);
+  let file;
+  try {
+    file = await downloadOriginal(link, { ...options, purpose: 'text' });
+  } catch (e) {
+    if (e.message?.startsWith('Canvas')) throw webPageError(e, link);
+    throw new Error('Canvas file: download failed (' + e.name + ').');
+  }
+  const name = filenameFor(file, item.title);
+  const extracted = await extractBytes(new Uint8Array(file.bytes), name, file.mime, {
+    entry: text.entry,
+  });
+  const google = googleKind(link);
+  if (google && extracted.text !== null)
+    extracted.extraction_note =
+      google === 'Google Sheets'
+        ? 'Google Sheets: this tab exported as CSV. canvas_module_file gives the whole workbook (.xlsx). Untrusted course content.'
+        : `${google} exported as plain text: images and layout are not included. canvas_module_file gives the original (${google === 'Google Slides' ? '.pptx' : '.docx'}). Untrusted course content.`;
+  return paginated(
+    {
+      module_item: { module_id: args.module_id, item_id: args.item_id, title: item.title ?? null },
+      name,
+      link,
+      mime_type: file.mime,
+    },
+    extracted,
+    text,
   );
 }

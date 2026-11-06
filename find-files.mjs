@@ -269,7 +269,7 @@ export async function findFiles(args, token, fetcher) {
             url,
             found_in: where,
             read_with: {
-              tool: 'canvas_module_file',
+              tool: 'canvas_module_file_content',
               course_id: c,
               module_id: m.id,
               item_id: it.id,
@@ -405,6 +405,6 @@ export async function findFiles(args, token, fetcher) {
           note: `Stopped after ${requests} Canvas requests; some linked pages or lists were not searched. Open more pages with canvas_context_page or canvas_module_items if the file is not listed.`,
         }),
     how_to_read:
-      'Read a file_id with canvas_file_content (text from PDF/Office/code, ZIP listing and contents) or canvas_file_original (original bytes, e.g. scanned PDFs). An external link with read_with: call canvas_module_file with those IDs. Other external links cannot be read by this connector: give the user the link.',
+      'Read a file_id with canvas_file_content (text from PDF/Office/code, ZIP listing and contents) or canvas_file_original (original bytes, e.g. scanned PDFs). An external link with read_with (a module item): call canvas_module_file_content with those IDs for its text (Google Docs/Slides/Sheets/Drive, Dropbox, GitHub), or canvas_module_file for the original file. Other external links cannot be read by this connector: give the user the link.',
   };
 }

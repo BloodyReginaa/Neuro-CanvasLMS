@@ -37,10 +37,11 @@ export async function readFileResource(uri, token, apiFetch, options) {
   // Recheck current Canvas access and the source on every authenticated resource read.
   const fetchIt = expected.kind === 'file' ? fileOriginal : moduleFile;
   const result = await fetchIt(expected.args, token, apiFetch, options);
-  if (
-    result.structuredContent.sha256 !== expected.sha256 ||
-    result.structuredContent.name !== expected.name
-  )
+  // A file the other site regenerates on every download (Google exports) cannot match its earlier
+  // hash; access was still rechecked above and the name must still match.
+  const sameBytes =
+    result.structuredContent.sha256 === expected.sha256 || result.structuredContent.regenerated;
+  if (!sameBytes || result.structuredContent.name !== expected.name)
     throw new Error('Canvas file: resource changed; fetch the file again.');
   return { contents: [{ ...result.content[1].resource, uri }] };
 }
