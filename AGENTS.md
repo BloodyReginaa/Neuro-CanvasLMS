@@ -30,6 +30,7 @@ Code map:
 - `owner.mjs`: owner binding, allowed OAuth clients. `i18n.mjs` + `pages.mjs`: web pages.
 - `update-check.mjs`: once a day reads the newest version number from npm; when it is newer the AI
   tells the user how to update. Also the `canvas_connector_version` tool.
-- `installer/`: the setup wizard (re-running it asks once, y/n, then updates with the saved
-  settings; without a terminal it does not ask). `version.mjs`: shown on
-  the home page and /healthz, compared with npm by update-check.mjs.
+- `installer/`: the setup wizard. Re-running it asks once (y/n), then updates with the saved
+  settings (without a terminal it does not ask). `installer/verify.mjs`: the post-deploy online
+  check, also run alone by `npx -y neuro-canvas-lms check`.
+- `version.mjs`: shown on the home page and /healthz, compared with npm by update-check.mjs.

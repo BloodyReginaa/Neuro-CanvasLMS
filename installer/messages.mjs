@@ -23,7 +23,6 @@ const M = {
     deploy_ok: 'Connector is live: {url}',
     check: 'Step 4/4 · Checking the connector…',
     check_ok: 'Everything works (version {version}).',
-    check_bad: 'The connector did not pass its check: {detail}',
     done: 'Done! Last step, in your AI:',
     done_1:
       '1. Create a Canvas access token: {canvas}/profile/settings → "+ New Access Token" (copy it; Canvas shows it once).',
@@ -47,6 +46,12 @@ const M = {
     un_done:
       'Removed. Also delete the Canvas token (Canvas → Account → Settings) and the connector in your AI app.',
     cancelled: 'Cancelled.',
+    check_pending:
+      'Deployed to {url}, but it could not be confirmed online yet ({detail}). A new address can take a few more minutes the first time. Nothing needs to be deployed again: in a few minutes, check it with\n    {cmd}',
+    check_none:
+      'No install named "{name}" was found (installed under another name? add --name <name>). Install it first with npx -y neuro-canvas-lms.',
+    check_only: 'Checking the connector at {url}…',
+    check_connected: 'It is connected to your AI apps and ready to use.',
     cert_wait:
       'The new workers.dev address is still getting its HTTPS certificate. The first time this can take a few minutes; waiting…',
     pick_account_flag:
@@ -89,7 +94,6 @@ const M = {
     deploy_ok: '连接器已上线：{url}',
     check: '第 4/4 步 · 检查连接器…',
     check_ok: '一切正常（版本 {version}）。',
-    check_bad: '连接器没通过检查：{detail}',
     done: '装好了！最后一步，在你的 AI 里：',
     done_1:
       '1. 生成 Canvas 访问令牌：{canvas}/profile/settings →「+ 新建访问许可证」（立刻复制，Canvas 只显示一次）。',
@@ -107,6 +111,12 @@ const M = {
     un_failed: '没能删除{what}：{detail}\n  本地安装记录已保留，再运行一次同一条命令即可重试。',
     un_done: '已删除。另外请删掉 Canvas 令牌（Canvas → 账户 → 设置）和 AI 应用里的连接器。',
     cancelled: '已取消。',
+    check_pending:
+      '已部署到 {url}，但还没能确认它已上线（{detail}）。新地址第一次可能还要几分钟。不需要重新部署：过几分钟用这条命令只做检查：\n    {cmd}',
+    check_none:
+      '没找到名为「{name}」的安装（装的时候用了别的名字？加上 --name <名字>）。请先用 npx -y neuro-canvas-lms 安装。',
+    check_only: '检查连接器 {url}…',
+    check_connected: '已经连接到你的 AI 应用，可以直接用。',
     cert_wait: '新的 workers.dev 地址还在申请 HTTPS 证书，第一次可能要几分钟，正在等待…',
     pick_account_flag:
       '这个 Cloudflare 登录下有多个账号。请在同一条命令后加上其中一个，再运行一次：\n{list}',
@@ -150,7 +160,6 @@ const M = {
     deploy_ok: 'El conector está activo: {url}',
     check: 'Paso 4/4 · Comprobando el conector…',
     check_ok: 'Todo funciona (versión {version}).',
-    check_bad: 'El conector no pasó la comprobación: {detail}',
     done: '¡Listo! Último paso, en tu IA:',
     done_1:
       '1. Crea un token de acceso de Canvas: {canvas}/profile/settings → "+ Nuevo token de acceso" (cópialo; Canvas lo muestra una sola vez).',
@@ -175,6 +184,12 @@ const M = {
     un_done:
       'Eliminado. Borra también el token de Canvas (Canvas → Cuenta → Configuración) y el conector en tu app de IA.',
     cancelled: 'Cancelado.',
+    check_pending:
+      'Desplegado en {url}, pero aún no se pudo confirmar que está en línea ({detail}). Una dirección nueva puede tardar unos minutos más la primera vez. No hace falta volver a desplegar: dentro de unos minutos, compruébalo con\n    {cmd}',
+    check_none:
+      'No se encontró ninguna instalación llamada "{name}" (¿la instalaste con otro nombre? añade --name <nombre>). Instálala primero con npx -y neuro-canvas-lms.',
+    check_only: 'Comprobando el conector en {url}…',
+    check_connected: 'Está conectado a tus apps de IA y listo para usar.',
     cert_wait:
       'La nueva dirección workers.dev todavía está obteniendo su certificado HTTPS. La primera vez puede tardar unos minutos; esperando…',
     pick_account_flag:
@@ -220,7 +235,6 @@ const M = {
     deploy_ok: 'コネクタが公開されました：{url}',
     check: 'ステップ 4/4 · コネクタを確認しています…',
     check_ok: 'すべて正常です（バージョン {version}）。',
-    check_bad: 'コネクタが確認に失敗しました：{detail}',
     done: '完了！最後のステップ（AI 側）：',
     done_1:
       '1. Canvas アクセストークンを作成：{canvas}/profile/settings →「+ 新しいアクセストークン」（すぐコピー。表示は一度きりです）。',
@@ -244,6 +258,12 @@ const M = {
     un_done:
       '削除しました。Canvas トークン（Canvas → アカウント → 設定）と AI アプリのコネクタも削除してください。',
     cancelled: 'キャンセルしました。',
+    check_pending:
+      '{url} へのデプロイは完了しましたが、まだオンラインであることを確認できていません（{detail}）。新しいアドレスは初回にさらに数分かかることがあります。再デプロイは不要です。数分後に次のコマンドで確認だけ行ってください：\n    {cmd}',
+    check_none:
+      '「{name}」という名前のインストールが見つかりません（別の名前でインストールした場合は --name <名前> を付けてください）。先に npx -y neuro-canvas-lms でインストールしてください。',
+    check_only: '{url} のコネクタを確認しています…',
+    check_connected: 'AI アプリに接続済みで、すぐに使えます。',
     cert_wait:
       '新しい workers.dev アドレスの HTTPS 証明書を準備しています。初回は数分かかることがあります。待機しています…',
     pick_account_flag:
@@ -289,7 +309,6 @@ const M = {
     deploy_ok: 'कनेक्टर चालू है: {url}',
     check: 'चरण 4/4 · कनेक्टर की जाँच हो रही है…',
     check_ok: 'सब कुछ ठीक है (संस्करण {version})।',
-    check_bad: 'कनेक्टर जाँच में विफल रहा: {detail}',
     done: 'हो गया! आख़िरी कदम, अपने AI में:',
     done_1:
       '1. Canvas एक्सेस टोकन बनाएँ: {canvas}/profile/settings → "+ New Access Token" (तुरंत कॉपी करें; Canvas इसे केवल एक बार दिखाता है)।',
@@ -313,6 +332,12 @@ const M = {
     un_done:
       'हटा दिया गया। Canvas टोकन (Canvas → Account → Settings) और अपने AI ऐप में कनेक्टर भी हटाएँ।',
     cancelled: 'रद्द किया गया।',
+    check_pending:
+      '{url} पर डिप्लॉय हो गया, लेकिन अभी पुष्टि नहीं हो पाई कि यह ऑनलाइन है ({detail})। नए पते को पहली बार कुछ और मिनट लग सकते हैं। दोबारा डिप्लॉय करने की ज़रूरत नहीं: कुछ मिनट बाद इस कमांड से सिर्फ़ जाँच करें:\n    {cmd}',
+    check_none:
+      '"{name}" नाम का कोई इंस्टॉल नहीं मिला (किसी और नाम से इंस्टॉल किया था? --name <नाम> जोड़ें)। पहले npx -y neuro-canvas-lms से इंस्टॉल करें।',
+    check_only: '{url} पर कनेक्टर की जाँच हो रही है…',
+    check_connected: 'यह आपके AI ऐप से जुड़ा है और इस्तेमाल के लिए तैयार है।',
     cert_wait:
       'नए workers.dev पते का HTTPS प्रमाणपत्र अभी तैयार हो रहा है। पहली बार इसमें कुछ मिनट लग सकते हैं; प्रतीक्षा हो रही है…',
     pick_account_flag:

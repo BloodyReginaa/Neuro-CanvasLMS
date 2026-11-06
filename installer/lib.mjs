@@ -68,7 +68,7 @@ export function parseArgs(argv) {
   const out = { command: 'install' };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === 'install' || a === 'uninstall' || a === 'help') out.command = a;
+    if (['install', 'uninstall', 'help', 'check'].includes(a)) out.command = a;
     else if (a === '--yes' || a === '-y') out.yes = true;
     else if (a.startsWith('--')) {
       const [k, v] = a.includes('=') ? a.slice(2).split(/=(.*)/s) : [a.slice(2), argv[++i]];

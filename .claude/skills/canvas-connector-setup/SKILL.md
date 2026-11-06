@@ -60,6 +60,10 @@ same command again.
      which account to use and add that flag. Never pick one yourself.
    - **New Cloudflare account without a workers.dev subdomain:** give the user the printed
      dashboard link; they choose a name (e.g. their name plus a number) and save it.
+   - **Deployed, but not confirmed online yet (exit code 2):** the deploy worked; the new address did
+     not answer correctly in time (usually its HTTPS certificate). Do not install again: wait a few
+     minutes, then run the check it prints, `npx -y neuro-canvas-lms check` (with the same
+     `--name` if one was used). It deploys nothing; exit code 0 means ready.
    - **"does not look like a Canvas site":** the address is wrong (school portal or SSO page).
      Ask the user again.
    - **Cloudflare sign-in failed or timed out:** see step 3 (the user signs in once, in their own
@@ -105,7 +109,7 @@ their AI app: connector → Disconnect → Connect → paste it. No reinstall ne
 | Homepage says "not configured" / `/healthz` not ok | `CANVAS_HOST` var missing: run the installer again. |
 | Verification failed, HTTP 401 | Token wrong, incomplete or expired → new token. |
 | "denied access to this resource" | Canvas permission for that item (e.g. the instructor hid it). The token is fine; don't reconnect. |
-| New connector address fails with `ERR_SSL_VERSION_OR_CIPHER_MISMATCH`, a TLS handshake error or "not found" right after the first deploy | The new workers.dev subdomain is still getting its certificate/DNS (minutes). The installer waits up to 5 minutes; if it still fails, wait a few minutes and open `<url>/healthz` or run the installer again. Nothing is broken. |
+| New connector address fails with `ERR_SSL_VERSION_OR_CIPHER_MISMATCH`, a TLS handshake error or "not found" right after the first deploy | The new workers.dev subdomain is still getting its certificate/DNS (minutes). The installer waits up to 5 minutes, then exits with code 2 ("deployed, not confirmed online yet"). Nothing is broken and nothing needs redeploying: wait a few minutes and run `npx -y neuro-canvas-lms check`. |
 | HTTP 406 / HTML error pages from Canvas | Something in front of Canvas rejected the request. API calls already retry over a raw TLS socket (`canvas-transport.mjs`). Debug with the `CANVAS_TRANSPORT` var (`fetch` / `socket`) and `npx wrangler tail`. |
 | File download 403 (`text/html`) while metadata works | A firewall rejects the download's User-Agent (none, or one containing `UMassCanvas`). Keep `DOWNLOAD_UA` in `file-content.mjs` as shipped. |
 | "not shared as Anyone with the link" on a module link | The Google/Dropbox file is private. Only the teacher can change that; give the user the link to open it signed in. |

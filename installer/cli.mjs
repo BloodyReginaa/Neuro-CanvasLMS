@@ -1,11 +1,13 @@
 // Neuro-CanvasLMS installer. Deploys THIS copy of the code to your own Cloudflare account.
 //   npx -y neuro-canvas-lms             install, or update an existing install
 //   npx -y neuro-canvas-lms uninstall   remove it
+//   npx -y neuro-canvas-lms check       only check an installed connector (deploys nothing)
 //   (from a clone: npm run setup / npm run setup -- uninstall)
 // Running it again updates the connector to the code you are running and keeps its storage, so
 // existing Claude/ChatGPT connections keep working.
 // Language: your system language if supported (en, zh, es, ja, hi), else English; --lang to choose.
 // Automation/tests: --name, --canvas-host, --school, --account-id, --yes; env NCLMS_HOME, NCLMS_LANG.
+// Exit codes: 0 done, 1 failed, 2 deployed but not confirmed online yet (run `check` later).
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -30,11 +32,9 @@ import {
   isYes,
   needsSubdomain,
   subdomainLink,
-  isWarmingUp,
-  CHECK_WAIT,
-  WARMUP_WAIT,
 } from './lib.mjs';
 import { msg } from './messages.mjs';
+import { verifyDeployment } from './verify.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 // wrangler's package "exports" hide bin/; find the package root from its main entry instead.
@@ -230,41 +230,6 @@ async function runningVersion(url) {
   }
 }
 
-async function healthCheck(url) {
-  let detail = 'no answer';
-  let told = false;
-  const start = Date.now();
-  for (let i = 0; Date.now() - start < (isWarmingUp(detail) ? WARMUP_WAIT : CHECK_WAIT); i++) {
-    if (i) await new Promise(r => setTimeout(r, 3000));
-    try {
-      const h = await fetch(`${url}/healthz`, {
-        headers: { 'Cache-Control': 'no-cache' },
-        signal: AbortSignal.timeout(10000),
-      });
-      const j = h.ok ? await h.json() : null;
-      if (!j?.ok) detail = `/healthz HTTP ${h.status}`;
-      else if (j.version !== VERSION) detail = `still ${j.version}`;
-      else {
-        const mcp = await fetch(`${url}/mcp`, {
-          method: 'POST',
-          body: '{}',
-          signal: AbortSignal.timeout(10000),
-        });
-        if (mcp.status === 401) return { ok: true, connected: j.connected === true };
-        detail = `/mcp HTTP ${mcp.status}`;
-      }
-    } catch (e) {
-      // fetch says only "fetch failed"; the cause names the real problem (TLS, DNS, …)
-      detail = e.cause?.code ?? e.cause?.message ?? e.message;
-      if (isWarmingUp(detail) && !told) {
-        say('cert_wait');
-        told = true;
-      }
-    }
-  }
-  return { ok: false, detail };
-}
-
 async function install() {
   console.log(`\n  ${msg(lang, 'title')}\n`);
   const [major] = process.versions.node.split('.').map(Number);
@@ -319,8 +284,8 @@ async function install() {
   save({ url, version: VERSION });
 
   say('check');
-  const check = await healthCheck(url);
-  if (!check.ok) fail(msg(lang, 'check_bad', { detail: check.detail }));
+  const check = await verifyDeployment(url, VERSION, { onWarmup: () => say('cert_wait') });
+  if (!check.ok) return notConfirmed(name, url, check.detail);
   ok('check_ok', { version: VERSION });
 
   // Already connected: an update needs nothing from the user, so don't send them to make a token,
@@ -333,6 +298,22 @@ async function install() {
     console.log('');
     return;
   }
+  nextSteps(url, host);
+}
+
+// The deploy worked but the address did not answer correctly in time (usually a brand-new
+// workers.dev address still getting its certificate). Not a failure: say where it is and how to
+// check again without deploying. Exit code 2 tells scripts and agents exactly that.
+function notConfirmed(name, url, detail) {
+  const cmd = 'npx -y neuro-canvas-lms check' + (name === DEFAULT_NAME ? '' : ` --name ${name}`);
+  console.log('');
+  say('check_pending', { url, detail, cmd });
+  console.log('');
+  process.exitCode = 2;
+}
+
+// What the user does next, once the connector is online and not yet connected to an AI app.
+function nextSteps(url, host) {
   copy(`${url}/mcp`);
   console.log(`\n  ${msg(lang, 'done')}`);
   say('done_1', { canvas: `https://${host}` });
@@ -345,6 +326,28 @@ async function install() {
   say('done_update');
   console.log('');
   if (!args.yes) openUrl(`https://${host}/profile/settings`);
+}
+
+// Only check an installed connector (after "not confirmed online yet"): nothing is deployed.
+async function check() {
+  console.log(`\n  ${msg(lang, 'title')}\n`);
+  const name = args.name ?? DEFAULT_NAME;
+  if (!validWorkerName(name)) fail('invalid --name');
+  const statePath = path.join(HOME, name, 'state.json');
+  const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : {};
+  if (!state.url) {
+    console.error('  ✗ ' + msg(lang, 'check_none', { name }));
+    process.exitCode = 1;
+    return;
+  }
+  say('check_only', { url: state.url });
+  const result = await verifyDeployment(state.url, state.version, {
+    onWarmup: () => say('cert_wait'),
+  });
+  if (!result.ok) return notConfirmed(name, state.url, result.detail);
+  ok('check_ok', { version: result.version });
+  if (result.connected) return ok('check_connected');
+  nextSteps(state.url, state.host);
 }
 
 async function uninstall() {
@@ -386,11 +389,11 @@ const help = async () =>
     fs
       .readFileSync(fileURLToPath(import.meta.url), 'utf8')
       .split('\n')
-      .slice(0, 8)
+      .slice(0, 10)
       .join('\n'),
   );
-({ install, uninstall, help })[args.command]().then(
-  () => process.exit(0),
+({ install, uninstall, help, check })[args.command]().then(
+  () => process.exit(process.exitCode ?? 0),
   e => {
     console.error('\n  ✗ ' + msg(lang, 'failed', { detail: e?.message ?? e }) + '\n');
     process.exit(1);
