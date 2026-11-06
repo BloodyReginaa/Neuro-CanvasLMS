@@ -31,7 +31,7 @@ La mayoría de integraciones de Canvas con IA son herramientas **locales**: solo
 Necesitas [Node.js 22+](https://nodejs.org), una [cuenta gratuita de Cloudflare](https://dash.cloudflare.com/sign-up) y tu acceso a Canvas. En una terminal, ejecuta:
 
 ```bash
-npx github:BloodyReginaa/Neuro-CanvasLMS
+npx -y github:BloodyReginaa/Neuro-CanvasLMS
 ```
 
 El instalador inicia sesión en Cloudflare (se abre una página en el navegador; haz clic en **Authorize**), pregunta la dirección de Canvas de tu universidad, despliega el conector en tu propia cuenta y lo comprueba. Después:
@@ -48,7 +48,7 @@ El instalador inicia sesión en Cloudflare (se abre una página en el navegador;
 ## Actualizar, desinstalar
 
 - **Actualizar:** vuelve a ejecutar el mismo comando `npx`. Reutiliza tu configuración sin preguntar nada, despliega el código actual y conserva tu almacenamiento y conexiones; nunca tienes que reconectar. Cuando sale una versión nueva, tu IA te avisa.
-- **Desinstalar:** `npx github:BloodyReginaa/Neuro-CanvasLMS uninstall`, y después borra el token de Canvas y el conector en tu app de IA.
+- **Desinstalar:** `npx -y github:BloodyReginaa/Neuro-CanvasLMS uninstall`, y después borra el token de Canvas y el conector en tu app de IA.
 
 ## Cómo funciona
 

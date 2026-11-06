@@ -1,6 +1,6 @@
 // Neuro-CanvasLMS installer. Deploys THIS copy of the code to your own Cloudflare account.
-//   npx github:BloodyReginaa/Neuro-CanvasLMS             install, or update an existing install
-//   npx github:BloodyReginaa/Neuro-CanvasLMS uninstall   remove it
+//   npx -y github:BloodyReginaa/Neuro-CanvasLMS             install, or update an existing install
+//   npx -y github:BloodyReginaa/Neuro-CanvasLMS uninstall   remove it
 //   (from a clone: npm run setup / npm run setup -- uninstall)
 // Running it again updates the connector to the code you are running and keeps its storage, so
 // existing Claude/ChatGPT connections keep working.

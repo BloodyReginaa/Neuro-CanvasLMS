@@ -31,7 +31,7 @@ Canvas と AI をつなぐツールの多くは **ローカル** ツールです
 必要なもの：[Node.js 22+](https://nodejs.org)、無料の [Cloudflare アカウント](https://dash.cloudflare.com/sign-up)、Canvas のログイン。ターミナルで次を実行します：
 
 ```bash
-npx github:BloodyReginaa/Neuro-CanvasLMS
+npx -y github:BloodyReginaa/Neuro-CanvasLMS
 ```
 
 インストーラーが Cloudflare にサインインし（ブラウザでページが開くので **Authorize** をクリック）、学校の Canvas アドレスを尋ね、あなたのアカウントにコネクタをデプロイして動作確認します。その後：
@@ -48,7 +48,7 @@ AI に任せたい場合は、このリポジトリをクローンして Claude 
 ## 更新・アンインストール
 
 - **更新：** 同じ `npx` コマンドをもう一度実行。保存済みの設定を使うので質問はなく、現在のコードをデプロイし、ストレージと接続はそのまま残ります。再接続は不要です。新しいバージョンが出ると AI が知らせてくれます。
-- **アンインストール：** `npx github:BloodyReginaa/Neuro-CanvasLMS uninstall` を実行し、Canvas トークンと AI アプリのコネクタを削除してください。
+- **アンインストール：** `npx -y github:BloodyReginaa/Neuro-CanvasLMS uninstall` を実行し、Canvas トークンと AI アプリのコネクタを削除してください。
 
 ## 仕組み
 

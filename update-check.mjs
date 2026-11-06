@@ -5,7 +5,7 @@
 // The check runs in the background after a request; a failed check just shows no notice.
 export const UPDATE_SOURCE =
   'https://raw.githubusercontent.com/BloodyReginaa/Neuro-CanvasLMS/main/package.json';
-export const UPDATE_COMMAND = 'npx github:BloodyReginaa/Neuro-CanvasLMS';
+export const UPDATE_COMMAND = 'npx -y github:BloodyReginaa/Neuro-CanvasLMS';
 export const UPDATE_KEY = 'update:latest'; // in OAUTH_KV: { version, checked }
 const DAY = 24 * 3600 * 1000;
 const REREAD = 3600 * 1000; // re-read the stored result at most hourly per Worker instance

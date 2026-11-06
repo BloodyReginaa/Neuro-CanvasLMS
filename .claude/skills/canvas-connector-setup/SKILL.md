@@ -6,7 +6,7 @@ description: Install, update, reconnect, uninstall or troubleshoot this repo's r
 # Canvas connector setup
 
 The user runs **their own copy** of this connector in their own Cloudflare account. The
-installer (`npm run setup`, same as `npx github:BloodyReginaa/Neuro-CanvasLMS`) does all the
+installer (`npm run setup`, same as `npx -y github:BloodyReginaa/Neuro-CanvasLMS`) does all the
 technical work. Most users are not developers: explain each step in one plain sentence, **in the
 user's language**.
 
@@ -51,7 +51,7 @@ the owner. (To pin the owner, add `OWNER_CANVAS_ID` to the vars in
 
 ## Update / reinstall / uninstall
 
-- **Update:** `git pull`, then run the installer again (or `npx github:BloodyReginaa/Neuro-CanvasLMS`).
+- **Update:** `git pull`, then run the installer again (or `npx -y github:BloodyReginaa/Neuro-CanvasLMS`).
   It reuses the storage, so connections keep working. Start a new chat afterwards (clients cache
   tool lists).
 - **Uninstall:** `npm run setup -- uninstall --yes` (deletes the Worker and its storage), then the

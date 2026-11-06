@@ -7,7 +7,7 @@ It is a community project provided as is.
 
 - To install, update, reconnect, uninstall or troubleshoot: follow
   `.claude/skills/canvas-connector-setup/SKILL.md` (Claude Code loads it as a skill; other agents
-  should read it). The installer is `npm run setup` / `npx github:BloodyReginaa/Neuro-CanvasLMS`.
+  should read it). The installer is `npm run setup` / `npx -y github:BloodyReginaa/Neuro-CanvasLMS`.
 - Reply in the user's language. Most users are students, not developers.
 - Never ask for, read, type or store the user's Canvas access token — they paste it only
   into the connector's authorization page in their browser.

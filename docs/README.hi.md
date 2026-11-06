@@ -31,7 +31,7 @@ AI के लिए ज़्यादातर Canvas इंटीग्रे�
 ज़रूरत: [Node.js 22+](https://nodejs.org), मुफ़्त [Cloudflare खाता](https://dash.cloudflare.com/sign-up) और आपका Canvas लॉगिन। टर्मिनल में चलाएँ:
 
 ```bash
-npx github:BloodyReginaa/Neuro-CanvasLMS
+npx -y github:BloodyReginaa/Neuro-CanvasLMS
 ```
 
 इंस्टॉलर Cloudflare में साइन इन करवाता है (ब्राउज़र में पेज खुलेगा; **Authorize** पर क्लिक करें), आपके संस्थान का Canvas पता पूछता है, कनेक्टर को आपके अपने खाते में डिप्लॉय करता है और जाँचता है। फिर:
@@ -48,7 +48,7 @@ AI से करवाना है? यह रिपॉज़िटरी क�
 ## अपडेट, अनइंस्टॉल
 
 - **अपडेट:** वही `npx` कमांड फिर से चलाएँ। यह आपकी सहेजी गई सेटिंग्स इस्तेमाल करता है और कुछ नहीं पूछता, मौजूदा कोड डिप्लॉय करता है और आपका स्टोरेज व कनेक्शन बनाए रखता है; दोबारा जोड़ने की ज़रूरत नहीं। नया संस्करण आने पर आपका AI आपको बता देगा।
-- **अनइंस्टॉल:** `npx github:BloodyReginaa/Neuro-CanvasLMS uninstall`, फिर Canvas टोकन और AI ऐप में कनेक्टर हटाएँ।
+- **अनइंस्टॉल:** `npx -y github:BloodyReginaa/Neuro-CanvasLMS uninstall`, फिर Canvas टोकन और AI ऐप में कनेक्टर हटाएँ।
 
 ## यह कैसे काम करता है
 

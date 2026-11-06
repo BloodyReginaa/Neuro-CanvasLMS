@@ -31,7 +31,7 @@ Most Canvas integrations for AI are **local** tools: they only work while your o
 You need [Node.js 22+](https://nodejs.org), a free [Cloudflare account](https://dash.cloudflare.com/sign-up) and your Canvas login. In a terminal, run:
 
 ```bash
-npx github:BloodyReginaa/Neuro-CanvasLMS
+npx -y github:BloodyReginaa/Neuro-CanvasLMS
 ```
 
 The installer signs you in to Cloudflare (a browser page opens; click **Authorize**), asks for your school's Canvas address, deploys the connector to your own account and checks that it works. Then:
@@ -48,7 +48,7 @@ Prefer to let an AI do it? Clone this repo, open it in Claude Code (or Codex) an
 ## Update, uninstall
 
 - **Update:** run the same `npx` command again. It reuses your settings and asks nothing, deploys the current code and keeps your storage and connections, so you never reconnect. When a new version is out, your AI tells you.
-- **Uninstall:** `npx github:BloodyReginaa/Neuro-CanvasLMS uninstall`, then delete the Canvas token and the connector in your AI app.
+- **Uninstall:** `npx -y github:BloodyReginaa/Neuro-CanvasLMS uninstall`, then delete the Canvas token and the connector in your AI app.
 
 ## How it works
 

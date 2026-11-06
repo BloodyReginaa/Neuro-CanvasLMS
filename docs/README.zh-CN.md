@@ -31,7 +31,7 @@
 你需要：[Node.js 22+](https://nodejs.org)、免费的 [Cloudflare 账号](https://dash.cloudflare.com/sign-up)，以及能登录 Canvas。在终端里运行：
 
 ```bash
-npx github:BloodyReginaa/Neuro-CanvasLMS
+npx -y github:BloodyReginaa/Neuro-CanvasLMS
 ```
 
 安装向导会：登录 Cloudflare（浏览器会打开一个页面，点 **Authorize**）、问你学校的 Canvas 网址、部署到你自己的账号、检查是否正常。然后：
@@ -48,7 +48,7 @@ npx github:BloodyReginaa/Neuro-CanvasLMS
 ## 更新、卸载
 
 - **更新：** 再运行一次同样的 `npx` 命令。它沿用之前的设置，不会提问，部署当前的代码，存储和连接都会保留，不需要重新连接。有新版本时，AI 会告诉你。
-- **卸载：** `npx github:BloodyReginaa/Neuro-CanvasLMS uninstall`，然后删掉 Canvas 令牌和 AI 应用里的连接器。
+- **卸载：** `npx -y github:BloodyReginaa/Neuro-CanvasLMS uninstall`，然后删掉 Canvas 令牌和 AI 应用里的连接器。
 
 ## 原理
 
