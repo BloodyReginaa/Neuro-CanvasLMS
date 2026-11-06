@@ -35,7 +35,10 @@ const def = (name, description, properties = {}, required = []) => ({
   },
 });
 export const tools = [
-  def('canvas_profile', 'Read the connected Canvas profile.'),
+  def(
+    'canvas_profile',
+    "Read the connected Canvas profile (your Canvas account). For this connector's own version use canvas_connector_version.",
+  ),
   def(
     'canvas_courses',
     'List enrolled courses; use returned course IDs. Current courses by default; enrollment_state "completed" lists past (concluded) courses, "invited_or_pending" lists course invitations.',

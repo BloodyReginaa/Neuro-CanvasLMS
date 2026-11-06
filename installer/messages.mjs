@@ -33,7 +33,9 @@ const M = {
     done_now: 'Do this right away, and keep the URL to yourself until it is connected.',
     done_gpt: '   ChatGPT: add a custom connector (developer mode) with the same URL.',
     updated:
-      'Updated to version {version}. Your connected Claude/ChatGPT keep working: nothing else to do.',
+      'Updated to version {version}. Your connected Claude/ChatGPT keep working: no reconnecting.',
+    updated_refresh:
+      'ChatGPT keeps its own copy of the tool list: in ChatGPT, open Settings, find this connector and click Refresh to get the new features. In Claude, just start a new chat.',
     updated_expired:
       'Updates never need reconnecting. Only when your Canvas token expires (your AI then says "authorization expired"): make a new Canvas token, then Disconnect → Connect the connector in your AI app and paste it.',
     done_update:
@@ -86,7 +88,9 @@ const M = {
     done_3: '3. 点「连接」，在弹出的页面粘贴 Canvas 令牌并授权。',
     done_now: '现在就去连接；连好之前不要把这个网址发给别人。',
     done_gpt: '   ChatGPT：在开发者模式里用同一个网址添加自定义连接器。',
-    updated: '已更新到 {version} 版。已经连好的 Claude / ChatGPT 照常能用，不用做任何事。',
+    updated: '已更新到 {version} 版。已经连好的 Claude / ChatGPT 照常能用，不用重新连接。',
+    updated_refresh:
+      'ChatGPT 会保存一份旧的工具列表：请到 ChatGPT 设置里找到这个连接器，点"刷新"，才能用上新功能。Claude 新开一个对话就行。',
     updated_expired:
       '更新永远不需要重新连接。只有 Canvas 令牌过期时（AI 会提示"authorization expired"，授权过期）才需要：生成一个新的 Canvas 令牌，在 AI 应用里把连接器断开再连接，粘贴新令牌就行。',
     done_update: '以后想更新，再运行一次同一条命令就行：存储和连接都会保留。',
@@ -140,7 +144,9 @@ const M = {
     done_now: 'Hazlo ahora mismo y no compartas la URL hasta que esté conectado.',
     done_gpt: '   ChatGPT: añade un conector personalizado (modo desarrollador) con la misma URL.',
     updated:
-      'Actualizado a la versión {version}. Tu Claude/ChatGPT conectado sigue funcionando: no tienes que hacer nada más.',
+      'Actualizado a la versión {version}. Tu Claude/ChatGPT conectado sigue funcionando: no hace falta reconectar.',
+    updated_refresh:
+      'ChatGPT guarda su propia copia de la lista de herramientas: en ChatGPT, abre Configuración, busca este conector y pulsa Actualizar para tener las novedades. En Claude, basta con abrir un chat nuevo.',
     updated_expired:
       'Las actualizaciones nunca requieren reconectar. Solo cuando tu token de Canvas caduca (tu IA dice "authorization expired"): crea un token nuevo de Canvas, desconecta y vuelve a conectar el conector en tu app de IA y pégalo.',
     done_update:
@@ -198,7 +204,9 @@ const M = {
     done_now: '今すぐ接続してください。接続が終わるまで、この URL を他人に教えないでください。',
     done_gpt: '   ChatGPT：開発者モードで同じ URL のカスタムコネクタを追加します。',
     updated:
-      'バージョン {version} に更新しました。接続済みの Claude / ChatGPT はそのまま使えます。ほかに作業はありません。',
+      'バージョン {version} に更新しました。接続済みの Claude / ChatGPT はそのまま使えます。再接続は不要です。',
+    updated_refresh:
+      'ChatGPT はツール一覧のコピーを保存しています。新機能を使うには、ChatGPT の設定でこのコネクタを探して「更新」を押してください。Claude は新しいチャットを始めるだけで反映されます。',
     updated_expired:
       '更新で再接続が必要になることはありません。Canvas トークンの期限が切れたとき（AI が「authorization expired」と言います）だけ：新しい Canvas トークンを作り、AI アプリでコネクタを切断 → 再接続して貼り付けてください。',
     done_update:
@@ -256,7 +264,9 @@ const M = {
     done_now: 'यह अभी करें, और जुड़ने तक यह URL किसी के साथ साझा न करें।',
     done_gpt: '   ChatGPT: डेवलपर मोड में उसी URL से कस्टम कनेक्टर जोड़ें।',
     updated:
-      'संस्करण {version} में अपडेट हो गया। आपका जुड़ा हुआ Claude/ChatGPT चलता रहेगा: और कुछ नहीं करना है।',
+      'संस्करण {version} में अपडेट हो गया। आपका जुड़ा हुआ Claude/ChatGPT चलता रहेगा: दोबारा जोड़ने की ज़रूरत नहीं।',
+    updated_refresh:
+      'ChatGPT टूल सूची की अपनी कॉपी रखता है: नई सुविधाएँ पाने के लिए ChatGPT की सेटिंग्स में यह कनेक्टर ढूँढें और Refresh दबाएँ। Claude में बस नई चैट शुरू करें।',
     updated_expired:
       'अपडेट के बाद दोबारा जोड़ने की ज़रूरत कभी नहीं होती। सिर्फ़ जब Canvas टोकन की अवधि खत्म हो (AI "authorization expired" कहेगा): नया Canvas टोकन बनाएँ, फिर AI ऐप में कनेक्टर को Disconnect → Connect करें और उसे चिपकाएँ।',
     done_update:

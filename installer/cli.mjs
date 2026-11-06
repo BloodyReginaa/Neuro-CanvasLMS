@@ -290,6 +290,7 @@ async function install() {
   if (check.connected) {
     console.log('');
     ok('updated', { version: VERSION });
+    say('updated_refresh');
     say('updated_expired');
     console.log('');
     return;

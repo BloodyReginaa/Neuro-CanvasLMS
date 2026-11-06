@@ -89,7 +89,7 @@ export function updateChecker({ fetcher = fetch, now = Date.now } = {}) {
 // What the AI is told when a newer version exists (null otherwise).
 export function updateNotice(latest, current) {
   if (!newer(latest, current)) return null;
-  return `Neuro-CanvasLMS ${latest} is available; this connector runs ${current}. Tell the user once in this conversation, briefly, after answering their question: to update, run ${UPDATE_COMMAND} in a terminal on the computer they installed it from (Node.js 22 or newer). It keeps their connection, so nothing needs to be reconnected.`;
+  return `Neuro-CanvasLMS ${latest} is available; this connector runs ${current}. Tell the user once in this conversation, briefly, after answering their question: to update, run ${UPDATE_COMMAND} in a terminal on the computer they installed it from (Node.js 22 or newer). It keeps their connection, so nothing needs to be reconnected. Afterwards, in ChatGPT the user refreshes this connector in ChatGPT's settings so it sees the new version; in Claude, a new chat picks it up.`;
 }
 
 export const versionTool = {
@@ -120,6 +120,6 @@ export async function connectorVersion(latest, kv, running, { timeZone } = {}) {
   };
   if (!version) out.note = 'GitHub could not be reached to check; try again later.';
   else if (newer(version, running))
-    out.how_to_update = `Run ${UPDATE_COMMAND} in a terminal on the computer the connector was installed from (Node.js 22 or newer), then answer y. It keeps the connection; nothing needs to be reconnected.`;
+    out.how_to_update = `Run ${UPDATE_COMMAND} in a terminal on the computer the connector was installed from (Node.js 22 or newer), then answer y. It keeps the connection; nothing needs to be reconnected. Afterwards, in ChatGPT the user refreshes this connector in ChatGPT's settings so it sees the new version; in Claude, a new chat picks it up.`;
   return out;
 }

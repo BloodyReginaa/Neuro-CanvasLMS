@@ -52,6 +52,8 @@ the owner. (To pin the owner, add `OWNER_CANVAS_ID` to the vars in
 ## Update / reinstall / uninstall
 
 - **Update:** `git pull`, then run the installer again (or `npx -y github:BloodyReginaa/Neuro-CanvasLMS`).
+  Then tell ChatGPT users to refresh the connector in ChatGPT's settings (ChatGPT keeps its own copy
+  of the tool list); in Claude a new chat is enough.
   It reuses the storage, so connections keep working. Start a new chat afterwards (clients cache
   tool lists).
 - **Uninstall:** `npm run setup -- uninstall --yes` (deletes the Worker and its storage), then the

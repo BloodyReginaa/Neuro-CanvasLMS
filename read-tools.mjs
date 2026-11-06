@@ -339,10 +339,14 @@ add(
 );
 add(
   'settings',
-  'Read your personal Canvas settings without changing them.',
+  "Read your personal Canvas settings without changing them. For this connector's own version use canvas_connector_version.",
   '/users/self/settings',
 );
-add('user', 'Read your own user profile including timezone and locale.', '/users/self');
+add(
+  'user',
+  "Read your own user profile including timezone and locale. For this connector's own version use canvas_connector_version.",
+  '/users/self',
+);
 add(
   'communication_channels',
   'Read your configured Canvas notification channels.',
