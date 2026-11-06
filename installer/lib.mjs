@@ -40,10 +40,27 @@ export function connectorConfig({ name, accountId, kvId, main, template, host, s
 
 export const parseWorkerUrl = out => out.match(/https:\/\/[a-z0-9.-]+\.workers\.dev/i)?.[0] ?? null;
 
-export function detectLang(env = process.env) {
-  const v = env.NCLMS_LANG || env.LC_ALL || env.LC_MESSAGES || env.LANG || '';
-  return /^zh/i.test(v) ? 'zh' : 'en';
+export const CLI_LANGS = ['en', 'zh', 'es', 'ja', 'hi'];
+// First supported language among the candidates (most preferred first); English otherwise.
+export function pickLang(candidates) {
+  for (const c of candidates) {
+    const tag = String(c ?? '')
+      .trim()
+      .toLowerCase();
+    if (!tag || tag === 'c' || tag === 'posix') continue;
+    const base = tag.split(/[-_.@]/)[0];
+    if (CLI_LANGS.includes(base)) return base;
+  }
+  return 'en';
 }
+// Order: explicit NCLMS_LANG, the operating system's preferred languages (macOS AppleLanguages —
+// Terminal's LANG is often en_US even on a Chinese system), the locale env vars, then English.
+export function detectLang(env = process.env, systemLanguages = []) {
+  return pickLang([env.NCLMS_LANG, ...systemLanguages, env.LC_ALL, env.LC_MESSAGES, env.LANG]);
+}
+// Parses `defaults read -g AppleLanguages` output: ( "zh-Hans-US", "en-US" ) or ( en, ja ).
+export const parseAppleLanguages = out =>
+  (out.match(/[A-Za-z]{2,3}(?:-[A-Za-z0-9]+)*/g) ?? []).filter(Boolean);
 
 export function parseArgs(argv) {
   const out = { command: 'install' };

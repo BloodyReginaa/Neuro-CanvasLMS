@@ -6,8 +6,12 @@ import {
   connectorConfig,
   parseWorkerUrl,
   detectLang,
+  pickLang,
+  parseAppleLanguages,
+  CLI_LANGS,
   parseArgs,
 } from './lib.mjs';
+import { MESSAGES, msg } from './messages.mjs';
 
 test('school Canvas addresses are accepted however people paste them', () => {
   for (const [input, host] of [
@@ -67,4 +71,38 @@ test('small helpers', () => {
     canvasHost: 'a.edu',
     school: 'A',
   });
+});
+
+test('installer language: system language first, English as the fallback', () => {
+  // macOS: Terminal's LANG is often en_US even when the system language is Chinese.
+  assert.equal(detectLang({ LANG: 'en_US.UTF-8' }, ['zh-Hans-US', 'en-US']), 'zh');
+  assert.equal(detectLang({ NCLMS_LANG: 'ja', LANG: 'zh_CN.UTF-8' }, ['es-ES']), 'ja');
+  assert.equal(detectLang({ LANG: 'hi_IN.UTF-8' }, []), 'hi');
+  assert.equal(detectLang({ LANG: 'C' }, ['fr-FR', 'de-DE']), 'en');
+  assert.equal(detectLang({}, ['fr-FR', 'es-MX']), 'es');
+  assert.equal(detectLang({}, []), 'en');
+  assert.equal(pickLang(['', null, 'POSIX', 'ja_JP.UTF-8']), 'ja');
+  assert.deepEqual(parseAppleLanguages('(\n    "zh-Hans-US",\n    "en-US"\n)\n'), [
+    'zh-Hans-US',
+    'en-US',
+  ]);
+  assert.deepEqual(parseAppleLanguages('(\n    en,\n    ja\n)'), ['en', 'ja']);
+  assert.deepEqual(parseAppleLanguages(''), []);
+});
+
+test('installer messages: every language has every message with the same placeholders', () => {
+  const holes = s =>
+    [...s.matchAll(/\{(\w+)\}/g)]
+      .map(m => m[1])
+      .sort()
+      .join(',');
+  const keys = Object.keys(MESSAGES.en).sort();
+  assert.deepEqual(Object.keys(MESSAGES).sort(), [...CLI_LANGS].sort());
+  for (const lang of CLI_LANGS) {
+    assert.deepEqual(Object.keys(MESSAGES[lang]).sort(), keys, lang);
+    for (const k of keys)
+      assert.equal(holes(MESSAGES[lang][k]), holes(MESSAGES.en[k]), `${lang}.${k}`);
+  }
+  assert.equal(msg('fr', 'cancelled'), MESSAGES.en.cancelled);
+  assert.match(msg('ja', 'canvas_ok', { host: 'a.edu' }), /a\.edu/);
 });

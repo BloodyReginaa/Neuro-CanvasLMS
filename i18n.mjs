@@ -18,8 +18,7 @@ const S = {
     home_lead:
       'A private, read-only bridge between your Canvas account and Claude or ChatGPT. Ask about deadlines, grades, lecture files and announcements in plain language.',
     status_bound: 'Connected to its owner',
-    status_unbound:
-      'Waiting for its owner — the first Canvas account to authorize will own this connector',
+    status_unbound: 'Not connected yet',
     home_add_title: 'Add it to your assistant',
     home_add_body: 'In Claude or ChatGPT, add a custom connector with this address:',
     home_safe: 'Read-only. It never submits work, sends messages or changes anything in Canvas.',
@@ -59,7 +58,7 @@ const S = {
     home_lead:
       '在你的 Canvas 账号与 Claude 或 ChatGPT 之间建立一条私人的只读通道。用日常语言询问截止日期、成绩、讲义文件和课程公告。',
     status_bound: '已绑定所有者',
-    status_unbound: '等待绑定——第一个完成授权的 Canvas 账号将成为此连接器的所有者',
+    status_unbound: '还没有连接',
     home_add_title: '添加到你的 AI 助手',
     home_add_body: '在 Claude 或 ChatGPT 中添加自定义连接器，地址填写：',
     home_safe: '只读。不会提交作业、发送消息，也不会修改 Canvas 中的任何内容。',
@@ -96,8 +95,7 @@ const S = {
     home_lead:
       'Un puente privado y de solo lectura entre tu cuenta de Canvas y Claude o ChatGPT. Pregunta por fechas de entrega, calificaciones, apuntes y anuncios en lenguaje natural.',
     status_bound: 'Vinculado a su propietario',
-    status_unbound:
-      'Esperando a su propietario: la primera cuenta de Canvas que autorice será la propietaria',
+    status_unbound: 'Aún no conectado',
     home_add_title: 'Añádelo a tu asistente',
     home_add_body: 'En Claude o ChatGPT, añade un conector personalizado con esta dirección:',
     home_safe: 'Solo lectura. Nunca entrega tareas, envía mensajes ni modifica nada en Canvas.',
@@ -136,7 +134,7 @@ const S = {
     home_lead:
       'Canvas アカウントと Claude / ChatGPT をつなぐ、個人用の読み取り専用ブリッジです。締め切り、成績、講義資料、お知らせを普段の言葉で質問できます。',
     status_bound: '所有者と連携済み',
-    status_unbound: '所有者を待っています — 最初に認可した Canvas アカウントが所有者になります',
+    status_unbound: 'まだ接続されていません',
     home_add_title: 'アシスタントに追加する',
     home_add_body:
       'Claude または ChatGPT で、次のアドレスをカスタムコネクタとして追加してください：',
@@ -178,7 +176,7 @@ const S = {
     home_lead:
       'आपके Canvas खाते और Claude या ChatGPT के बीच एक निजी, केवल-पढ़ने वाला पुल। समय-सीमा, ग्रेड, लेक्चर फ़ाइलों और घोषणाओं के बारे में सामान्य भाषा में पूछें।',
     status_bound: 'अपने स्वामी से जुड़ा हुआ',
-    status_unbound: 'स्वामी की प्रतीक्षा — सबसे पहले अधिकृत करने वाला Canvas खाता इसका स्वामी होगा',
+    status_unbound: 'अभी तक कनेक्ट नहीं हुआ',
     home_add_title: 'इसे अपने सहायक में जोड़ें',
     home_add_body: 'Claude या ChatGPT में इस पते के साथ एक कस्टम कनेक्टर जोड़ें:',
     home_safe:

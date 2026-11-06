@@ -4,6 +4,7 @@
 //   (from a clone: npm run setup / npm run setup -- uninstall)
 // Running it again updates the connector to the code you are running and keeps its storage, so
 // existing Claude/ChatGPT connections keep working.
+// Language: your system language if supported (en, zh, es, ja, hi), else English; --lang to choose.
 // Automation/tests: --name, --canvas-host, --school, --account-id, --yes; env NCLMS_HOME, NCLMS_LANG.
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -21,6 +22,8 @@ import {
   connectorConfig,
   parseWorkerUrl,
   detectLang,
+  parseAppleLanguages,
+  CLI_LANGS,
   parseArgs,
 } from './lib.mjs';
 import { msg } from './messages.mjs';
@@ -35,7 +38,18 @@ const WRANGLER = (() => {
 })();
 const HOME = process.env.NCLMS_HOME || path.join(os.homedir(), '.neuro-canvas-lms');
 const args = parseArgs(process.argv.slice(2));
-const lang = args.lang === 'zh' || args.lang === 'en' ? args.lang : detectLang();
+function systemLanguages() {
+  const out = [];
+  if (process.platform === 'darwin') {
+    const r = spawnSync('defaults', ['read', '-g', 'AppleLanguages'], { encoding: 'utf8' });
+    if (r.status === 0) out.push(...parseAppleLanguages(r.stdout));
+  }
+  try {
+    out.push(Intl.DateTimeFormat().resolvedOptions().locale); // Windows / Linux system locale
+  } catch {}
+  return out;
+}
+const lang = CLI_LANGS.includes(args.lang) ? args.lang : detectLang(process.env, systemLanguages());
 const say = (key, vars) => console.log('  ' + msg(lang, key, vars));
 const ok = (key, vars) => console.log('  ✓ ' + msg(lang, key, vars));
 const fail = detail => {
@@ -148,12 +162,19 @@ async function askCanvasHost(previous) {
   fail(msg(lang, 'cancelled'));
 }
 
+// null = the list could not be read (never treat that as "no storage").
 function listNamespaces() {
   const r = wrangler(['kv', 'namespace', 'list']);
-  return r.ok ? JSON.parse(r.out.slice(r.out.indexOf('['))) : [];
+  if (!r.ok) return null;
+  try {
+    return JSON.parse(r.out.slice(r.out.indexOf('[')));
+  } catch {
+    return null;
+  }
 }
 function ensureKv(name, state) {
   const namespaces = listNamespaces();
+  if (!namespaces) fail('could not list storage');
   const existing =
     namespaces.find(n => n.id === state.kvId) ?? namespaces.find(n => n.title === `${name}-oauth`);
   if (existing) {
@@ -239,6 +260,7 @@ async function install() {
   console.log(`\n      ${url}/mcp\n`);
   say('done_3');
   say('done_gpt');
+  say('done_now');
   console.log('');
   say('done_update');
   console.log('');
@@ -252,11 +274,29 @@ async function uninstall() {
   const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : {};
   accountEnv = { CLOUDFLARE_ACCOUNT_ID: await ensureLogin() };
   if (!args.yes && (await ask(msg(lang, 'un_confirm', { name }))) !== name) return say('cancelled');
-  wrangler(['delete', '--name', name, '--force']);
-  const namespaces = listNamespaces();
-  const kv =
-    namespaces.find(n => n.id === state.kvId) ?? namespaces.find(n => n.title === `${name}-oauth`);
-  if (kv) wrangler(['kv', 'namespace', 'delete', '--namespace-id', kv.id, '--skip-confirmation']);
+  // Every step must succeed (or find the thing already gone) before the local record is removed,
+  // so a failed uninstall can simply be run again.
+  const worker = wrangler(['delete', '--name', name, '--force']);
+  if (!worker.ok && !/\b10090\b|does not exist/i.test(worker.out))
+    fail(msg(lang, 'un_failed', { what: `Worker "${name}"`, detail: lastLines(worker.out) }));
+  const before = listNamespaces();
+  if (!before) fail(msg(lang, 'un_failed', { what: 'storage', detail: 'could not list storage' }));
+  const kv = before.find(n => n.id === state.kvId) ?? before.find(n => n.title === `${name}-oauth`);
+  if (kv) {
+    const r = wrangler([
+      'kv',
+      'namespace',
+      'delete',
+      '--namespace-id',
+      kv.id,
+      '--skip-confirmation',
+    ]);
+    if (!r.ok && !/\b10013\b|not found/i.test(r.out))
+      fail(msg(lang, 'un_failed', { what: `storage "${kv.title}"`, detail: lastLines(r.out) }));
+    const after = listNamespaces();
+    if (!after || after.some(n => n.id === kv.id))
+      fail(msg(lang, 'un_failed', { what: `storage "${kv.title}"`, detail: 'still listed' }));
+  }
   fs.rmSync(dir, { recursive: true, force: true });
   ok('un_done');
 }
@@ -266,7 +306,7 @@ const help = async () =>
     fs
       .readFileSync(fileURLToPath(import.meta.url), 'utf8')
       .split('\n')
-      .slice(0, 7)
+      .slice(0, 8)
       .join('\n'),
   );
 ({ install, uninstall, help })[args.command]().then(

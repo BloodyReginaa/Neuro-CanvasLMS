@@ -78,7 +78,7 @@ Claude / ChatGPT ──OAuth──▶ Neuro-CanvasLMS on your Cloudflare ──r
 
 - Your token goes only to your Worker and your school's Canvas. It is stored encrypted inside the
   OAuth grant in your own Cloudflare KV.
-- The connector binds to the first Canvas account that authorizes it and refuses all others.
+- The connector locks itself to your Canvas account when you connect it and refuses all others.
 - Only Claude, ChatGPT and local (loopback) clients can complete OAuth.
 - Course content is treated as untrusted data, never as instructions.
 - File downloads are capped at 15 MiB, HTTPS-only, and blocked from reaching private networks.

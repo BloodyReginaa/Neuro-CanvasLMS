@@ -58,7 +58,7 @@ Claude / ChatGPT ──OAuth──▶ 你 Cloudflare 上的 Neuro-CanvasLMS ─�
 ## 隐私与安全
 
 - 令牌只会发送到你的 Worker 和学校的 Canvas，并加密保存在你自己 Cloudflare KV 的授权记录里。
-- 连接器会绑定第一个完成授权的 Canvas 账号，其他账号一律拒绝。
+- 连接器在你连接时锁定到你的 Canvas 账号，其他账号一律拒绝。
 - 只有 Claude、ChatGPT 和本地客户端可以完成 OAuth 授权。
 - 课程内容一律视为不可信数据，不会被当作指令执行。
 - 文件下载上限 15 MiB，仅限 HTTPS，并禁止访问内网地址。
