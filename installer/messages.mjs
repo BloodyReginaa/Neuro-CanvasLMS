@@ -35,11 +35,11 @@ const M = {
     updated:
       'Updated to version {version}. Your connected Claude/ChatGPT keep working: nothing else to do.',
     updated_expired:
-      'If your AI ever says "authorization expired": make a new Canvas token, then Disconnect → Connect the connector in your AI app and paste it.',
+      'Updates never need reconnecting. Only when your Canvas token expires (your AI then says "authorization expired"): make a new Canvas token, then Disconnect → Connect the connector in your AI app and paste it.',
     done_update:
       'To update later, run the same command again: it keeps your storage and connections.',
     rerun:
-      'Found your existing install "{name}". This updates it to the code you are running now and keeps your settings and connections.',
+      'Found your existing install "{name}". Updating it to the code you are running now with its saved settings: no questions, and your AI apps stay connected.',
     un_confirm:
       'This deletes the connector "{name}" and its storage. Your AI apps will lose the connection. Type the name to confirm:',
     un_failed:
@@ -81,9 +81,10 @@ const M = {
     done_gpt: '   ChatGPT：在开发者模式里用同一个网址添加自定义连接器。',
     updated: '已更新到 {version} 版。已经连好的 Claude / ChatGPT 照常能用，不用做任何事。',
     updated_expired:
-      '以后如果 AI 提示"authorization expired"（授权过期）：生成一个新的 Canvas 令牌，在 AI 应用里把连接器断开再连接，粘贴新令牌就行。',
+      '更新永远不需要重新连接。只有 Canvas 令牌过期时（AI 会提示"authorization expired"，授权过期）才需要：生成一个新的 Canvas 令牌，在 AI 应用里把连接器断开再连接，粘贴新令牌就行。',
     done_update: '以后想更新，再运行一次同一条命令就行：存储和连接都会保留。',
-    rerun: '找到你已有的安装「{name}」。会把它更新成你现在运行的这份代码，设置和连接都会保留。',
+    rerun:
+      '找到你已有的安装「{name}」。会用保存的设置把它更新成你现在运行的这份代码：不用回答任何问题，AI 应用也不用重新连接。',
     un_confirm: '这会删除连接器「{name}」和它的存储，你的 AI 应用会失去连接。输入名称确认：',
     un_failed: '没能删除{what}：{detail}\n  本地安装记录已保留，再运行一次同一条命令即可重试。',
     un_done: '已删除。另外请删掉 Canvas 令牌（Canvas → 账户 → 设置）和 AI 应用里的连接器。',
@@ -128,11 +129,11 @@ const M = {
     updated:
       'Actualizado a la versión {version}. Tu Claude/ChatGPT conectado sigue funcionando: no tienes que hacer nada más.',
     updated_expired:
-      'Si tu IA dice "authorization expired": crea un token nuevo de Canvas, desconecta y vuelve a conectar el conector en tu app de IA y pégalo.',
+      'Las actualizaciones nunca requieren reconectar. Solo cuando tu token de Canvas caduca (tu IA dice "authorization expired"): crea un token nuevo de Canvas, desconecta y vuelve a conectar el conector en tu app de IA y pégalo.',
     done_update:
       'Para actualizar más adelante, vuelve a ejecutar el mismo comando: conserva tu almacenamiento y tus conexiones.',
     rerun:
-      'Se encontró tu instalación "{name}". Esto la actualiza al código que estás ejecutando y conserva tu configuración y conexiones.',
+      'Se encontró tu instalación "{name}". Se actualiza al código que estás ejecutando con la configuración guardada: sin preguntas, y tus apps de IA siguen conectadas.',
     un_confirm:
       'Esto elimina el conector "{name}" y su almacenamiento. Tus apps de IA perderán la conexión. Escribe el nombre para confirmar:',
     un_failed:
@@ -179,11 +180,11 @@ const M = {
     updated:
       'バージョン {version} に更新しました。接続済みの Claude / ChatGPT はそのまま使えます。ほかに作業はありません。',
     updated_expired:
-      'AI が「authorization expired」と言ったら：新しい Canvas トークンを作り、AI アプリでコネクタを切断 → 再接続して貼り付けてください。',
+      '更新で再接続が必要になることはありません。Canvas トークンの期限が切れたとき（AI が「authorization expired」と言います）だけ：新しい Canvas トークンを作り、AI アプリでコネクタを切断 → 再接続して貼り付けてください。',
     done_update:
       '後で更新するときは、同じコマンドをもう一度実行するだけです。ストレージと接続はそのまま残ります。',
     rerun:
-      '既存のインストール「{name}」が見つかりました。今実行しているコードに更新し、設定と接続はそのまま残します。',
+      '既存のインストール「{name}」が見つかりました。保存済みの設定で、今実行しているコードに更新します。質問はなく、AI アプリの再接続も不要です。',
     un_confirm:
       'コネクタ「{name}」とそのストレージを削除します。AI アプリとの接続は切れます。確認のため名前を入力してください：',
     un_failed:
@@ -229,11 +230,11 @@ const M = {
     updated:
       'संस्करण {version} में अपडेट हो गया। आपका जुड़ा हुआ Claude/ChatGPT चलता रहेगा: और कुछ नहीं करना है।',
     updated_expired:
-      'अगर आपका AI कभी "authorization expired" कहे: नया Canvas टोकन बनाएँ, फिर AI ऐप में कनेक्टर को Disconnect → Connect करें और उसे चिपकाएँ।',
+      'अपडेट के बाद दोबारा जोड़ने की ज़रूरत कभी नहीं होती। सिर्फ़ जब Canvas टोकन की अवधि खत्म हो (AI "authorization expired" कहेगा): नया Canvas टोकन बनाएँ, फिर AI ऐप में कनेक्टर को Disconnect → Connect करें और उसे चिपकाएँ।',
     done_update:
       'बाद में अपडेट करने के लिए वही कमांड फिर से चलाएँ: आपका स्टोरेज और कनेक्शन बने रहेंगे।',
     rerun:
-      'आपका मौजूदा इंस्टॉल "{name}" मिला। यह उसे अभी चल रहे कोड पर अपडेट करेगा और आपकी सेटिंग्स व कनेक्शन बनाए रखेगा।',
+      'आपका मौजूदा इंस्टॉल "{name}" मिला। इसे सहेजी गई सेटिंग्स के साथ अभी चल रहे कोड पर अपडेट किया जा रहा है: कोई सवाल नहीं, और आपके AI ऐप जुड़े रहेंगे।',
     un_confirm:
       'यह कनेक्टर "{name}" और उसका स्टोरेज हटा देगा। आपके AI ऐप का कनेक्शन टूट जाएगा। पुष्टि के लिए नाम लिखें:',
     un_failed:

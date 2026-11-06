@@ -75,3 +75,17 @@ export function parseArgs(argv) {
   }
   return out;
 }
+
+// Re-running the installer on an existing install is an update: it asks nothing and reuses the
+// saved Canvas address, school name and Cloudflare account, unless a flag says otherwise.
+export function updateChoices(state = {}, args = {}) {
+  const updating = Boolean(state.url && state.host);
+  return {
+    updating,
+    host: args.canvasHost ?? (updating ? state.host : undefined),
+    askHost: !(args.canvasHost || updating),
+    school: args.school ?? (updating ? (state.school ?? '') : undefined),
+    askSchool: args.school === undefined && !updating,
+    accountId: args.accountId ?? (updating ? state.accountId : undefined),
+  };
+}

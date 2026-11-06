@@ -25,6 +25,7 @@ import {
   parseAppleLanguages,
   CLI_LANGS,
   parseArgs,
+  updateChoices,
 } from './lib.mjs';
 import { msg } from './messages.mjs';
 
@@ -109,7 +110,7 @@ function copy(text) {
   spawnSync(cmd, a, { input: text, stdio: ['pipe', 'ignore', 'ignore'] });
 }
 
-async function ensureLogin() {
+async function ensureLogin(saved) {
   let who = wrangler(['whoami', '--json']);
   if (!who.ok) {
     say('login_needed');
@@ -124,6 +125,7 @@ async function ensureLogin() {
   ok('logged_in', { email: info.email ?? '' });
   const accounts = info.accounts ?? [];
   if (args.accountId) return args.accountId;
+  if (saved && accounts.some(a => a.id === saved)) return saved;
   if (!accounts.length) fail('no Cloudflare account found');
   if (accounts.length === 1) return accounts[0].id;
   const i = await choose(
@@ -146,9 +148,11 @@ async function checkCanvas(host) {
     return { ok: false, detail: e.cause?.code ?? e.message };
   }
 }
-async function askCanvasHost(previous) {
+async function askCanvasHost(previous, { quiet = false } = {}) {
   for (let i = 0; i < 5; i++) {
-    const input = args.canvasHost ?? (await ask(msg(lang, 'canvas_q'), previous ?? ''));
+    const input =
+      args.canvasHost ??
+      (quiet && i === 0 ? previous : await ask(msg(lang, 'canvas_q'), previous ?? ''));
     const host = normalizeCanvasHost(input);
     const check = host ? await checkCanvas(host) : { ok: false, detail: input || '—' };
     if (check.ok) {
@@ -156,6 +160,7 @@ async function askCanvasHost(previous) {
       return host;
     }
     say('canvas_bad', { detail: check.detail });
+    if (quiet && i === 0 && !args.canvasHost) continue; // the saved address stopped working: ask
     if (args.canvasHost || args.yes || !process.stdin.isTTY)
       fail(msg(lang, 'canvas_bad', { detail: check.detail }));
   }
@@ -219,15 +224,15 @@ async function install() {
   fs.mkdirSync(dir, { recursive: true });
   const statePath = path.join(dir, 'state.json');
   const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : {};
-  if (state.url) say('rerun', { name });
+  const plan = updateChoices(state, args);
+  if (plan.updating) say('rerun', { name });
 
-  const accountId = await ensureLogin();
+  const accountId = await ensureLogin(plan.accountId);
   accountEnv = { CLOUDFLARE_ACCOUNT_ID: accountId };
-  const host = await askCanvasHost(state.host);
-  const school = (args.school ?? (await ask(msg(lang, 'school_q'), state.school ?? ''))).slice(
-    0,
-    80,
-  );
+  const host = await askCanvasHost(state.host, { quiet: !plan.askHost });
+  const school = (
+    plan.askSchool ? await ask(msg(lang, 'school_q'), state.school ?? '') : plan.school
+  ).slice(0, 80);
   const kvId = ensureKv(name, state);
   const save = extra =>
     fs.writeFileSync(

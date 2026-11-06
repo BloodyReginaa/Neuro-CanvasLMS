@@ -47,7 +47,7 @@ Prefer to let an AI do it? Clone this repo, open it in Claude Code (or Codex) an
 
 ## Update, uninstall
 
-- **Update:** run the same `npx` command again. It deploys the current code and keeps your storage and connections, so you never reconnect.
+- **Update:** run the same `npx` command again. It reuses your settings and asks nothing, deploys the current code and keeps your storage and connections, so you never reconnect. When a new version is out, your AI tells you.
 - **Uninstall:** `npx github:BloodyReginaa/Neuro-CanvasLMS uninstall`, then delete the Canvas token and the connector in your AI app.
 
 ## How it works
@@ -65,6 +65,7 @@ Claude / ChatGPT ──OAuth──▶ Neuro-CanvasLMS on your Cloudflare ──r
 - Course content is treated as untrusted data, never as instructions.
 - File downloads are capped at 15 MiB, HTTPS-only, and blocked from reaching private networks.
 - Canvas still enforces your own permissions: you can only read what you can already see.
+- Once a day the connector reads the latest version number from this project's GitHub page, so your AI can tell you about updates. Nothing about you is sent.
 - Files the AI reads are kept by your AI provider as part of the conversation, under that provider's own privacy terms. Delete the chat to remove them.
 
 Check your school's policy on personal access tokens and third-party tools before use.

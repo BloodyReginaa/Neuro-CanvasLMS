@@ -47,7 +47,7 @@ El instalador inicia sesión en Cloudflare (se abre una página en el navegador;
 
 ## Actualizar, desinstalar
 
-- **Actualizar:** vuelve a ejecutar el mismo comando `npx`. Despliega el código actual y conserva tu almacenamiento y conexiones; nunca tienes que reconectar.
+- **Actualizar:** vuelve a ejecutar el mismo comando `npx`. Reutiliza tu configuración sin preguntar nada, despliega el código actual y conserva tu almacenamiento y conexiones; nunca tienes que reconectar. Cuando sale una versión nueva, tu IA te avisa.
 - **Desinstalar:** `npx github:BloodyReginaa/Neuro-CanvasLMS uninstall`, y después borra el token de Canvas y el conector en tu app de IA.
 
 ## Cómo funciona
@@ -65,6 +65,7 @@ Claude / ChatGPT ──OAuth──▶ Neuro-CanvasLMS en tu Cloudflare ──API
 - El contenido de los cursos se trata como datos no confiables, nunca como instrucciones.
 - Las descargas tienen un límite de 15 MiB, solo HTTPS, y bloquean redes privadas.
 - Canvas sigue aplicando tus permisos: solo puedes leer lo que ya ves.
+- Una vez al día el conector lee el número de la versión más reciente en el GitHub de este proyecto, para que tu IA te avise de las actualizaciones. No se envía nada sobre ti.
 - Los archivos que lee la IA los guarda tu proveedor de IA como parte de la conversación, bajo sus propias condiciones de privacidad. Borra el chat para eliminarlos.
 
 Consulta la política de tu universidad sobre tokens personales y herramientas de terceros.

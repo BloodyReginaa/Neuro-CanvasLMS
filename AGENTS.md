@@ -28,4 +28,7 @@ Code map:
   links to when its Files list is hidden), `external-links.mjs` (Google/Dropbox/GitHub share links →
   the file itself), `module-file.mjs` + `file-resource.mjs` (original files as MCP resources).
 - `owner.mjs`: owner binding, allowed OAuth clients. `i18n.mjs` + `pages.mjs`: web pages.
-- `installer/`: the setup wizard. `version.mjs`: shown on the home page and /healthz.
+- `update-check.mjs`: once a day reads the newest version number from GitHub; when it is newer the AI
+  tells the user how to update.
+- `installer/`: the setup wizard (re-running it updates without questions). `version.mjs`: shown on
+  the home page and /healthz, compared with GitHub by update-check.mjs.

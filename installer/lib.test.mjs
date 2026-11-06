@@ -10,6 +10,7 @@ import {
   parseAppleLanguages,
   CLI_LANGS,
   parseArgs,
+  updateChoices,
 } from './lib.mjs';
 import { MESSAGES, msg } from './messages.mjs';
 
@@ -105,4 +106,38 @@ test('installer messages: every language has every message with the same placeho
   }
   assert.equal(msg('fr', 'cancelled'), MESSAGES.en.cancelled);
   assert.match(msg('ja', 'canvas_ok', { host: 'a.edu' }), /a\.edu/);
+});
+
+test('re-running on an existing install updates it without asking anything', () => {
+  const state = {
+    url: 'https://neuro-canvas-lms.you.workers.dev',
+    host: 'canvas.example.edu',
+    school: 'Example University',
+    accountId: 'acc1',
+  };
+  assert.deepEqual(updateChoices(state, {}), {
+    updating: true,
+    host: 'canvas.example.edu',
+    askHost: false,
+    school: 'Example University',
+    askSchool: false,
+    accountId: 'acc1',
+  });
+  // flags still win
+  const flagged = updateChoices(state, {
+    canvasHost: 'canvas.other.edu',
+    school: '',
+    accountId: 'acc2',
+  });
+  assert.equal(flagged.host, 'canvas.other.edu');
+  assert.equal(flagged.school, '');
+  assert.equal(flagged.accountId, 'acc2');
+  // a first install asks; a half-finished one (no URL yet) asks again
+  for (const s of [{}, { host: 'canvas.example.edu' }]) {
+    const first = updateChoices(s, {});
+    assert.equal(first.updating, false);
+    assert.equal(first.askHost, true);
+    assert.equal(first.askSchool, true);
+    assert.equal(first.accountId, undefined);
+  }
 });
