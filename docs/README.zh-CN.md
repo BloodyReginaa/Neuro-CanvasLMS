@@ -2,6 +2,8 @@
 
 [English](../README.md) · **简体中文** · [Español](README.es.md) · [日本語](README.ja.md) · [हिन्दी](README.hi.md)
 
+[![npm](https://img.shields.io/npm/v/neuro-canvas-lms?label=npm&color=c9a462)](https://www.npmjs.com/package/neuro-canvas-lms) [![tests](https://github.com/BloodyReginaa/Neuro-CanvasLMS/actions/workflows/test.yml/badge.svg)](https://github.com/BloodyReginaa/Neuro-CanvasLMS/actions/workflows/test.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/BloodyReginaa/Neuro-CanvasLMS/blob/main/LICENSE)
+
 ![Neuro-CanvasLMS 在 Claude 里回答"这周有什么要交？"](https://raw.githubusercontent.com/BloodyReginaa/Neuro-CanvasLMS/main/docs/images/banner.png)
 
 **把你的 Canvas 直接接进 Claude 和 ChatGPT。** 课程、截止日期、成绩、讲义，从此都在 AI 的掌握之中，任何对话、任何设备都能用。它是一个只读的远程 MCP 服务器，一条命令就能部署到你自己的免费 Cloudflare 账号。只要学校允许学生生成 Canvas 访问令牌就能用（下面有 30 秒自查）。

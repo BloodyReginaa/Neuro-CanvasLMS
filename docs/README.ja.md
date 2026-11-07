@@ -2,6 +2,8 @@
 
 [English](../README.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · **日本語** · [हिन्दी](README.hi.md)
 
+[![npm](https://img.shields.io/npm/v/neuro-canvas-lms?label=npm&color=c9a462)](https://www.npmjs.com/package/neuro-canvas-lms) [![tests](https://github.com/BloodyReginaa/Neuro-CanvasLMS/actions/workflows/test.yml/badge.svg)](https://github.com/BloodyReginaa/Neuro-CanvasLMS/actions/workflows/test.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/BloodyReginaa/Neuro-CanvasLMS/blob/main/LICENSE)
+
 ![Neuro-CanvasLMS が Claude で「今週の締め切りは？」に答える画面](https://raw.githubusercontent.com/BloodyReginaa/Neuro-CanvasLMS/main/docs/images/banner.png)
 
 **あなたの Canvas LMS を、Claude と ChatGPT に直結。** コース、締め切り、成績、講義資料が、どのチャットでも、どのデバイスでも AI の知識になります。読み取り専用のリモート MCP サーバーで、コマンド 1 つであなた自身の無料 Cloudflare アカウントにデプロイできます。学生がアクセストークンを作成できる Canvas の学校なら使えます（下で 30 秒チェック）。
