@@ -2,8 +2,8 @@
 
 This repo, **Neuro-CanvasLMS** (`neuro-canvas-lms`), is a read-only Canvas LMS connector (remote MCP
 server on Cloudflare Workers) that each user deploys to their **own** Cloudflare account. It works
-with any Canvas school; nothing school-specific is in the code (the school comes from Worker vars).
-It is a community project provided as is.
+with any Canvas school that lets students create access tokens; nothing school-specific is in the
+code (the school comes from Worker vars). It is a community project provided as is.
 
 - To install, update, reconnect, uninstall or troubleshoot: follow
   `.claude/skills/canvas-connector-setup/SKILL.md` (Claude Code loads it as a skill; other agents
@@ -30,9 +30,12 @@ Code map:
   `download-link.mjs` (one-time, minutes-long Canvas storage link so coding agents can curl an original
   file to disk).
 - `owner.mjs`: owner binding, allowed OAuth clients. `i18n.mjs` + `pages.mjs`: web pages.
+  `page-scene.mjs`: their one script (allowed by its hash in the CSP; pages stay off the network):
+  the black-hole scene and the step-by-step authorization. Everything works without it.
 - `update-check.mjs`: once a day reads the newest version number from npm; when it is newer the AI
   tells the user how to update. Also the `canvas_connector_version` tool.
-- `installer/`: the setup wizard. Re-running it asks once (y/n), then updates with the saved
+- `installer/`: the setup wizard. On a new Cloudflare account it registers a random workers.dev
+  subdomain through Cloudflare's API. Re-running it asks once (y/n), then updates with the saved
   settings (without a terminal it does not ask). `installer/verify.mjs`: the post-deploy online
   check, also run alone by `npx -y neuro-canvas-lms check`.
 - `version.mjs`: shown on the home page and /healthz, compared with npm by update-check.mjs.

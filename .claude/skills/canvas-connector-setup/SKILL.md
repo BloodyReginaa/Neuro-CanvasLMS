@@ -31,7 +31,7 @@ same command again.
 1. Check `node -v`: it needs 22 or newer. Otherwise send the user to https://nodejs.org and stop.
 2. Ask the user for their school's **Canvas address**: what the browser's address bar shows when
    they use Canvas (e.g. `canvas.example.edu` or `<school>.instructure.com`, not the school portal
-   or login page). Optionally the school's name. Never guess the address.
+   or login page). Never guess the address.
 3. **Cloudflare sign-in comes first, in the user's own browser.** Run `npx -y wrangler whoami`.
    If it shows an email, they are signed in: go on. If not, ask the user to run
    `npx -y wrangler login` **themselves, in their own terminal** (PowerShell on Windows,
@@ -48,18 +48,23 @@ same command again.
      timeout (5 minutes or more).
 4. Run, **without a clone** (`-y` only skips npm's own download prompt):
    ```bash
-   npx -y neuro-canvas-lms --canvas-host "<address>" --school "<name or empty>"
+   npx -y neuro-canvas-lms --canvas-host "<address>"
    ```
    From a clone instead: `npm install`, `npm test` (all must pass), then
-   `npm run setup -- --canvas-host "<address>" --school "<name or empty>"`.
-   Give it a timeout of 10 minutes. On a brand-new workers.dev address the HTTPS certificate can
-   take a few minutes; the installer then says it is waiting for it and keeps checking for up to
-   5 minutes. Let it finish; do not restart it.
+   `npm run setup -- --canvas-host "<address>"`.
+   Give it a timeout of 10 minutes. A new Cloudflare account gets a free workers.dev subdomain from
+   the installer itself (a random `neuro-xxxxxx` name). On a brand-new workers.dev address the HTTPS
+   certificate can take a few minutes; the installer then says it is waiting for it, keeps
+   checking for up to 5 minutes and meanwhile opens Canvas so the user can create their token: tell
+   the user. Let it finish; do not restart it.
 5. If it stops, do what its message says, then run the same command again:
    - **Several Cloudflare accounts:** it lists them as `--account-id <id>  <name>`. Ask the user
      which account to use and add that flag. Never pick one yourself.
-   - **New Cloudflare account without a workers.dev subdomain:** give the user the printed
-     dashboard link; they choose a name (e.g. their name plus a number) and save it.
+   - **Cloudflare email not verified:** the user opens the verification email from Cloudflare
+     (spam folder too) and clicks the link.
+   - **New Cloudflare account without a workers.dev subdomain** (only if the installer could not
+     create one itself): give the user the printed dashboard link; they choose a name (e.g. their
+     name plus a number) and save it.
    - **Deployed, but not confirmed online yet (exit code 2):** the deploy worked; the new address did
      not answer correctly in time (usually its HTTPS certificate). Do not install again: wait a few
      minutes, then run the check it prints, `npx -y neuro-canvas-lms check` (with the same
@@ -71,8 +76,9 @@ same command again.
 6. On success it prints the connector URL (`https://<name>.<subdomain>.workers.dev/mcp`, also copied
    to the clipboard) and the next steps. Relay them; **the user does these in their browser, never
    you**:
-   - Canvas → Account → Settings → **+ New Access Token** (schools may cap it, e.g. 30 days at
-     UMass Amherst; copy it right away, Canvas shows it once).
+   - Canvas → Account → Settings → **+ New Access Token**, unless they already made it while the
+     installer waited (schools may cap it, e.g. 30 days at UMass Amherst; copy it right away,
+     Canvas shows it once). The connector's page also has an **Open Canvas settings** button.
    - Claude: Settings → Connectors → **Add custom connector** → the `…/mcp` URL → **Connect** →
      paste the Canvas token on the connector's own page → Authorize. Works on every device with the
      same account, including Claude Code (check with `/mcp`).
@@ -104,6 +110,7 @@ their AI app: connector → Disconnect → Connect → paste it. No reinstall ne
 | Symptom | Cause / fix |
 |---|---|
 | "bound to a different Canvas account" | Someone else authorized first, or the user changed accounts. Reset: `npx wrangler kv key delete --namespace-id <id> --remote owner:canvas_user_id` (id in `~/.neuro-canvas-lms/<name>/state.json`), then connect again. |
+| Installer: "email address is not verified" / `email_verification_required` | A new Cloudflare account must verify its email first: the user clicks the link in Cloudflare's email (or requests a new one in the dashboard), then runs the installer again. |
 | Installer: "does not look like a Canvas site" | They pasted the school portal or SSO page. Find the real Canvas host (often `<school>.instructure.com`). |
 | Cloudflare sign-in failed: "Authentication error", "authorization failed", "callback does not match the pending login", or timed out | The consent page opened in a browser without the user's Cloudflare session, or an older attempt's tab was used. Stop any running installer, close every Cloudflare tab; the user runs `npx -y wrangler login` once in their own terminal and clicks Authorize in their usual browser. Then run the installer again. |
 | Homepage says "not configured" / `/healthz` not ok | `CANVAS_HOST` var missing: run the installer again. |

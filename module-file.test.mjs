@@ -66,13 +66,19 @@ test('internal File follows metadata without forwarding credentials', async () =
   assert.equal(r.structuredContent.name, 'test.pdf');
 });
 test('does not accept arbitrary URL or mismatched/locked item', async () => {
-  await assert.rejects(moduleFile({ ...args, url: 'https://example.com' }, '', () => {}));
+  await assert.rejects(
+    moduleFile({ ...args, url: 'https://example.com' }, '', () => {}),
+    /only positive Canvas course\/module\/item IDs/,
+  );
   for (const item of [
     { ...external, id: 2 },
     { ...external, locked_for_user: true },
     { ...external, type: 'Page' },
   ])
-    await assert.rejects(moduleFile(args, '', async () => Response.json(item)));
+    await assert.rejects(
+      moduleFile(args, '', async () => Response.json(item)),
+      /^Error: Canvas file: module item is (inaccessible|not a File or ExternalUrl)\.$/,
+    );
 });
 test('blocks private IPs, credentials, non-HTTPS and redirect destinations', async () => {
   for (const u of [
@@ -84,7 +90,7 @@ test('blocks private IPs, credentials, non-HTTPS and redirect destinations', asy
     'https://user:pass@example.com/a',
     'https://example.com:444/a',
   ])
-    assert.throws(() => safeURL(u));
+    assert.throws(() => safeURL(u), /unsafe download destination/);
   for (const ip of [
     '127.0.0.1',
     '10.2.3.4',
@@ -103,11 +109,13 @@ test('blocks private IPs, credentials, non-HTTPS and redirect destinations', asy
       fetcher: async () =>
         new Response(null, { status: 302, headers: { location: 'https://127.0.0.1/' } }),
     }),
+    /unsafe download destination/,
   );
   await assert.rejects(
     resolvePublic('public.example.org', async () =>
       Response.json({ Status: 0, Answer: [{ type: 1, data: '10.0.0.1' }] }),
     ),
+    /non-public DNS destination blocked/,
   );
 });
 test('checks each redirect DNS and rejects oversize/chunked and HTML', async () => {
@@ -132,6 +140,7 @@ test('checks each redirect DNS and rejects oversize/chunked and HTML', async () 
         maxBytes: 10,
         fetcher: async () => response,
       }),
+      /exceeds 15 MiB limit/,
     );
 });
 
@@ -141,6 +150,7 @@ test('DNS requests use Workers-compatible manual redirects and refuse redirect r
       assert.equal(o.redirect, 'manual');
       return new Response(null, { status: 302, headers: { location: 'https://private.local' } });
     }),
+    /DNS validation failed/,
   );
 });
 test('cloud delivery stores exact bytes and returns a compact named resource link', async () => {

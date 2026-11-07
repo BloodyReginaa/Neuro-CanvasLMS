@@ -226,6 +226,20 @@ export async function extractBytes(bytes, shown, mime = '', opts = {}) {
       'This format is not supported for text extraction. Call canvas_file_original with this file_id to get the original file.',
   };
 }
+// extractBytes, but a parser failing on the file itself (damaged, password-protected, or not really
+// a PDF/Office file) becomes a note with a way on instead of an error the AI reads as "check your
+// arguments". Our own messages (limits, a wrong `entry`) start with "Canvas" and go through.
+export async function extractOrExplain(bytes, name, mime, opts, wayOn) {
+  try {
+    return await extractBytes(bytes, name, mime, opts);
+  } catch (e) {
+    if (/^Canvas/.test(e?.message ?? '')) throw e;
+    return {
+      text: null,
+      extraction_note: `Could not read the text of this file (${e?.name ?? 'Error'}): it may be damaged, password-protected, or not really the type its name says. ${wayOn}`,
+    };
+  }
+}
 export async function readFileContent(meta, args, fetcher = fetch) {
   // `hidden` files are only hidden from the Files list ("only available with link"), which is how
   // many courses share files; students may open them. Only a lock stops a download.
@@ -237,7 +251,14 @@ export async function readFileContent(meta, args, fetcher = fetch) {
     html_url: `https://${CANVAS_HOST}/files/${meta.id}`,
     mime_type: meta['content-type'],
   };
-  if (!meta.url || !allowedDownload(meta.url))
+  if (!meta.url)
+    return {
+      ...base,
+      text: null,
+      extraction_note:
+        'Canvas gives no download address for this file (it may only be viewable inside Canvas); open html_url.',
+    };
+  if (!allowedDownload(meta.url))
     return {
       ...base,
       text: null,
@@ -262,14 +283,22 @@ export async function readFileContent(meta, args, fetcher = fetch) {
       throw new Error(
         'Canvas file redirect host is not allowed: ' + [...hops, where(url)].join(' → '),
       );
-    response = await fetcher(url, {
-      method: 'GET',
-      redirect: 'manual',
-      headers: { Accept: '*/*', 'User-Agent': DOWNLOAD_UA },
-      signal: AbortSignal.timeout(20000),
-    });
+    try {
+      response = await fetcher(url, {
+        method: 'GET',
+        redirect: 'manual',
+        headers: { Accept: '*/*', 'User-Agent': DOWNLOAD_UA },
+        signal: AbortSignal.timeout(20000),
+      });
+    } catch (e) {
+      if (/^Canvas/.test(e?.message ?? '')) throw e;
+      throw new Error(
+        `Canvas file download did not finish (${e?.name === 'TimeoutError' || e?.name === 'AbortError' ? 'no answer within 20 seconds' : 'network error: ' + (e?.name ?? 'Error')}; ${where(url)}). Try again in a minute; the connection is fine.`,
+      );
+    }
     hops.push(response.status + ' ' + where(url));
     if (response.status >= 300 && response.status < 400) {
+      await response.body?.cancel().catch(() => {});
       const location = response.headers.get('location');
       if (!location) throw new Error('Canvas download redirect is missing its destination.');
       url = new URL(location, url).href;
@@ -293,11 +322,12 @@ export async function readFileContent(meta, args, fetcher = fetch) {
         (response.headers.get('content-type') ?? 'unknown').split(';')[0] +
         ').',
     );
-  const extracted = await extractBytes(
+  const extracted = await extractOrExplain(
     await boundedBytes(response),
     base.name ?? '',
     base.mime_type ?? response.headers.get('content-type') ?? '',
     { entry: args.entry, storedName: meta.filename },
+    'Call canvas_file_original with this file_id to get the file itself, or open html_url.',
   );
   return paginated(base, extracted, args);
 }

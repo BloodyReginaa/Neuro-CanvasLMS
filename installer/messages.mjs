@@ -16,7 +16,6 @@ const M = {
     canvas_bad:
       'That does not look like a Canvas site ({detail}). Paste the address of the page where you log in to Canvas.',
     canvas_ok: 'Canvas found at {host}.',
-    school_q: "Your school's name, shown on the connector's pages (optional, press Enter to skip):",
     kv: "Creating the connector's storage…",
     kv_reuse: 'Reusing the existing storage.',
     deploy: 'Step 3/4 · Deploying the connector (version {version})…',
@@ -25,7 +24,9 @@ const M = {
     check_ok: 'Everything works (version {version}).',
     done: 'Done! Last step, in your AI:',
     done_1:
-      '1. Create a Canvas access token: {canvas}/profile/settings → "+ New Access Token" (copy it; Canvas shows it once).',
+      '1. Create a Canvas access token: {canvas}/profile/settings (or Account → Settings in Canvas) → "+ New Access Token" (copy it; Canvas shows it once).',
+    done_1_ready:
+      '1. Have the Canvas token you just made ready (none yet? {canvas}/profile/settings, or Account → Settings in Canvas → "+ New Access Token").',
     done_2:
       '2. Claude: Settings → Connectors → "Add custom connector" → paste this URL (already copied):',
     done_3: '3. Click "Connect", paste the Canvas token on the page that opens, and authorize.',
@@ -43,6 +44,8 @@ const M = {
       'This deletes the connector "{name}" and its storage. Your AI apps will lose the connection. Type the name to confirm:',
     un_failed:
       'Could not delete {what}: {detail}\n  Your local install record was kept: run the same command again to retry.',
+    un_wrong_account:
+      'This connector was installed in Cloudflare account {id}, not the one chosen now. Run it again and pick that account, or log in to it first (npx wrangler login). Nothing was deleted.',
     un_done:
       'Removed. Also delete the Canvas token (Canvas → Account → Settings) and the connector in your AI app.',
     cancelled: 'Cancelled.',
@@ -54,6 +57,11 @@ const M = {
     check_connected: 'It is connected to your AI apps and ready to use.',
     cert_wait:
       'The new workers.dev address is still getting its HTTPS certificate. The first time this can take a few minutes; waiting…',
+    cert_wait_token:
+      'While you wait, create your Canvas access token (Canvas opens in your browser): {canvas} → "+ New Access Token". If Canvas makes you sign in first and then shows another page, open Account → Settings. Copy the token right away; Canvas shows it only once.',
+    subdomain_ok: 'Created your free workers.dev address: {address}',
+    email_verify:
+      "Your Cloudflare account's email address is not verified yet. Open the email from Cloudflare (check spam too), click the verification link, then run this command again.",
     pick_account_flag:
       'This Cloudflare login has several accounts. Run the same command again with one of these added:\n{list}',
     canvas_flag:
@@ -87,7 +95,6 @@ const M = {
       '第 2/4 步 · 你学校 Canvas 的网址（在浏览器打开 Canvas，把地址栏粘贴过来，比如 canvas.example.edu）：',
     canvas_bad: '这看起来不是 Canvas 网站（{detail}）。请粘贴你登录 Canvas 那个页面的网址。',
     canvas_ok: '找到 Canvas：{host}',
-    school_q: '学校名称，会显示在连接器页面上（可选，直接回车跳过）：',
     kv: '创建连接器的存储…',
     kv_reuse: '沿用已有的存储。',
     deploy: '第 3/4 步 · 部署连接器（版本 {version}）…',
@@ -96,7 +103,9 @@ const M = {
     check_ok: '一切正常（版本 {version}）。',
     done: '装好了！最后一步，在你的 AI 里：',
     done_1:
-      '1. 生成 Canvas 访问令牌：{canvas}/profile/settings →「+ 新建访问许可证」（立刻复制，Canvas 只显示一次）。',
+      '1. 生成 Canvas 访问令牌：{canvas}/profile/settings（或 Canvas 左边「账户 → 设置」）→「+ 新建访问许可证」（立刻复制，Canvas 只显示一次）。',
+    done_1_ready:
+      '1. 准备好刚才生成的 Canvas 令牌（还没生成？{canvas}/profile/settings，或 Canvas 左边「账户 → 设置」→「+ 新建访问许可证」）。',
     done_2: '2. Claude：设置 → 连接器 →「添加自定义连接器」→ 粘贴这个网址（已经复制好了）：',
     done_3: '3. 点「连接」，在弹出的页面粘贴 Canvas 令牌并授权。',
     done_now: '现在就去连接；连好之前不要把这个网址发给别人。',
@@ -109,6 +118,8 @@ const M = {
     done_update: '以后想更新，再运行一次同一条命令就行：存储和连接都会保留。',
     un_confirm: '这会删除连接器「{name}」和它的存储，你的 AI 应用会失去连接。输入名称确认：',
     un_failed: '没能删除{what}：{detail}\n  本地安装记录已保留，再运行一次同一条命令即可重试。',
+    un_wrong_account:
+      '这个连接器装在 Cloudflare 账号 {id} 里，不是现在选的这个。请重新运行并选择那个账号，或者先登录它（npx wrangler login）。什么都没有删除。',
     un_done: '已删除。另外请删掉 Canvas 令牌（Canvas → 账户 → 设置）和 AI 应用里的连接器。',
     cancelled: '已取消。',
     check_pending:
@@ -118,6 +129,11 @@ const M = {
     check_only: '检查连接器 {url}…',
     check_connected: '已经连接到你的 AI 应用，可以直接用。',
     cert_wait: '新的 workers.dev 地址还在申请 HTTPS 证书，第一次可能要几分钟，正在等待…',
+    cert_wait_token:
+      '等待的同时，先去生成 Canvas 访问令牌（浏览器里会打开 Canvas）：{canvas} →「+ 新建访问许可证」。如果要先登录、登录后没回到设置页，就在 Canvas 左边点「账户 → 设置」。令牌立刻复制，Canvas 只显示一次。',
+    subdomain_ok: '已为你创建免费的 workers.dev 地址：{address}',
+    email_verify:
+      '你的 Cloudflare 账号还没验证邮箱。打开 Cloudflare 发来的邮件（也看看垃圾箱），点里面的验证链接，然后再运行一次这条命令。',
     pick_account_flag:
       '这个 Cloudflare 登录下有多个账号。请在同一条命令后加上其中一个，再运行一次：\n{list}',
     canvas_flag:
@@ -152,8 +168,6 @@ const M = {
     canvas_bad:
       'Eso no parece un sitio de Canvas ({detail}). Pega la dirección de la página donde inicias sesión en Canvas.',
     canvas_ok: 'Canvas encontrado en {host}.',
-    school_q:
-      'Nombre de tu universidad, se muestra en las páginas del conector (opcional, Enter para omitir):',
     kv: 'Creando el almacenamiento del conector…',
     kv_reuse: 'Reutilizando el almacenamiento existente.',
     deploy: 'Paso 3/4 · Desplegando el conector (versión {version})…',
@@ -162,7 +176,9 @@ const M = {
     check_ok: 'Todo funciona (versión {version}).',
     done: '¡Listo! Último paso, en tu IA:',
     done_1:
-      '1. Crea un token de acceso de Canvas: {canvas}/profile/settings → "+ Nuevo token de acceso" (cópialo; Canvas lo muestra una sola vez).',
+      '1. Crea un token de acceso de Canvas: {canvas}/profile/settings (o Cuenta → Configuración en Canvas) → "+ Nuevo token de acceso" (cópialo; Canvas lo muestra una sola vez).',
+    done_1_ready:
+      '1. Ten a mano el token de Canvas que acabas de crear (¿aún no lo tienes? {canvas}/profile/settings, o Cuenta → Configuración en Canvas → "+ Nuevo token de acceso").',
     done_2:
       '2. Claude: Configuración → Conectores → "Añadir conector personalizado" → pega esta URL (ya está copiada):',
     done_3:
@@ -181,6 +197,8 @@ const M = {
       'Esto elimina el conector "{name}" y su almacenamiento. Tus apps de IA perderán la conexión. Escribe el nombre para confirmar:',
     un_failed:
       'No se pudo eliminar {what}: {detail}\n  Se conservó el registro local: vuelve a ejecutar el mismo comando para reintentar.',
+    un_wrong_account:
+      'Este conector se instaló en la cuenta de Cloudflare {id}, no en la elegida ahora. Vuelve a ejecutarlo y elige esa cuenta, o inicia sesión en ella primero (npx wrangler login). No se ha borrado nada.',
     un_done:
       'Eliminado. Borra también el token de Canvas (Canvas → Cuenta → Configuración) y el conector en tu app de IA.',
     cancelled: 'Cancelado.',
@@ -192,6 +210,11 @@ const M = {
     check_connected: 'Está conectado a tus apps de IA y listo para usar.',
     cert_wait:
       'La nueva dirección workers.dev todavía está obteniendo su certificado HTTPS. La primera vez puede tardar unos minutos; esperando…',
+    cert_wait_token:
+      'Mientras esperas, crea tu token de acceso de Canvas (Canvas se abre en el navegador): {canvas} → "+ Nuevo token de acceso". Si Canvas te pide iniciar sesión y luego no vuelve a la configuración, abre Cuenta → Configuración. Cópialo enseguida: Canvas lo muestra una sola vez.',
+    subdomain_ok: 'Creada tu dirección gratuita de workers.dev: {address}',
+    email_verify:
+      'El correo de tu cuenta de Cloudflare aún no está verificado. Abre el correo de Cloudflare (revisa también el spam), haz clic en el enlace de verificación y vuelve a ejecutar este comando.',
     pick_account_flag:
       'Este inicio de sesión de Cloudflare tiene varias cuentas. Ejecuta el mismo comando otra vez añadiendo una de estas:\n{list}',
     canvas_flag:
@@ -228,7 +251,6 @@ const M = {
     canvas_bad:
       'Canvas のサイトではないようです（{detail}）。Canvas にログインするページのアドレスを貼り付けてください。',
     canvas_ok: 'Canvas が見つかりました：{host}',
-    school_q: '学校名（コネクタのページに表示されます。任意、Enter でスキップ）：',
     kv: 'コネクタのストレージを作成しています…',
     kv_reuse: '既存のストレージを再利用します。',
     deploy: 'ステップ 3/4 · コネクタをデプロイしています（バージョン {version}）…',
@@ -237,7 +259,9 @@ const M = {
     check_ok: 'すべて正常です（バージョン {version}）。',
     done: '完了！最後のステップ（AI 側）：',
     done_1:
-      '1. Canvas アクセストークンを作成：{canvas}/profile/settings →「+ 新しいアクセストークン」（すぐコピー。表示は一度きりです）。',
+      '1. Canvas アクセストークンを作成：{canvas}/profile/settings（または Canvas 左側の「アカウント → 設定」）→「+ 新しいアクセストークン」（すぐコピー。表示は一度きりです）。',
+    done_1_ready:
+      '1. さっき作った Canvas トークンを用意（まだなら：{canvas}/profile/settings、または Canvas 左側の「アカウント → 設定」→「+ 新しいアクセストークン」）。',
     done_2:
       '2. Claude：設定 → コネクタ →「カスタムコネクタを追加」→ この URL を貼り付け（コピー済み）：',
     done_3: '3.「接続」を押し、開いたページに Canvas トークンを貼り付けて認可します。',
@@ -255,6 +279,8 @@ const M = {
       'コネクタ「{name}」とそのストレージを削除します。AI アプリとの接続は切れます。確認のため名前を入力してください：',
     un_failed:
       '{what} を削除できませんでした：{detail}\n  ローカルのインストール記録は残してあります。同じコマンドをもう一度実行すると再試行できます。',
+    un_wrong_account:
+      'このコネクタは Cloudflare アカウント {id} にインストールされていて、今選んだアカウントではありません。もう一度実行してそのアカウントを選ぶか、先にそのアカウントにログインしてください（npx wrangler login）。何も削除していません。',
     un_done:
       '削除しました。Canvas トークン（Canvas → アカウント → 設定）と AI アプリのコネクタも削除してください。',
     cancelled: 'キャンセルしました。',
@@ -266,6 +292,11 @@ const M = {
     check_connected: 'AI アプリに接続済みで、すぐに使えます。',
     cert_wait:
       '新しい workers.dev アドレスの HTTPS 証明書を準備しています。初回は数分かかることがあります。待機しています…',
+    cert_wait_token:
+      '待っている間に Canvas のアクセストークンを作成しましょう（ブラウザで Canvas が開きます）：{canvas} →「+ 新しいアクセストークン」。先にログインを求められ、そのあと設定ページに戻らない場合は、Canvas 左側の「アカウント → 設定」を開いてください。表示は一度きりなので、すぐにコピーしてください。',
+    subdomain_ok: '無料の workers.dev アドレスを作成しました：{address}',
+    email_verify:
+      'Cloudflare アカウントのメールアドレスがまだ確認されていません。Cloudflare からのメール（迷惑メールフォルダも確認）を開いて確認リンクをクリックし、このコマンドをもう一度実行してください。',
     pick_account_flag:
       'この Cloudflare ログインには複数のアカウントがあります。同じコマンドに次のどれかを付けて、もう一度実行してください：\n{list}',
     canvas_flag:
@@ -301,8 +332,6 @@ const M = {
     canvas_bad:
       'यह Canvas साइट नहीं लगती ({detail})। उस पेज का पता चिपकाएँ जहाँ आप Canvas में लॉग इन करते हैं।',
     canvas_ok: 'Canvas मिला: {host}',
-    school_q:
-      'आपके संस्थान का नाम, कनेक्टर के पेजों पर दिखेगा (वैकल्पिक, छोड़ने के लिए Enter दबाएँ):',
     kv: 'कनेक्टर का स्टोरेज बनाया जा रहा है…',
     kv_reuse: 'मौजूदा स्टोरेज का फिर से उपयोग किया जा रहा है।',
     deploy: 'चरण 3/4 · कनेक्टर डिप्लॉय हो रहा है (संस्करण {version})…',
@@ -311,7 +340,9 @@ const M = {
     check_ok: 'सब कुछ ठीक है (संस्करण {version})।',
     done: 'हो गया! आख़िरी कदम, अपने AI में:',
     done_1:
-      '1. Canvas एक्सेस टोकन बनाएँ: {canvas}/profile/settings → "+ New Access Token" (तुरंत कॉपी करें; Canvas इसे केवल एक बार दिखाता है)।',
+      '1. Canvas एक्सेस टोकन बनाएँ: {canvas}/profile/settings (या Canvas में Account → Settings) → "+ New Access Token" (तुरंत कॉपी करें; Canvas इसे केवल एक बार दिखाता है)।',
+    done_1_ready:
+      '1. अभी बनाया Canvas टोकन तैयार रखें (अभी तक नहीं बनाया? {canvas}/profile/settings, या Canvas में Account → Settings → "+ New Access Token")।',
     done_2:
       '2. Claude: Settings → Connectors → "Add custom connector" → यह URL चिपकाएँ (पहले से कॉपी है):',
     done_3: '3. "Connect" दबाएँ, खुले पेज पर Canvas टोकन चिपकाएँ और अधिकृत करें।',
@@ -329,6 +360,8 @@ const M = {
       'यह कनेक्टर "{name}" और उसका स्टोरेज हटा देगा। आपके AI ऐप का कनेक्शन टूट जाएगा। पुष्टि के लिए नाम लिखें:',
     un_failed:
       '{what} हटाया नहीं जा सका: {detail}\n  आपका लोकल इंस्टॉल रिकॉर्ड रखा गया है: फिर से कोशिश करने के लिए वही कमांड चलाएँ।',
+    un_wrong_account:
+      'यह कनेक्टर Cloudflare खाते {id} में इंस्टॉल है, अभी चुने गए खाते में नहीं। फिर से चलाएँ और वही खाता चुनें, या पहले उसमें लॉग इन करें (npx wrangler login)। कुछ भी हटाया नहीं गया।',
     un_done:
       'हटा दिया गया। Canvas टोकन (Canvas → Account → Settings) और अपने AI ऐप में कनेक्टर भी हटाएँ।',
     cancelled: 'रद्द किया गया।',
@@ -340,6 +373,11 @@ const M = {
     check_connected: 'यह आपके AI ऐप से जुड़ा है और इस्तेमाल के लिए तैयार है।',
     cert_wait:
       'नए workers.dev पते का HTTPS प्रमाणपत्र अभी तैयार हो रहा है। पहली बार इसमें कुछ मिनट लग सकते हैं; प्रतीक्षा हो रही है…',
+    cert_wait_token:
+      'इंतज़ार के दौरान अपना Canvas एक्सेस टोकन बना लें (ब्राउज़र में Canvas खुलेगा): {canvas} → "+ New Access Token"। अगर Canvas पहले साइन इन करवाए और फिर Settings पर न लौटे, तो Account → Settings खोलें। तुरंत कॉपी करें — Canvas इसे केवल एक बार दिखाता है।',
+    subdomain_ok: 'आपका मुफ़्त workers.dev पता बना दिया गया: {address}',
+    email_verify:
+      'आपके Cloudflare खाते का ईमेल पता अभी सत्यापित नहीं है। Cloudflare का ईमेल खोलें (स्पैम भी देखें), सत्यापन लिंक पर क्लिक करें, फिर यही कमांड दोबारा चलाएँ।',
     pick_account_flag:
       'इस Cloudflare लॉगिन में कई खाते हैं। वही कमांड इनमें से एक जोड़कर फिर से चलाएँ:\n{list}',
     canvas_flag:

@@ -2,9 +2,11 @@
 
 **English** · [简体中文](docs/README.zh-CN.md) · [Español](docs/README.es.md) · [日本語](docs/README.ja.md) · [हिन्दी](docs/README.hi.md)
 
-**Wire your Canvas LMS straight into Claude and ChatGPT.** Your courses, deadlines, grades and lecture files become part of what your AI knows, in any chat and on any device. Works with any school that uses Canvas.
+![Neuro-CanvasLMS answering "What's due this week?" in Claude](https://raw.githubusercontent.com/BloodyReginaa/Neuro-CanvasLMS/main/docs/images/banner.png)
 
-> "What's due this week?" · "Summarize Lecture 5 in MATH 132." · "What feedback did I get on HW 3?" · "What's in the code ZIP for Lecture 12?"
+**Wire your Canvas LMS straight into Claude and ChatGPT.** Your courses, deadlines, grades and lecture files become part of what your AI knows, in any chat and on any device. It is a read-only remote MCP server that one command deploys to your own free Cloudflare account. Works at any Canvas school that lets students create access tokens ([30-second check](#can-you-use-it)).
+
+> "What's due this week?" · "Summarize Lecture 5 in MATH 132." · "What feedback did I get on HW 3?" · "What's in the code ZIP for Lecture 12?" · "Set up the PA2 starter code in this folder."
 
 ## Why Neuro-CanvasLMS
 
@@ -15,7 +17,7 @@
 | 💸 **Free** | It runs on Cloudflare's free plan, which is far more than one student needs. |
 | 🧠 **Your files live in the conversation** | Lecture notes and PDFs the AI reads stay with that chat on your AI provider's servers. Nothing to download. |
 
-Most Canvas integrations for AI are **local** tools: they only work while your own computer runs them, and only inside desktop or coding apps. Neuro-CanvasLMS is a **remote connector** that runs in your own Cloudflare account, so it also works on your phone and in ChatGPT.
+Local Canvas tools only work while your own computer runs them. Hosted services keep your Canvas token, or a copy of your courses, on their servers. Neuro-CanvasLMS runs in **your own** Cloudflare account: always on, usable from your phone and in ChatGPT, and your token goes only to your own Worker and your school's Canvas.
 
 ## What you get
 
@@ -23,20 +25,25 @@ Most Canvas integrations for AI are **local** tools: they only work while your o
 - **Real file reading:** text from PDF, Word, PowerPoint and Excel, about 90 kinds of code and text files, and Jupyter notebooks (cells and outputs); ZIP archives unpacked on the server (listing plus every code/text file); scanned or handwritten PDFs are recognised and their original pages handed to the AI to look at.
 - **Linked files too:** course files that a module links on Google Docs/Slides/Sheets, Google Drive, Dropbox (files and folders) and GitHub (files and repositories) are read as text, as long as they are shared publicly ("Anyone with the link").
 - **Finds files the course hides:** many courses hide their Files list from students. The connector searches the front page, syllabus, modules, assignments, announcements and the pages they link to, so the AI can still find "the Lecture 12 slides" by name.
+- **Starter code onto your computer:** in Claude Code, Codex and other coding agents, ask "set up PA2 from Canvas". The agent gets a one-time download link that expires in minutes, saves the assignment's starter files in your folder and unpacks them.
 - **Read-only by design:** only fixed `GET` requests. It never submits work, sends messages, starts quizzes or changes anything in Canvas.
 - **Yours only:** deployed in your own Cloudflare account and locked to your own Canvas account. Nobody else, including the authors, ever sees your Canvas token.
 
+## Can you use it?
+
+Check in 30 seconds: in Canvas, open **Account → Settings** and scroll to **Approved Integrations**. If you see a **+ New Access Token** button, you're set. If it is missing, or creating a token is refused, your school doesn't let students make personal tokens, and this connector can't work there yet.
+
 ## Install (about 5 minutes)
 
-You need [Node.js 22+](https://nodejs.org), a free [Cloudflare account](https://dash.cloudflare.com/sign-up) and your Canvas login. In a terminal, run:
+You need [Node.js 22+](https://nodejs.org), a free [Cloudflare account](https://dash.cloudflare.com/sign-up) (verify its email address) and your Canvas login. In a terminal, run:
 
 ```bash
 npx -y neuro-canvas-lms
 ```
 
-The installer signs you in to Cloudflare (a browser page opens; click **Authorize**), asks for your school's Canvas address, deploys the connector to your own account and checks that it works. Then:
+The installer signs you in to Cloudflare (a browser page opens; click **Authorize**), asks for your school's Canvas address, sets up your free workers.dev address if the account is new, deploys the connector to your own account and checks that it works. A new address can take a few minutes to come online; meanwhile the installer opens Canvas so you can create your token. Then:
 
-1. **Create a Canvas token:** Canvas → Account → Settings → **+ New Access Token**. Your school may cap its lifetime (30 days at UMass Amherst). Copy it right away; Canvas shows it only once.
+1. **Create a Canvas token** (if you haven't yet): Canvas → Account → Settings → **+ New Access Token**. Your school may cap its lifetime (30 days at UMass Amherst). Copy it right away; Canvas shows it only once.
 2. **Claude:** Settings → Connectors → **Add custom connector** → paste the URL the installer printed (it is already copied) → **Connect** → paste the Canvas token → Authorize. It then works everywhere you use Claude, including the mobile app and Claude Code.
 3. **ChatGPT:** add a custom connector (developer mode) with the same URL.
 4. Start a new chat and ask: "What assignments do I have this week?"

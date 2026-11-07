@@ -203,3 +203,22 @@ test('the ZIP text result tells the AI how to get the original archive', async (
   const r = await extractZip(course(), 'trees3.zip', doc);
   assert.match(r.extraction_note, /canvas_file_original/);
 });
+
+test('UTF-8 names without the UTF-8 flag (macOS zip / Finder) are read, not called damaged', async () => {
+  // Made with macOS `zip -r`: 作业/第一题.py, name bytes UTF-8, flag bit 11 not set.
+  const bytes = new Uint8Array(
+    Buffer.from(
+      'UEsDBAoAAAAAADR6Z129ciwLCQAAAAkAAAAKABwAcmVhZG1lLnR4dFVUCQADZIfvamSH72p1eAsAAQT1AQAABAAAAABhc2NpaSBvawpQSwMECgAAAAAANHpnXQAAAAAAAAAAAAAAAAcAHADkvZzkuJovVVQJAANkh+9qZIfvanV4CwABBPUBAAAEAAAAAFBLAwQKAAAAAAA0emdd9/WYrgwAAAAMAAAAEwAcAOS9nOS4mi/nrKzkuIDpopgucHlVVAkAA2SH72pkh+9qdXgLAAEE9QEAAAQAAAAAcHJpbnQoImhpIikKUEsBAh4DCgAAAAAANHpnXb1yLAsJAAAACQAAAAoAGAAAAAAAAQAAAKSBAAAAAHJlYWRtZS50eHRVVAUAA2SH72p1eAsAAQT1AQAABAAAAABQSwECHgMKAAAAAAA0emddAAAAAAAAAAAAAAAABwAYAAAAAAAAABAA7UFNAAAA5L2c5LiaL1VUBQADZIfvanV4CwABBPUBAAAEAAAAAFBLAQIeAwoAAAAAADR6Z1339ZiuDAAAAAwAAAATABgAAAAAAAEAAACkgY4AAADkvZzkuJov56ys5LiA6aKYLnB5VVQFAANkh+9qdXgLAAEE9QEAAAQAAAAAUEsFBgAAAAADAAMA9gAAAOcAAAAAAA==',
+      'base64',
+    ),
+  );
+  const r = await extractZip(bytes, 'pa.zip', async () => ({ text: 'doc' }));
+  assert.match(r.text, /作业\/第一题\.py {2}\(12 B\) {2}included/);
+  assert.match(r.text, /===== 作业\/第一题\.py =====\nprint\("hi"\)/);
+  assert.ok(!r.text.includes('damaged'));
+  // `entry` takes the real name, and the Latin-1 reading older results showed
+  const one = await extractZip(bytes, 'pa.zip', null, { entry: '作业/第一题.py' });
+  assert.equal(one.text, 'print("hi")\n');
+  const latin1 = Buffer.from('作业/第一题.py', 'utf8').toString('latin1');
+  assert.equal((await extractZip(bytes, 'pa.zip', null, { entry: latin1 })).text, 'print("hi")\n');
+});

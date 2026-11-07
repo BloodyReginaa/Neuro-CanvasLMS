@@ -122,7 +122,7 @@ test('truncated, ambiguous and oversized responses fail closed', async () => {
     wire('HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked', '0\r\n\r\nextra'),
     enc.encode('HTTP/1.1 200 OK\r\nX: ' + 'x'.repeat(40000) + '\r\n\r\n'),
   ])
-    await assert.rejects(parseCanvasResponse(bytes));
+    await assert.rejects(parseCanvasResponse(bytes), /^Error: Canvas transport: /);
 });
 test('redirect responses never initiate another request or send credentials onward', async () => {
   const f = fixture(
@@ -140,34 +140,54 @@ test('redirect responses never initiate another request or send credentials onwa
   assert.equal(f.closes, 1);
 });
 test('credentials cannot leave the fixed API and writes or injected headers are rejected', async () => {
+  // Each request must be refused by the transport's own checks, before anything is sent: the
+  // stubs only count (a stub that throws would make a missing check look like a refusal).
+  let sent = 0;
   const client = createCanvasTransport(
     () => {
-      throw new Error('must not connect');
+      sent++;
+      return { readable: new ReadableStream(), writable: new WritableStream(), close() {} };
     },
-    () => {
-      throw new Error('must not fallback');
+    async () => {
+      sent++;
+      return Response.json({});
     },
+    { mode: () => 'auto' },
   );
+  const refused = async (url, opt, pattern) => {
+    await assert.rejects(client(url, opt), pattern, `${url} ${JSON.stringify(opt)}`);
+    assert.equal(sent, 0, `nothing was sent for ${url} ${JSON.stringify(opt)}`);
+  };
+  const auth = { method: 'GET', redirect: 'manual', headers: { Authorization: 'Bearer private' } };
   for (const url of [
     'https://evil.test/api/v1/test',
     `http://${H}/api/v1/test`,
     `https://${H}/files/1`,
-    `https://user@${H}/api/v1/test`,
   ])
-    await assert.rejects(
-      client(url, {
-        method: 'GET',
-        redirect: 'manual',
-        headers: { Authorization: 'Bearer private' },
-      }),
-    );
+    await refused(url, auth, /credentials cannot leave the fixed API origin/);
+  await refused(`https://user@${H}/api/v1/test`, auth, /only fixed read-only API requests/);
+  await refused(`https://u:pw@${H}/api/v1/test`, auth, /only fixed read-only API requests/);
   for (const opt of [
     { method: 'POST', redirect: 'manual' },
     { method: 'GET', redirect: 'follow' },
-    { method: 'GET', redirect: 'manual', headers: { Host: 'evil.test' } },
-    { method: 'GET', redirect: 'manual', headers: { Authorization: 'Bearer private\r\nX: evil' } },
+    { method: 'GET', redirect: 'manual', body: 'x' },
   ])
-    await assert.rejects(client(`https://${H}/api/v1/test`, opt));
+    await refused(`https://${H}/api/v1/test`, opt, /only fixed read-only API requests/);
+  for (const headers of [{ Host: 'evil.test' }, { Cookie: 'x=1' }])
+    await refused(
+      `https://${H}/api/v1/test`,
+      { method: 'GET', redirect: 'manual', headers },
+      /unexpected request header/,
+    );
+  // A header with CRLF never reaches the wire: Headers itself rejects it.
+  await refused(
+    `https://${H}/api/v1/test`,
+    { method: 'GET', redirect: 'manual', headers: { Authorization: 'Bearer private\r\nX: evil' } },
+    TypeError,
+  );
+  // And a valid request does go out (the counter works).
+  await client(`https://${H}/api/v1/test`, auth);
+  assert.equal(sent, 1);
 });
 test('file downloads use the existing fetch path without Authorization', async () => {
   let calls = 0;
@@ -204,6 +224,7 @@ test('already aborted requests do not connect', async () => {
       redirect: 'manual',
       signal: AbortSignal.abort(),
     }),
+    { name: 'AbortError' },
   );
   assert.equal(called, false);
 });

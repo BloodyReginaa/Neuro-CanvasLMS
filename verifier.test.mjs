@@ -67,6 +67,16 @@ test('raw results lose signed links too; ordinary and shared links stay', async 
     crocodoc_session_url: `/api/v1/crocodoc_session?blob=x&hmac=y`,
     preview_url: `/api/v1/canvadoc_session?blob=%7B%7D&hmac=abc123`,
     thumbnail_url: `https://inst-fs-iad-prod.inscloudgate.net/thumbnails/1?token=${jwt}`,
+    // the file's uuid is its legacy verifier (Canvas accepts ?verifier=<uuid>)
+    uuid: 'UUIDPASS0123456789abcdefghijklmnopqrstu',
+    attachments: [
+      {
+        id: 6,
+        uuid: 'UUIDPASS-att',
+        thumbnail_url: `https://${H}/images/thumbnails/6/UUIDPASS-att`,
+      },
+    ],
+    login: `https://${H}/login?return_to=%2Ffiles%2F5%2Fdownload%3Fverifier%3DENCODEDPASS%26wrap%3D1`,
   };
   const out = withoutVerifiers({ data: raw });
   const text = JSON.stringify(out);
@@ -77,11 +87,16 @@ test('raw results lose signed links too; ordinary and shared links stay', async 
     jwt,
     'canvadoc_session_url',
     'crocodoc_session_url',
+    'UUIDPASS',
+    'ENCODEDPASS',
+    'thumbnail',
   ])
     assert.ok(!text.includes(secret), secret);
   assert.equal(out.data.url, `https://${H}/files/5/download?download_frd=1`);
   assert.equal(out.data.preview_url, '[signed link removed]');
-  assert.equal(out.data.thumbnail_url, '[signed link removed]');
+  assert.equal(out.data.uuid, undefined);
+  assert.equal(out.data.attachments[0].id, 6);
+  assert.match(out.data.login, /verifier%3D%26wrap%3D1$/);
   assert.equal(out.data.display_name, 'notes.pdf');
 
   // inside page HTML (raw) and inside text: signed storage links go, the rest of the text stays

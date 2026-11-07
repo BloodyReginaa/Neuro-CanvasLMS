@@ -15,6 +15,11 @@ import {
   isYes,
   needsSubdomain,
   subdomainLink,
+  subdomainApi,
+  subdomainCandidate,
+  subdomainAnswer,
+  apiAuth,
+  needsEmailVerification,
   isWarmingUp,
   CHECK_WAIT,
   WARMUP_WAIT,
@@ -127,7 +132,6 @@ test('re-running on an existing install updates it without asking anything', () 
     host: 'canvas.example.edu',
     askHost: false,
     school: 'Example University',
-    askSchool: false,
     accountId: 'acc1',
   });
   // flags still win
@@ -139,14 +143,19 @@ test('re-running on an existing install updates it without asking anything', () 
   assert.equal(flagged.host, 'canvas.other.edu');
   assert.equal(flagged.school, '');
   assert.equal(flagged.accountId, 'acc2');
-  // a first install asks; a half-finished one (no URL yet) asks again
+  // a first install asks for the Canvas address; a half-finished one (no URL yet) asks again
   for (const s of [{}, { host: 'canvas.example.edu' }]) {
     const first = updateChoices(s, {});
     assert.equal(first.updating, false);
     assert.equal(first.askHost, true);
-    assert.equal(first.askSchool, true);
     assert.equal(first.accountId, undefined);
   }
+  // the optional school name is never asked: a flag, an earlier install, or nothing
+  assert.equal(updateChoices({}, {}).school, '');
+  assert.equal(updateChoices({}, { school: 'Example' }).school, 'Example');
+  assert.equal(updateChoices({ host: 'a.edu', school: 'Kept' }, {}).school, 'Kept');
+  assert.equal(updateChoices({}, { school: 'x'.repeat(200) }).school.length, 80);
+  for (const lang of CLI_LANGS) assert.equal(MESSAGES[lang].school_q, undefined, lang);
 });
 
 test('an update asks once, and the question fits the versions', () => {
@@ -172,6 +181,88 @@ test("a new Cloudflare account without a workers.dev subdomain is recognised (wr
   assert.equal(subdomainLink('abc123'), 'https://dash.cloudflare.com/abc123/workers/onboarding');
   for (const lang of CLI_LANGS)
     assert.ok(msg(lang, 'subdomain_needed', { link: 'L' }).includes('L'), lang);
+});
+
+test('a new Cloudflare account gets a workers.dev subdomain without visiting the dashboard', () => {
+  assert.equal(
+    subdomainApi('abc123'),
+    'https://api.cloudflare.com/client/v4/accounts/abc123/workers/subdomain',
+  );
+  // random, valid as a subdomain, and nothing about the user
+  let n = 0;
+  assert.equal(
+    subdomainCandidate(() => n++),
+    'neuro-abcdef',
+  );
+  for (let i = 0; i < 50; i++) assert.match(subdomainCandidate(), /^neuro-[a-z0-9]{6}$/);
+  assert.notEqual(subdomainCandidate(), subdomainCandidate());
+
+  // credentials from `wrangler auth token --json`, whichever way wrangler is signed in
+  assert.deepEqual(apiAuth('{"type":"oauth","token":"T1"}'), { Authorization: 'Bearer T1' });
+  assert.deepEqual(apiAuth('note\n{"type":"api_token","token":"T2"}'), {
+    Authorization: 'Bearer T2',
+  });
+  assert.deepEqual(apiAuth('{"type":"api_key","key":"K","email":"e@x.edu"}'), {
+    'X-Auth-Key': 'K',
+    'X-Auth-Email': 'e@x.edu',
+  });
+  for (const bad of ['', 'Not logged in', '{"type":"oauth"}', '{"type":"x","token":"T"}', null])
+    assert.equal(apiAuth(bad), null, String(bad));
+
+  // what Cloudflare's answers mean
+  assert.deepEqual(subdomainAnswer({ success: true, result: { subdomain: 'neuro-ab12cd' } }), {
+    subdomain: 'neuro-ab12cd',
+  });
+  assert.deepEqual(
+    subdomainAnswer({ success: false, errors: [{ code: 10007, message: 'not found' }] }),
+    { missing: true },
+  );
+  assert.deepEqual(subdomainAnswer({ success: false, errors: [{ code: 10031, message: 'x' }] }), {
+    taken: true,
+  });
+  assert.deepEqual(
+    subdomainAnswer({
+      success: false,
+      errors: [{ code: 10034, message: 'workers.api.error.email_verification_required' }],
+    }),
+    { emailUnverified: true },
+  );
+  assert.deepEqual(
+    subdomainAnswer({ success: false, errors: [{ code: 10000, message: 'Auth' }] }),
+    {
+      error: '10000 Auth',
+    },
+  );
+  assert.deepEqual(subdomainAnswer(null), { error: 'no answer' });
+  assert.deepEqual(subdomainAnswer({ success: true, result: { subdomain: '' } }), {
+    error: 'no answer',
+  });
+
+  // an unverified email, from the API or from wrangler's own message, gets a clear message
+  assert.ok(
+    needsEmailVerification("✘ [ERROR] Please verify your account's email address and try again."),
+  );
+  assert.ok(!needsEmailVerification('✘ [ERROR] Authentication error [code: 10000]'));
+  assert.ok(!needsEmailVerification(undefined));
+  for (const lang of CLI_LANGS) {
+    assert.ok(
+      msg(lang, 'subdomain_ok', { address: 'neuro-x.workers.dev' }).includes('neuro-x'),
+      lang,
+    );
+    assert.ok(
+      msg(lang, 'cert_wait_token', { canvas: 'https://c.edu/profile/settings' }).includes(
+        'https://c.edu/profile/settings',
+      ),
+      lang,
+    );
+    assert.ok(
+      msg(lang, 'done_1_ready', { canvas: 'https://c.edu' }).includes(
+        'https://c.edu/profile/settings',
+      ),
+      lang,
+    );
+    assert.ok(msg(lang, 'email_verify').length > 20, lang);
+  }
 });
 
 test('a new address still waiting for its certificate or DNS gets minutes, not one', () => {

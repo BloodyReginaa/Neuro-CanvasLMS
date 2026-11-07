@@ -32,9 +32,11 @@ import {
   isYes,
   needsSubdomain,
   subdomainLink,
+  needsEmailVerification,
 } from './lib.mjs';
 import { msg } from './messages.mjs';
 import { verifyDeployment } from './verify.mjs';
+import { ensureSubdomain } from './subdomain.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 // wrangler's package "exports" hide bin/; find the package root from its main entry instead.
@@ -65,15 +67,19 @@ const fail = detail => {
 };
 
 let accountEnv = {};
-function wrangler(argv, { cwd, inherit } = {}) {
+function wrangler(argv, { cwd, inherit, timeout } = {}) {
   const r = spawnSync(process.execPath, [WRANGLER, ...argv], {
     cwd,
     encoding: 'utf8',
     stdio: inherit ? 'inherit' : ['ignore', 'pipe', 'pipe'],
+    timeout,
     env: { ...process.env, WRANGLER_SEND_METRICS: 'false', ...accountEnv },
   });
-  return { ok: r.status === 0, out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
+  return { ok: r.status === 0, out: `${r.stdout ?? ''}${r.stderr ?? ''}`, stdout: r.stdout ?? '' };
 }
+// A failed wrangler step: an unverified Cloudflare email gets its own clear message.
+const failStep = (what, out) =>
+  fail(needsEmailVerification(out) ? msg(lang, 'email_verify') : `${what}: ${lastLines(out)}`);
 const lastLines = out =>
   out
     .split('\n')
@@ -155,6 +161,15 @@ async function ensureLogin(saved) {
   return accounts[i].id;
 }
 
+// A new Cloudflare account gets its workers.dev subdomain here (subdomain.mjs), right after sign-in,
+// so the new address's certificate is being issued while the rest runs.
+async function setUpSubdomain(accountId) {
+  const token = wrangler(['auth', 'token', '--json'], { timeout: 30 * 1000 });
+  const result = await ensureSubdomain(accountId, { authOutput: token.ok ? token.stdout : '' });
+  if (result.emailUnverified) fail(msg(lang, 'email_verify'));
+  if (result.created) ok('subdomain_ok', { address: `${result.created}.workers.dev` });
+}
+
 async function checkCanvas(host) {
   try {
     const r = await fetch(`https://${host}/api/v1/users/self`, {
@@ -212,7 +227,7 @@ function ensureKv(name, state) {
   say('kv');
   const r = wrangler(['kv', 'namespace', 'create', `${name}-oauth`]);
   const id = r.out.match(/"id":\s*"([a-f0-9]{32})"/)?.[1];
-  if (!id) fail('could not create storage: ' + lastLines(r.out));
+  if (!id) failStep('could not create storage', r.out);
   return id;
 }
 
@@ -250,10 +265,9 @@ async function install() {
 
   const accountId = await ensureLogin(plan.accountId);
   accountEnv = { CLOUDFLARE_ACCOUNT_ID: accountId };
+  if (!plan.updating) await setUpSubdomain(accountId);
   const host = await askCanvasHost(state.host, { quiet: !plan.askHost });
-  const school = (
-    plan.askSchool ? await ask(msg(lang, 'school_q'), state.school ?? '') : plan.school
-  ).slice(0, 80);
+  const school = plan.school;
   const kvId = ensureKv(name, state);
   const save = extra =>
     fs.writeFileSync(
@@ -277,14 +291,25 @@ async function install() {
     await ask(msg(lang, 'subdomain_wait'));
     r = wrangler(['deploy', '-c', 'wrangler.jsonc'], { cwd: dir });
   }
-  if (!r.ok) fail('deploy failed: ' + lastLines(r.out));
+  if (!r.ok) failStep('deploy failed', r.out);
   const url = parseWorkerUrl(r.out) ?? state.url;
   if (!url) fail('could not read the connector URL: ' + lastLines(r.out));
   ok('deploy_ok', { url });
   save({ url, version: VERSION });
 
   say('check');
-  const check = await verifyDeployment(url, VERSION, { onWarmup: () => say('cert_wait') });
+  // A new address can need minutes for its certificate. On a first install, use that time: the
+  // user makes the Canvas token they need next.
+  let tokenAsked = false;
+  const check = await verifyDeployment(url, VERSION, {
+    onWarmup: () => {
+      say('cert_wait');
+      if (plan.updating) return;
+      tokenAsked = true;
+      say('cert_wait_token', { canvas: `https://${host}/profile/settings` });
+      if (!args.yes) openUrl(`https://${host}/profile/settings`);
+    },
+  });
   if (!check.ok) return notConfirmed(name, url, check.detail);
   ok('check_ok', { version: VERSION });
 
@@ -298,7 +323,7 @@ async function install() {
     console.log('');
     return;
   }
-  nextSteps(url, host);
+  nextSteps(url, host, { tokenAsked });
 }
 
 // The deploy worked but the address did not answer correctly in time (usually a brand-new
@@ -313,10 +338,10 @@ function notConfirmed(name, url, detail) {
 }
 
 // What the user does next, once the connector is online and not yet connected to an AI app.
-function nextSteps(url, host) {
+function nextSteps(url, host, { tokenAsked = false } = {}) {
   copy(`${url}/mcp`);
   console.log(`\n  ${msg(lang, 'done')}`);
-  say('done_1', { canvas: `https://${host}` });
+  say(tokenAsked ? 'done_1_ready' : 'done_1', { canvas: `https://${host}` });
   say('done_2');
   console.log(`\n      ${url}/mcp\n`);
   say('done_3');
@@ -325,7 +350,7 @@ function nextSteps(url, host) {
   console.log('');
   say('done_update');
   console.log('');
-  if (!args.yes) openUrl(`https://${host}/profile/settings`);
+  if (!args.yes && !tokenAsked) openUrl(`https://${host}/profile/settings`);
 }
 
 // Only check an installed connector (after "not confirmed online yet"): nothing is deployed.
@@ -355,7 +380,12 @@ async function uninstall() {
   const dir = path.join(HOME, name);
   const statePath = path.join(dir, 'state.json');
   const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : {};
-  accountEnv = { CLOUDFLARE_ACCOUNT_ID: await ensureLogin() };
+  // The account the connector was installed in. In any other account "Worker does not exist"
+  // would look like success while the Worker and its storage (with the token grants) stay online.
+  const accountId = await ensureLogin(state.accountId);
+  if (state.accountId && accountId !== state.accountId)
+    fail(msg(lang, 'un_wrong_account', { id: state.accountId }));
+  accountEnv = { CLOUDFLARE_ACCOUNT_ID: accountId };
   if (!args.yes && (await ask(msg(lang, 'un_confirm', { name }))) !== name) return say('cancelled');
   // Every step must succeed (or find the thing already gone) before the local record is removed,
   // so a failed uninstall can simply be run again.

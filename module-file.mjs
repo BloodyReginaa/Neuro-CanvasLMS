@@ -13,7 +13,7 @@ import {
   googleKind,
   regeneratedOnDownload,
 } from './external-links.mjs';
-import { DOWNLOAD_UA, loginRedirect, extractBytes, paginated } from './file-content.mjs';
+import { DOWNLOAD_UA, loginRedirect, extractOrExplain, paginated } from './file-content.mjs';
 export const MAX_FILE_BYTES = 15 * 1024 * 1024;
 const cloudFetch = (input, init) => fetch(input, init);
 const id = { type: 'integer', minimum: 1 };
@@ -439,9 +439,13 @@ export async function moduleFileContent(args, token, apiFetch, options = {}) {
     throw new Error('Canvas file: download failed (' + e.name + ').');
   }
   const name = filenameFor(file, item.title);
-  const extracted = await extractBytes(new Uint8Array(file.bytes), name, file.mime, {
-    entry: text.entry,
-  });
+  const extracted = await extractOrExplain(
+    new Uint8Array(file.bytes),
+    name,
+    file.mime,
+    { entry: text.entry },
+    'Call canvas_module_file with this module item to get the file itself, or open the link.',
+  );
   const google = googleKind(link);
   if (google && extracted.text !== null)
     extracted.extraction_note =

@@ -30,7 +30,10 @@ test('resource URI accepts only module IDs, hash and encoded filename', () => {
     uri.replace('/1234/', '/0/'),
     uri.replace('/1234/', '/99999999999999999999/'),
   ])
-    assert.throws(() => parseFileResourceURI(bad));
+    assert.throws(
+      () => parseFileResourceURI(bad),
+      /^Error: Canvas file: invalid resource (URI|IDs)\.$/,
+    );
 });
 test('resource read returns exact binary via authenticated Canvas source', async () => {
   const result = await readFileResource(uri, 'secret', api, options);
@@ -45,6 +48,7 @@ test('resource read rejects changed file and lost Canvas access', async () => {
   );
   await assert.rejects(
     readFileResource(uri, 'secret', async () => new Response('', { status: 403 }), options),
+    /^Error: Canvas returned HTTP 403/,
   );
 });
 
@@ -58,7 +62,7 @@ test('file_id resources round-trip and re-check Canvas on every read', async () 
     name: '12 Notes.pdf',
   });
   for (const bad of [furi.replace('/7777/', '/0/'), furi + '/x', 'canvas-file://file/1/' + sha256])
-    assert.throws(() => parseFileResourceURI(bad));
+    assert.throws(() => parseFileResourceURI(bad), /^Error: Canvas file: invalid resource URI\.$/);
   let apiCalls = 0;
   const fileApi = async u => {
     apiCalls++;

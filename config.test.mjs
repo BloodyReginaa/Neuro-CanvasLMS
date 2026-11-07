@@ -49,14 +49,40 @@ test('one release serves any school: vars switch the Canvas host, name and colou
     assert.match(home, /canvas\.example\.edu/);
     assert.match(home, /Example University/);
     assert.match(home, /--accent:#123456/);
+    assert.match(home, /<title>Neuro-CanvasLMS<\/title>/); // the product name once, not "X · X"
+    const auth = authorizePage('en', 'https://w.example/authorize', { csrf: 'x', returnTo: 'r' });
+    assert.match(auth, /Connect your Example University Canvas/);
+    // one click to where the token is made, in a new tab so the form stays open
     assert.match(
-      authorizePage('en', 'https://w.example/authorize', { csrf: 'x', returnTo: 'r' }),
-      /Connect your Example University Canvas/,
+      auth,
+      /<a class="open" href="https:\/\/canvas\.example\.edu\/profile\/settings" target="_blank" rel="noopener noreferrer">Open Canvas settings ↗<\/a>/,
     );
   } finally {
     config.applyConfig(defaults);
   }
   assert.equal(config.CANVAS_HOST, 'canvas.example.edu');
+});
+
+test('without a school name (the installer no longer asks) every title still reads naturally', () => {
+  try {
+    config.applyConfig({ SCHOOL_NAME: '' });
+    for (const [lang, title] of [
+      ['en', 'Connect your Canvas'],
+      ['zh-CN', '连接你的 Canvas'],
+      ['es', 'Conecta tu Canvas'],
+      ['ja', 'Canvas を接続'],
+      ['hi', 'अपना Canvas जोड़ें'],
+    ]) {
+      const html = authorizePage(lang, 'https://w.example/authorize', { csrf: 'x', returnTo: 'r' });
+      assert.ok(html.includes(`<h1>${title}</h1>`), lang);
+      assert.ok(html.includes(`<title>${title} · Neuro-CanvasLMS</title>`), lang);
+      const home = homePage(lang, 'https://w.example/', { bound: false, version: '2.13.0' });
+      assert.ok(home.includes('<title>Neuro-CanvasLMS</title>'), lang);
+    }
+  } finally {
+    config.applyConfig(defaults);
+  }
+  assert.equal(config.SCHOOL_NAME, 'Example University');
 });
 
 test('invalid settings are ignored, the previous values stay', () => {

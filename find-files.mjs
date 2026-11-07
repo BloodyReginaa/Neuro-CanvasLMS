@@ -180,14 +180,24 @@ export async function findFiles(args, token, fetcher) {
     return canvasGet(u, token, fetcher);
   };
   const searched = {};
-  // One source failing (hidden, not enabled) is normal; an expired token stops everything.
+  // A source being hidden or not enabled (401/403/404) is normal. A source that failed (timeout,
+  // network, rate limit, Canvas error) was not searched: the result is then incomplete, and if
+  // nothing could be searched at all the error is passed on instead of an empty "complete" list.
+  // An expired token or an HTML error page (Canvas down, a firewall) stops everything.
+  const failures = [];
+  const hidden = e => [401, 403, 404].includes(e.status);
   const attempt = async (source, run) => {
     try {
       const n = await run();
       searched[source] = n === undefined ? 'ok' : `ok (${n})`;
     } catch (e) {
       if (/authorization expired|HTML error page/.test(e.message ?? '')) throw e;
-      searched[source] = e.status ? `not available (HTTP ${e.status})` : 'failed';
+      if (hidden(e)) searched[source] = `not available (HTTP ${e.status})`;
+      else {
+        failures.push(e);
+        complete = false;
+        searched[source] = e.status ? `failed (HTTP ${e.status})` : 'failed';
+      }
     }
   };
   const pagesOf = async (path, query, maxPages, each) => {
@@ -337,7 +347,8 @@ export async function findFiles(args, token, fetcher) {
 
   // Pages linked from everything above, breadth first, never outside this course.
   let pagesRead = 0,
-    pagesUnavailable = 0;
+    pagesUnavailable = 0,
+    pagesFailed = 0;
   while (queue.length) {
     const batch = queue.splice(0, PAGE_BATCH).filter(slug => !read.has(slug));
     await Promise.all(
@@ -355,7 +366,12 @@ export async function findFiles(args, token, fetcher) {
           });
         } catch (e) {
           if (/authorization expired|HTML error page/.test(e.message ?? '')) throw e;
-          pagesUnavailable++;
+          if (hidden(e)) pagesUnavailable++;
+          else {
+            failures.push(e);
+            complete = false;
+            pagesFailed++;
+          }
         }
       }),
     );
@@ -365,7 +381,20 @@ export async function findFiles(args, token, fetcher) {
     }
   }
   searched.linked_pages =
-    `${pagesRead} read` + (pagesUnavailable ? `, ${pagesUnavailable} not available` : '');
+    `${pagesRead} read` +
+    (pagesUnavailable ? `, ${pagesUnavailable} not available` : '') +
+    (pagesFailed ? `, ${pagesFailed} failed` : '');
+  const sources = Object.entries(searched).filter(([k]) => k !== 'linked_pages');
+  // Nothing could be searched: say why instead of "no files, complete".
+  if (failures.length && !pagesRead && !sources.some(([, v]) => v.startsWith('ok'))) {
+    const e = failures.find(x => /^Canvas/.test(x.message ?? '')) ?? failures[0];
+    throw /^Canvas/.test(e.message ?? '')
+      ? e
+      : new Error(`Canvas could not be searched (${e.name}). Try again in a minute.`);
+  }
+  // Every source 404: most likely not a course this user is in.
+  const wrongCourse =
+    !files.size && sources.length && sources.every(([, v]) => v === 'not available (HTTP 404)');
 
   let list = [...files.values()];
   let matchedOn = null;
@@ -393,11 +422,21 @@ export async function findFiles(args, token, fetcher) {
     external_links: ext,
     searched,
     complete,
-    ...(complete
-      ? {}
-      : {
-          note: `Stopped after ${requests} Canvas requests; some linked pages or lists were not searched. Open more pages with canvas_context_page or canvas_module_items if the file is not listed.`,
-        }),
+    ...(failures.length
+      ? {
+          note: `Some places could not be searched (they failed, see searched: ${failures.length} failed request${failures.length > 1 ? 's' : ''}), so a file missing here may still exist. Try again in a minute before telling the user it is not there.`,
+        }
+      : complete
+        ? {}
+        : {
+            note: `Stopped after ${requests} Canvas requests; some linked pages or lists were not searched. Open more pages with canvas_context_page or canvas_module_items if the file is not listed.`,
+          }),
+    ...(wrongCourse
+      ? {
+          course_note:
+            'Every part of this course answered 404: check the course_id (canvas_courses lists the user’s courses).',
+        }
+      : {}),
     how_to_read:
       'Read a file_id with canvas_file_content (text from PDF/Office/code, ZIP listing and contents) or canvas_file_original (original bytes, e.g. scanned PDFs). An external link with read_with (a module item): call canvas_module_file_content with those IDs for its text (Google Docs/Slides/Sheets/Drive, Dropbox, GitHub), or canvas_module_file for the original file. Other external links cannot be read by this connector: give the user the link.',
   };

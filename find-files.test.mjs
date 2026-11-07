@@ -303,3 +303,40 @@ test('numbers match whole numbers only; school.instructure.com links count as th
   assert.deepEqual(await ids('15'), [2]);
   assert.deepEqual(await ids('2025'), [3]);
 });
+
+test('failed sources make the result incomplete; nothing searchable is an error, not "no files"', async () => {
+  // Canvas timing out everywhere: the AI must hear that, not an empty, complete list.
+  await assert.rejects(
+    findFiles({ course_id: 7 }, 'tok', async () => {
+      throw new DOMException('timeout', 'TimeoutError');
+    }),
+    /Canvas did not answer within 20 seconds/,
+  );
+  // One source failing (JSON 500, rate limit) while the rest answer: files found, but incomplete.
+  for (const failing of [
+    { status: 500, json: { errors: [] } },
+    { status: 429, json: { errors: [] } },
+  ]) {
+    const r = await findFiles(
+      { course_id: 7 },
+      'tok',
+      fakeCanvas({ ...course, '/api/v1/courses/7/assignments': failing }),
+    );
+    assert.equal(r.complete, false);
+    assert.equal(r.searched.assignments, `failed (HTTP ${failing.status})`);
+    assert.match(r.note, /could not be searched/);
+    assert.ok(byId(r)[100], 'files from the other sources are kept');
+  }
+  // Hidden lists alone are normal: still complete.
+  const ok = await findFiles({ course_id: 7 }, 'tok', fakeCanvas(course));
+  assert.equal(ok.complete, true);
+  assert.equal(ok.note, undefined);
+});
+
+test('a course where everything is 404 hints at a wrong course_id', async () => {
+  const r = await findFiles({ course_id: 9 }, 'tok', fakeCanvas({}));
+  assert.deepEqual(r.files, []);
+  assert.match(r.course_note, /check the course_id/);
+  const real = await findFiles({ course_id: 7 }, 'tok', fakeCanvas(course));
+  assert.equal(real.course_note, undefined);
+});

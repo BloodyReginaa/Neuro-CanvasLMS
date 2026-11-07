@@ -52,5 +52,12 @@ test('pages render in every language, escape input, and keep OAuth params in lan
       authorizePage(l, url, { csrf: 'x', returnTo: 'r' }),
       /client_id=abc&amp;state=%3Cx%3E&amp;lang=/,
     );
+    // a translated one-click link to where the Canvas token is made
+    assert.ok(
+      authorizePage(l, url, { csrf: 'x', returnTo: 'r' }).includes(
+        `href="https://canvas.example.edu/profile/settings" target="_blank" rel="noopener noreferrer">${t(l, 'token_open')} ↗</a>`,
+      ),
+      l,
+    );
   }
 });

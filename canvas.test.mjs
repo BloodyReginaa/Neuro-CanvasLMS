@@ -5,9 +5,15 @@ import { endpoint, callCanvas, tools, nextPage } from './canvas.mjs';
 test('every tool is explicitly read only', () =>
   assert.ok(tools.every(t => t.annotations.readOnlyHint && !t.annotations.destructiveHint)));
 test('rejects arbitrary URLs and invalid course IDs', () => {
-  assert.throws(() => endpoint('canvas_assignments', { course_id: '../../users' }));
-  assert.throws(() => endpoint('canvas_profile', { url: 'https://evil.test' }));
-  assert.throws(() => endpoint('delete_course', {}));
+  assert.throws(
+    () => endpoint('canvas_assignments', { course_id: '../../users' }),
+    /^Error: Invalid course_id$/,
+  );
+  assert.throws(
+    () => endpoint('canvas_profile', { url: 'https://evil.test' }),
+    /^Error: Unexpected argument: url$/,
+  );
+  assert.throws(() => endpoint('delete_course', {}), /^Error: Unknown tool$/);
 });
 test('all Canvas requests use GET and refuse redirects', async () => {
   let seen;
@@ -69,8 +75,14 @@ test('new tools reject privilege-expanding and state-changing arguments', () => 
     ],
     ['canvas_file_content', { file_id: 1, url: 'https://evil.test' }],
   ])
-    assert.throws(() => endpoint(name, args));
-  assert.throws(() => endpoint('canvas_files', { context_type: 'course' }));
+    assert.throws(
+      () => endpoint(name, args),
+      /^Error: (Invalid [a-z_]+|Unexpected argument: \w+|Missing [a-z_]+)$/,
+    );
+  assert.throws(
+    () => endpoint('canvas_files', { context_type: 'course' }),
+    /^Error: Missing context_id$/,
+  );
 });
 test('messages and feedback reads do not request read-state changes', () => {
   assert.equal(
@@ -252,7 +264,11 @@ test('pagination follows Canvas bookmarks instead of guessing page+1', async () 
   assert.equal(endpoint('canvas_courses', { page: 3 }).searchParams.get('page'), '3');
   assert.equal(endpoint('canvas_courses', { page: '3' }).searchParams.get('page'), '3');
   for (const bad of [0, '0', 'bookmark:../../x', 'javascript:1', 10001])
-    assert.throws(() => endpoint('canvas_courses', { page: bad }), String(bad));
+    assert.throws(
+      () => endpoint('canvas_courses', { page: bad }),
+      /^Error: Invalid page$/,
+      String(bad),
+    );
   assert.equal(nextPage(null), null);
   assert.equal(nextPage(`<https://${H}/x?page=2>; rel="current"`), null);
 });

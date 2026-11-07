@@ -229,27 +229,55 @@ export async function callCanvas(name, args, token, fetcher = fetch, opts = {}) 
   return out;
 }
 
+// Canvas could not be reached at all: say so (and that the connection is fine), so the AI retries
+// instead of changing its arguments. Our own transport messages already start with "Canvas".
+export function unreachable(e) {
+  if (/^Canvas/.test(e?.message ?? '')) return e;
+  const timeout = e?.name === 'TimeoutError' || e?.name === 'AbortError';
+  return Object.assign(
+    new Error(
+      timeout
+        ? 'Canvas did not answer within 20 seconds; it may be slow or down right now. Try again in a minute. The token and the connection are fine: do not reconnect.'
+        : `Canvas could not be reached (network error: ${e?.name ?? 'Error'}). Try again in a minute. The token and the connection are fine: do not reconnect.`,
+    ),
+    { unreachable: true, cause: e },
+  );
+}
+
 // One GET to the Canvas API: fixed headers, no redirects, Canvas errors turned into safe messages
 // (never the upstream body). `e.status` is set when Canvas refused this item (not a token problem).
 export async function canvasGet(u, token, fetcher = fetch) {
-  const r = await fetcher(u, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/json',
-      'User-Agent': 'Neuro-CanvasLMS/2.0 (read-only personal integration)',
-    },
-    redirect: 'manual',
-    signal: AbortSignal.timeout(20000),
-  });
+  let r;
+  try {
+    r = await fetcher(u, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+        'User-Agent': 'Neuro-CanvasLMS/2.0 (read-only personal integration)',
+      },
+      redirect: 'manual',
+      signal: AbortSignal.timeout(20000),
+    });
+  } catch (e) {
+    throw unreachable(e);
+  }
   if (
     r.status === 406 ||
     (r.status >= 500 && !(r.headers.get('content-type') ?? '').includes('json'))
   ) {
-    // Canvas answers its API with JSON. An HTML error page means a firewall in front of Canvas
-    // rejected the request, or Canvas failed on a malformed token (it returns an HTML 500 for that).
-    throw new Error(
-      `Canvas returned an HTML error page (HTTP ${r.status}) instead of JSON: a firewall in front of Canvas rejected the request, or the token is malformed. If it persists, reconnect with a freshly created token.`,
+    // Canvas answers its API with JSON. An HTML error page means Canvas is down or in maintenance
+    // (502/503/504 from the load balancer), a firewall in front of Canvas rejected the request, or
+    // Canvas failed on a malformed token (an HTML 500; only possible on the authorization page,
+    // since a connected token already passed). The phrase "HTML error page" stops canvas_find_files.
+    await r.body?.cancel().catch(() => {});
+    throw Object.assign(
+      new Error(
+        [502, 503, 504].includes(r.status)
+          ? `Canvas is temporarily unavailable (HTTP ${r.status}, an HTML error page instead of JSON). Try again in a few minutes. The token and the connection are fine: do not reconnect.`
+          : `Canvas returned an HTML error page (HTTP ${r.status}) instead of JSON: usually a temporary Canvas problem or a firewall in front of Canvas. Try again in a few minutes; reconnecting does not help.`,
+      ),
+      { htmlError: r.status },
     );
   }
   if (r.status === 401) {
@@ -276,7 +304,14 @@ export async function canvasGet(u, token, fetcher = fetch) {
       ),
       { status: r.status },
     );
-  const data = await r.json();
+  let data;
+  try {
+    data = await r.json();
+  } catch {
+    throw new Error(
+      `Canvas answered HTTP ${r.status} but not with JSON (a maintenance or login page in between?). Try again in a few minutes; the token and the connection are fine.`,
+    );
+  }
   const next = nextPage(r.headers.get('link'));
   // api_url is the API request itself (it shows JSON); links for the user are the html_url fields.
   return { data, has_more: next !== null, next_page: next, api_url: u.href };
@@ -299,12 +334,22 @@ const FEED = /https?:\/\/[^\s"'<>()]*\/feeds\/[^\s"'<>()]+/gi;
 const LINK = /(?:https?:\/\/|\/api\/v1\/(?:canvadoc|crocodoc)_session)[^\s"'<>()]*/gi;
 const SIGNED =
   /(?:canvadoc|crocodoc)_session|[?&](?:amp;)?(?:sf_verifier|hmac|x-amz-signature|signature)=|[?&](?:amp;)?token=[\w-]+\.[\w-]+\.[\w-]+/i;
-const SIGNED_KEYS = new Set(['canvadoc_session_url', 'crocodoc_session_url']);
+// A file's `uuid` is the verifier itself (Canvas accepts ?verifier=<uuid>) and its thumbnail_url
+// carries it in the path; a course's uuid is the key of its calendar feed. Raw results lose them.
+const SIGNED_KEYS = new Set([
+  'canvadoc_session_url',
+  'crocodoc_session_url',
+  'uuid',
+  'thumbnail_url',
+]);
+// The same pass URL-encoded inside another link (e.g. a login page's return_to=).
+const ENCODED_VERIFIER = /verifier%3D[^&#"'\s<>()%]*/gi;
 export function withoutVerifiers(value) {
   if (typeof value === 'string') {
     let v = value;
     if (v.includes('verifier='))
       v = v.replace(VERIFIER, (m, before, after) => (after ? before : ''));
+    if (/verifier%3D/i.test(v)) v = v.replace(ENCODED_VERIFIER, 'verifier%3D');
     if (v.includes('/feeds/')) v = v.replace(FEED, '[private feed link removed]');
     if (/[?]|_session/.test(v))
       v = v.replace(LINK, link => (SIGNED.test(link) ? '[signed link removed]' : link));

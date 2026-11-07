@@ -63,36 +63,56 @@ export function crc32(data) {
   for (let i = 0; i < data.length; i++) c = CRC_TABLE[(c ^ data[i]) & 0xff] ^ (c >>> 8);
   return (c ^ 0xffffffff) >>> 0;
 }
-export function centralCrcs(bytes) {
+// The central directory in order (fflate walks it in the same order, so entry i here is the i-th
+// file fflate reports): each entry's CRC-32 and, when the name is UTF-8 without the archive saying
+// so, that name. macOS `zip` and Finder write UTF-8 names without the UTF-8 flag (bit 11); fflate
+// then reads them as Latin-1 ("作业.py" → "ä½ä¸.py"). Matching by position, not by name, keeps the
+// CRC check working for such entries, and the UTF-8 name is what the listing shows.
+export function centralDirectory(bytes) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const crcs = new Map();
+  const out = [];
   let eocd = -1;
   for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 22 - 65535); i--)
     if (view.getUint32(i, true) === 0x06054b50) {
       eocd = i;
       break;
     }
-  if (eocd < 0) return crcs;
+  if (eocd < 0) return out;
   let p = view.getUint32(eocd + 16, true);
   const count = view.getUint16(eocd + 10, true);
-  const dec = new TextDecoder();
+  const strict = new TextDecoder('utf-8', { fatal: true });
   for (let n = 0; n < count && p + 46 <= bytes.length; n++) {
     if (view.getUint32(p, true) !== 0x02014b50) break;
+    const flags = view.getUint16(p + 8, true);
     const nameLen = view.getUint16(p + 28, true);
     const extraLen = view.getUint16(p + 30, true);
     const commentLen = view.getUint16(p + 32, true);
-    crcs.set(dec.decode(bytes.subarray(p + 46, p + 46 + nameLen)), view.getUint32(p + 16, true));
+    const raw = bytes.subarray(p + 46, p + 46 + nameLen);
+    let utf8Name = null;
+    if (!(flags & 0x800) && raw.some(b => b > 0x7f))
+      try {
+        utf8Name = strict.decode(raw);
+      } catch {} // not UTF-8: really a legacy code page, keep fflate's reading
+    out.push({ crc: view.getUint32(p + 16, true), utf8Name });
     p += 46 + nameLen + extraLen + commentLen;
   }
-  return crcs;
+  return out;
 }
 
-// Decompress exactly one entry; returns null if it fails, its size doesn't match the header,
-// or its CRC-32 doesn't match the central directory.
+// Decompress exactly one entry (by its position); returns null if it fails, its size doesn't
+// match the header, or its CRC-32 doesn't match the central directory.
 function inflateOne(bytes, entry) {
   try {
-    const out = unzipSync(bytes, { filter: f => f.name === entry.name });
-    const data = out[entry.name];
+    let i = -1,
+      key;
+    const out = unzipSync(bytes, {
+      filter: f => {
+        if (++i !== entry.index) return false;
+        key = f.name;
+        return true;
+      },
+    });
+    const data = out[key];
     if (!data || data.length !== entry.originalSize) return null;
     if (entry.crc === undefined || crc32(data) !== entry.crc) return null;
     return data;
@@ -112,7 +132,12 @@ export async function extractZip(bytes, name, extractDoc, opts = {}) {
   try {
     unzipSync(bytes, {
       filter: f => {
-        entries.push({ name: f.name, size: f.size, originalSize: f.originalSize });
+        entries.push({
+          index: entries.length,
+          name: f.name,
+          size: f.size,
+          originalSize: f.originalSize,
+        });
         return false;
       },
     });
@@ -122,8 +147,13 @@ export async function extractZip(bytes, name, extractDoc, opts = {}) {
       extraction_note: 'This ZIP archive could not be read (damaged, encrypted or not a ZIP file).',
     };
   }
-  const crcs = centralCrcs(bytes);
-  for (const e of entries) e.crc = crcs.get(e.name);
+  const directory = centralDirectory(bytes);
+  for (const e of entries) {
+    e.crc = directory[e.index]?.crc;
+    // fflate's reading stays usable as `entry` too
+    if (directory[e.index]?.utf8Name)
+      [e.latin1Name, e.name] = [e.name, directory[e.index].utf8Name];
+  }
   const files = entries.filter(e => !e.name.endsWith('/'));
   const folders = new Set(entries.filter(e => e.name.endsWith('/')).map(e => e.name));
   for (const f of files) {
@@ -132,7 +162,8 @@ export async function extractZip(bytes, name, extractDoc, opts = {}) {
   }
 
   if (opts.entry !== undefined) {
-    const f = files.find(x => x.name === opts.entry);
+    const f =
+      files.find(x => x.name === opts.entry) ?? files.find(x => x.latin1Name === opts.entry);
     if (!f)
       throw new Error(
         'Canvas file: entry not found in the ZIP. Call canvas_file_content without `entry` to see the listing.',
