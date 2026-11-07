@@ -227,8 +227,9 @@ export async function extractBytes(bytes, shown, mime = '', opts = {}) {
   };
 }
 export async function readFileContent(meta, args, fetcher = fetch) {
-  if (meta.locked_for_user || meta.hidden_for_user)
-    throw new Error('Canvas file is locked or hidden for this user.');
+  // `hidden` files are only hidden from the Files list ("only available with link"), which is how
+  // many courses share files; students may open them. Only a lock stops a download.
+  if (meta.locked_for_user) throw new Error('Canvas file is locked for this user.');
   const base = {
     file_id: meta.id,
     name: meta.display_name ?? meta.filename,

@@ -55,3 +55,75 @@ test('list results name the API request api_url, not a link for the user', async
   assert.match(r.api_url, /\/api\/v1\/courses\?/);
   assert.equal(r.source_url, undefined);
 });
+
+test('raw results lose signed links too; ordinary and shared links stay', async () => {
+  const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyMTcwNTZ9.c2lnbmF0dXJl';
+  // canvas_file with raw: true, as Canvas answers (the shape the security scan reported)
+  const raw = {
+    id: 5,
+    display_name: 'notes.pdf',
+    url: `https://${H}/files/5/download?download_frd=1&verifier=SECRET`,
+    canvadoc_session_url: `/api/v1/canvadoc_session?blob=%7B%22user_id%22%3A1%7D&hmac=abc123`,
+    crocodoc_session_url: `/api/v1/crocodoc_session?blob=x&hmac=y`,
+    preview_url: `/api/v1/canvadoc_session?blob=%7B%7D&hmac=abc123`,
+    thumbnail_url: `https://inst-fs-iad-prod.inscloudgate.net/thumbnails/1?token=${jwt}`,
+  };
+  const out = withoutVerifiers({ data: raw });
+  const text = JSON.stringify(out);
+  for (const secret of [
+    'SECRET',
+    'hmac',
+    'blob=',
+    jwt,
+    'canvadoc_session_url',
+    'crocodoc_session_url',
+  ])
+    assert.ok(!text.includes(secret), secret);
+  assert.equal(out.data.url, `https://${H}/files/5/download?download_frd=1`);
+  assert.equal(out.data.preview_url, '[signed link removed]');
+  assert.equal(out.data.thumbnail_url, '[signed link removed]');
+  assert.equal(out.data.display_name, 'notes.pdf');
+
+  // inside page HTML (raw) and inside text: signed storage links go, the rest of the text stays
+  const html = `<p>See <img src="https://inst-fs-iad-prod.inscloudgate.net/files/1/a.png?token=${jwt}&amp;download=1"> and <a href="https://a1-5.cluster1.canvas-user-content.com/files/5/download?download_frd=1&amp;sf_verifier=${jwt}">slides</a>.</p>`;
+  const cleaned = withoutVerifiers(html);
+  assert.ok(!cleaned.includes(jwt));
+  assert.match(
+    cleaned,
+    /^<p>See <img src="\[signed link removed\]"> and <a href="\[signed link removed\]">slides<\/a>\.<\/p>$/,
+  );
+  for (const signed of [
+    'https://bucket.s3.amazonaws.com/f.zip?X-Amz-Algorithm=AWS4&X-Amz-Signature=abcd',
+    'https://d1.cloudfront.net/f.pdf?Expires=1800000000&Signature=abcd&Key-Pair-Id=K',
+  ])
+    assert.equal(
+      withoutVerifiers(`get it at ${signed} today`),
+      'get it at [signed link removed] today',
+    );
+
+  // these must survive untouched
+  for (const keep of [
+    `https://${H}/courses/1/assignments/2/submissions/3?preview=1&version=0`,
+    `https://${H}/courses/1/files/5?wrap=1`,
+    `https://${H}/api/v1/files/5?per_page=50&page=1`,
+    'https://www.dropbox.com/scl/fi/abc/x.pdf?rlkey=KEY&dl=0',
+    'https://docs.google.com/presentation/d/ID/edit?usp=sharing',
+    'https://umass-amherst.zoom.us/j/123456789?pwd=abc',
+    'https://example.org/page?token=not-a-jwt',
+    'https://neuro-canvas-lms.you.workers.dev/dl/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCdE',
+    "What's due this week? Office hours moved?",
+  ])
+    assert.equal(withoutVerifiers(keep), keep, keep);
+
+  // a canvas_file_download_link result reaches the AI unchanged
+  const dl =
+    'https://neuro-canvas-lms.you.workers.dev/dl/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCdE';
+  const link = {
+    file_id: 5,
+    name: 'hamspam-student.zip',
+    html_url: `https://${H}/files/5`,
+    download_url: dl,
+    command: `curl -L --fail -H "X-Canvas-Download: 1" -o "hamspam-student.zip" "${dl}"`,
+  };
+  assert.deepEqual(withoutVerifiers(link), link);
+});

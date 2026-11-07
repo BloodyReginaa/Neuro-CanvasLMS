@@ -51,3 +51,38 @@ test('download User-Agent avoids strings known to be blocked by Canvas file stor
   assert.doesNotMatch(DOWNLOAD_UA, /umasscanvas/i);
   assert.match(DOWNLOAD_UA, /^[\x20-\x7e]+$/);
 });
+
+test('files shared "only with link" are read; only a lock stops a download', async () => {
+  // Canvas's own answer for such a file (UMass, 2026-11-06): hidden from the Files list, not locked,
+  // with a download URL. Students open it from the course page; every reader must too.
+  const hiddenMeta = {
+    id: 18454568,
+    display_name: 'Programming Environment Setup.md',
+    filename: 'setup.md',
+    url: `https://${H}/files/18454568/download?download_frd=1&verifier=x`,
+    size: 5,
+    hidden: true,
+    hidden_for_user: true,
+    locked_for_user: false,
+  };
+  const text = async () => new Response('hello', { headers: { 'content-type': 'text/plain' } });
+  assert.equal((await readFileContent(hiddenMeta, {}, text)).text, 'hello');
+  await assert.rejects(
+    readFileContent({ ...hiddenMeta, locked_for_user: true }, {}, text),
+    /locked/,
+  );
+  const { fileOriginal } = await import('./module-file.mjs');
+  const api = m => async () => Response.json(m);
+  const options = { resolve: async () => {}, fetcher: text };
+  const original = await fileOriginal({ file_id: 18454568 }, 't', api(hiddenMeta), options);
+  assert.equal(original.structuredContent.size, 5);
+  await assert.rejects(
+    fileOriginal(
+      { file_id: 18454568 },
+      't',
+      api({ ...hiddenMeta, locked_for_user: true }),
+      options,
+    ),
+    /locked/,
+  );
+});

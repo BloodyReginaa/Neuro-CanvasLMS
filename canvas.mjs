@@ -286,20 +286,37 @@ export async function canvasGet(u, token, fetcher = fetch) {
 // anyone holding the link can download the file without logging in. The connector needs it for
 // its own downloads, but it must not end up in conversations, so it is stripped from everything
 // returned to the AI. The links keep working for the user, who is logged in to Canvas.
-// Private calendar/announcement feed links (/feeds/…) work the same way and are removed whole.
+// Other passes are removed whole, in compact and raw results alike (raw skips slim.mjs):
+//  - private calendar/announcement feed links (/feeds/…);
+//  - signed links: document preview sessions (canvadoc/crocodoc), storage links signed with
+//    sf_verifier, hmac, S3/CloudFront signatures or a JWT `token`. They open a file, or carry the
+//    user's id, without logging in.
+// Ordinary links stay: Canvas pages (including a submission's preview page), Dropbox/Google share
+// links and meeting links a teacher posted, and this connector's own /dl/ download links.
+// The connector's own requests use Canvas data directly and never pass through this filter.
 const VERIFIER = /(&amp;|[?&])verifier=[^&#"'\s<>()]*(&amp;|&)?/gi;
 const FEED = /https?:\/\/[^\s"'<>()]*\/feeds\/[^\s"'<>()]+/gi;
+const LINK = /(?:https?:\/\/|\/api\/v1\/(?:canvadoc|crocodoc)_session)[^\s"'<>()]*/gi;
+const SIGNED =
+  /(?:canvadoc|crocodoc)_session|[?&](?:amp;)?(?:sf_verifier|hmac|x-amz-signature|signature)=|[?&](?:amp;)?token=[\w-]+\.[\w-]+\.[\w-]+/i;
+const SIGNED_KEYS = new Set(['canvadoc_session_url', 'crocodoc_session_url']);
 export function withoutVerifiers(value) {
   if (typeof value === 'string') {
     let v = value;
     if (v.includes('verifier='))
       v = v.replace(VERIFIER, (m, before, after) => (after ? before : ''));
     if (v.includes('/feeds/')) v = v.replace(FEED, '[private feed link removed]');
+    if (/[?]|_session/.test(v))
+      v = v.replace(LINK, link => (SIGNED.test(link) ? '[signed link removed]' : link));
     return v;
   }
   if (Array.isArray(value)) return value.map(withoutVerifiers);
   if (value && typeof value === 'object')
-    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, withoutVerifiers(v)]));
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([k]) => !SIGNED_KEYS.has(k))
+        .map(([k, v]) => [k, withoutVerifiers(v)]),
+    );
   return value;
 }
 

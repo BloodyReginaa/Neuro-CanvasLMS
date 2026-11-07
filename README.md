@@ -19,7 +19,7 @@ Most Canvas integrations for AI are **local** tools: they only work while your o
 
 ## What you get
 
-- **63 read-only tools:** courses, modules, pages, files, assignments, submissions, grades and feedback, rubrics, announcements, discussions, inbox, calendar, to-dos, groups, quiz history and profile settings.
+- **64 read-only tools:** courses, modules, pages, files, assignments, submissions, grades and feedback, rubrics, announcements, discussions, inbox, calendar, to-dos, groups, quiz history and profile settings.
 - **Real file reading:** text from PDF, Word, PowerPoint and Excel, about 90 kinds of code and text files, and Jupyter notebooks (cells and outputs); ZIP archives unpacked on the server (listing plus every code/text file); scanned or handwritten PDFs are recognised and their original pages handed to the AI to look at.
 - **Linked files too:** course files that a module links on Google Docs/Slides/Sheets, Google Drive, Dropbox (files and folders) and GitHub (files and repositories) are read as text, as long as they are shared publicly ("Anyone with the link").
 - **Finds files the course hides:** many courses hide their Files list from students. The connector searches the front page, syllabus, modules, assignments, announcements and the pages they link to, so the AI can still find "the Lecture 12 slides" by name.

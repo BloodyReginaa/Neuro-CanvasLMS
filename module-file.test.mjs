@@ -161,3 +161,23 @@ test('cloud delivery stores exact bytes and returns a compact named resource lin
   assert.equal(r.content[1].size, pdf.length);
   assert.deepEqual(r.structuredContent.file_resource, r.content[1]);
 });
+
+test('a module File shared "only with link" (hidden from Files) is fetched; a locked one is not', async () => {
+  const api = locked => async u =>
+    Response.json(
+      new URL(u).pathname.endsWith('/files/1')
+        ? {
+            id: 1,
+            url: 'https://files.inscloudgate.net/a',
+            filename: 'notes.pdf',
+            hidden: true,
+            hidden_for_user: true,
+            locked_for_user: locked,
+          }
+        : { ...external, type: 'File', content_id: 1 },
+    );
+  const options = { resolve: resolver, fetcher: async () => new Response(pdf) };
+  const r = await moduleFile(args, 't', api(false), options);
+  assert.deepEqual(Buffer.from(r.content[1].resource.blob, 'base64'), pdf);
+  await assert.rejects(moduleFile(args, 't', api(true), options), /locked/);
+});

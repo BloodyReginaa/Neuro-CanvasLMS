@@ -252,8 +252,8 @@ export async function moduleFile(args, token, apiFetch, options = {}) {
   if (item.type === 'File' && Number.isSafeInteger(item.content_id)) {
     const meta = (await callCanvas('canvas_file', { file_id: item.content_id }, token, apiFetch))
       .data;
-    if (meta.locked_for_user || meta.hidden_for_user)
-      throw new Error('Canvas file: file is locked or hidden.');
+    // Hidden = only hidden from the Files list (link-only sharing); only a lock stops a download.
+    if (meta.locked_for_user) throw new Error('Canvas file: file is locked.');
     if (meta.size > MAX_FILE_BYTES) throw new Error('Canvas file: file exceeds 15 MiB limit.');
     raw = meta.url;
     fallback = meta.display_name ?? meta.filename;
@@ -353,8 +353,9 @@ export async function fileOriginal(args, token, apiFetch, options = {}) {
   )
     throw new Error('Canvas file: only a positive Canvas file_id is accepted.');
   const meta = (await callCanvas('canvas_file', { file_id: args.file_id }, token, apiFetch)).data;
-  if (meta.locked_for_user || meta.hidden_for_user)
-    throw new Error('Canvas file: file is locked or hidden.');
+  // `hidden` files are only hidden from the Files list ("only available with link"), which is how
+  // many courses share files; students may open them. Only a lock stops a download.
+  if (meta.locked_for_user) throw new Error('Canvas file: file is locked.');
   if (meta.size > MAX_FILE_BYTES) throw new Error('Canvas file: file exceeds 15 MiB limit.');
   if (!meta.url)
     throw new Error('Canvas file: Canvas did not provide a download link for this file.');
