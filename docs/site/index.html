@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect Canvas LMS to ChatGPT and Claude · Neuro-CanvasLMS</title>
+<meta name="description" content="How to connect Canvas LMS to Claude and ChatGPT in about 5 minutes. Ask about deadlines, grades and lecture files from any device. Free, read-only, open source, and deployed to your own Cloudflare account.">
+<link rel="canonical" href="https://bloodyreginaa.github.io/Neuro-CanvasLMS/">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Neuro-CanvasLMS">
+<meta property="og:title" content="Connect Canvas LMS to ChatGPT and Claude">
+<meta property="og:description" content="Ask your AI what's due, how you're doing and what Lecture 5 said. Free, read-only, on your own Cloudflare account.">
+<meta property="og:url" content="https://bloodyreginaa.github.io/Neuro-CanvasLMS/">
+<meta property="og:image" content="https://raw.githubusercontent.com/BloodyReginaa/Neuro-CanvasLMS/main/docs/images/banner.png">
+<meta property="og:image:width" content="2560">
+<meta property="og:image:height" content="1280">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' rx='38' fill='%231d1d1f'/%3E%3Cpath d='M44 106 L44 46 L106 104 L106 44' fill='none' stroke='%23fff' stroke-width='12' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Neuro-CanvasLMS",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Cloudflare Workers",
+  "description": "Read-only Canvas LMS MCP server for Claude and ChatGPT, deployed to your own free Cloudflare account with one command.",
+  "url": "https://bloodyreginaa.github.io/Neuro-CanvasLMS/",
+  "downloadUrl": "https://www.npmjs.com/package/neuro-canvas-lms",
+  "codeRepository": "https://github.com/BloodyReginaa/Neuro-CanvasLMS",
+  "license": "https://opensource.org/licenses/MIT",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Can I connect Canvas LMS to ChatGPT or Claude?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes, if your school lets students create Canvas access tokens. Run npx -y neuro-canvas-lms, add the printed URL as a custom connector in Claude or ChatGPT, and paste your Canvas token on the connector's own page." } },
+    { "@type": "Question", "name": "Is it free?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is MIT-licensed open source and runs on Cloudflare's free plan, which is far more than one student needs." } },
+    { "@type": "Question", "name": "Can it submit assignments or change anything in Canvas?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. It only makes fixed read-only GET requests. It never submits work, sends messages, starts quizzes or changes anything." } },
+    { "@type": "Question", "name": "Who can see my Canvas token?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Only your own Cloudflare Worker and your school's Canvas. The token is stored encrypted in your own Cloudflare account; the authors never see it." } },
+    { "@type": "Question", "name": "What happens when my Canvas token expires?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Create a new token in Canvas, then disconnect and reconnect the connector in your AI app and paste it. Nothing needs to be reinstalled." } },
+    { "@type": "Question", "name": "Does it work on my phone?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. It runs in the cloud, so it works in the Claude and ChatGPT mobile apps even when your computer is off." } }
+  ]
+}
+</script>
+<style>
+:root {
+  --bg: #f5f5f7; --bg2: #ffffff; --fg: #1d1d1f; --muted: #6e6e73; --faint: #86868b;
+  --line: #e5e5ea; --chip: rgba(0,0,0,.055); --code-bg: #1d1d1f; --code-fg: #f5f5f7;
+  --accent: #0a66d8; --ok: #248a3d; --warn-bg: #fff8e6; --warn-line: #f2d48a; --warn-fg: #6b4e00;
+  --shadow: 0 1px 0 rgba(0,0,0,.04), 0 24px 60px -20px rgba(0,0,0,.22), 0 0 0 1px rgba(0,0,0,.06);
+  --t-cs: #e8f0fe; --t-cs-fg: #1a56db; --t-ma: #fdf2e5; --t-ma-fg: #b45309; --t-en: #eef7ee; --t-en-fg: #2f7d32;
+  --soon: #d70015;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000; --bg2: #1c1c1e; --fg: #f5f5f7; --muted: #a1a1a6; --faint: #8e8e93;
+    --line: #2c2c2e; --chip: rgba(255,255,255,.09); --code-bg: #2c2c2e; --code-fg: #f5f5f7;
+    --accent: #4da3ff; --ok: #30d158; --warn-bg: #2a2410; --warn-line: #5c4a14; --warn-fg: #f2d48a;
+    --shadow: 0 0 0 1px rgba(255,255,255,.08), 0 24px 60px -20px rgba(0,0,0,.8);
+    --t-cs: #1a2a44; --t-cs-fg: #8ab4ff; --t-ma: #3a2a14; --t-ma-fg: #f0b46a; --t-en: #183020; --t-en-fg: #7fd08a;
+    --soon: #ff6961;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #000000; --bg2: #1c1c1e; --fg: #f5f5f7; --muted: #a1a1a6; --faint: #8e8e93;
+  --line: #2c2c2e; --chip: rgba(255,255,255,.09); --code-bg: #2c2c2e; --code-fg: #f5f5f7;
+  --accent: #4da3ff; --ok: #30d158; --warn-bg: #2a2410; --warn-line: #5c4a14; --warn-fg: #f2d48a;
+  --shadow: 0 0 0 1px rgba(255,255,255,.08), 0 24px 60px -20px rgba(0,0,0,.8);
+  --t-cs: #1a2a44; --t-cs-fg: #8ab4ff; --t-ma: #3a2a14; --t-ma-fg: #f0b46a; --t-en: #183020; --t-en-fg: #7fd08a;
+  --soon: #ff6961;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg); color: var(--fg); line-height: 1.55; -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, pre, .mono { font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 600px) { .wrap { padding: 0 16px; } }
+
+/* top bar */
+header.top { position: sticky; top: 0; z-index: 10; backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: color-mix(in srgb, var(--bg) 78%, transparent); border-bottom: 1px solid var(--line); }
+header.top .wrap { display: flex; align-items: center; gap: 12px; height: 56px; }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--fg); letter-spacing: -.01em; }
+.logo:hover { text-decoration: none; }
+.logo svg { width: 28px; height: 28px; }
+header.top nav { margin-left: auto; display: flex; gap: 20px; font-size: 14px; }
+header.top nav a { color: var(--muted); }
+header.top nav a.gh { color: var(--fg); font-weight: 600; }
+@media (max-width: 600px) { header.top nav a:not(.gh) { display: none; } }
+
+/* hero */
+.hero { padding: 72px 0 56px; display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; }
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; padding: 44px 0 36px; gap: 36px; } }
+.eyebrow { font-size: 14px; font-weight: 600; color: var(--muted); letter-spacing: .01em; }
+h1 { margin-top: 12px; font-size: clamp(36px, 6vw, 58px); line-height: 1.05; font-weight: 700; letter-spacing: -.035em; }
+h1 span { color: var(--faint); }
+.lead { margin-top: 20px; font-size: 19px; color: var(--muted); max-width: 520px; }
+.pills { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { font-size: 14px; font-weight: 600; background: var(--chip); border-radius: 999px; padding: 6px 13px; }
+.cta { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.cmd { display: inline-flex; align-items: center; gap: 10px; background: var(--code-bg); color: var(--code-fg); border-radius: 12px;
+  padding: 13px 16px; font-size: 16px; border: 0; cursor: pointer; max-width: 100%; }
+.cmd .p { color: #8e8e93; }
+.cmd .copy { font: 600 12px -apple-system, BlinkMacSystemFont, sans-serif; color: #8e8e93; border-left: 1px solid #48484a; padding-left: 10px; margin-left: 4px; }
+.btn { display: inline-block; font-weight: 600; font-size: 15px; padding: 12px 18px; border-radius: 12px; background: var(--chip); color: var(--fg); }
+.btn:hover { text-decoration: none; filter: brightness(.97); }
+.check { margin-top: 16px; font-size: 14px; color: var(--muted); }
+
+/* chat mock */
+.win { background: var(--bg2); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; }
+.bar { height: 42px; display: flex; align-items: center; padding: 0 16px; gap: 7px; border-bottom: 1px solid var(--line); position: relative; }
+.bar i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+.bar .t { position: absolute; left: 0; right: 0; text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); pointer-events: none; }
+.chat { padding: 20px 20px 22px; }
+.q { margin-left: auto; width: max-content; max-width: 90%; background: var(--chip); border-radius: 18px; padding: 9px 15px; font-size: 16px; font-weight: 500; }
+.tool { margin-top: 16px; display: flex; align-items: center; gap: 9px; font-size: 14px; color: var(--muted); }
+.tool .ic { width: 22px; height: 22px; border-radius: 6px; background: #1d1d1f; display: grid; place-items: center; flex: none; }
+.tool b { color: var(--fg); font-weight: 600; }
+.tool .ok { color: var(--ok); font-weight: 700; }
+.say { margin-top: 12px; font-size: 16px; font-weight: 600; }
+.rows { margin-top: 10px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; font-size: 15px; }
+.row + .row { border-top: 1px solid var(--line); }
+.tag { font-size: 11px; font-weight: 700; letter-spacing: .02em; padding: 3px 7px; border-radius: 6px; flex: none; }
+.row .ttl { font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.due { font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.due.soon { color: var(--soon); }
+.note { margin-top: 12px; font-size: 13px; color: var(--faint); }
+
+/* sections */
+section { padding: 56px 0; border-top: 1px solid var(--line); }
+h2 { font-size: clamp(26px, 4vw, 36px); line-height: 1.15; letter-spacing: -.025em; font-weight: 700; }
+.sub { margin-top: 10px; color: var(--muted); font-size: 17px; max-width: 680px; }
+.grid { margin-top: 28px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+.card { background: var(--bg2); border-radius: 16px; padding: 20px; border: 1px solid var(--line); }
+.card h3 { font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+.card p { margin-top: 6px; font-size: 15px; color: var(--muted); }
+.card .em { font-size: 22px; line-height: 1; }
+.asks { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 10px; }
+.ask { background: var(--bg2); border: 1px solid var(--line); border-radius: 999px; padding: 9px 15px; font-size: 15px; }
+
+.warn { margin-top: 24px; background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-fg); border-radius: 14px; padding: 16px 18px; font-size: 15px; }
+.warn b { color: inherit; }
+
+ol.steps { margin-top: 28px; list-style: none; counter-reset: s; display: grid; gap: 14px; }
+ol.steps li { counter-increment: s; background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px 18px 64px; position: relative; }
+ol.steps li::before { content: counter(s); position: absolute; left: 20px; top: 18px; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--fg); color: var(--bg); font-weight: 700; font-size: 14px; display: grid; place-items: center; }
+ol.steps h3 { font-size: 16px; font-weight: 700; }
+ol.steps p { margin-top: 4px; font-size: 15px; color: var(--muted); }
+ol.steps code, p code, td code { background: var(--chip); border-radius: 6px; padding: 1px 6px; font-size: .92em; color: var(--fg); }
+pre { margin-top: 10px; background: var(--code-bg); color: var(--code-fg); border-radius: 12px; padding: 12px 14px; font-size: 14px; overflow-x: auto; }
+
+.tablewrap { margin-top: 28px; overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--bg2); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 560px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-size: 13px; color: var(--muted); font-weight: 600; }
+td.y { color: var(--ok); font-weight: 600; }
+td.n { color: var(--faint); }
+th.us, td.us { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+
+details { background: var(--bg2); border: 1px solid var(--line); border-radius: 14px; padding: 0 18px; margin-top: 10px; }
+details:first-of-type { margin-top: 24px; }
+summary { cursor: pointer; font-weight: 600; padding: 15px 0; list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; float: right; color: var(--faint); font-weight: 400; }
+details[open] summary::after { content: "–"; }
+details p { padding-bottom: 16px; color: var(--muted); font-size: 15px; }
+
+.final { text-align: center; padding: 72px 0; }
+.final .cta { justify-content: center; }
+footer { border-top: 1px solid var(--line); padding: 28px 0 40px; font-size: 13px; color: var(--faint); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <a class="logo" href="#top" aria-label="Neuro-CanvasLMS home">
+    <svg viewBox="0 0 150 150" aria-hidden="true"><rect width="150" height="150" rx="38" fill="#1d1d1f"/><path d="M44 106 L44 46 L106 104 L106 44" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="46" r="11" fill="#fff"/><circle cx="44" cy="106" r="11" fill="#fff"/><circle cx="106" cy="104" r="11" fill="#fff"/><circle cx="106" cy="44" r="11" fill="#fff"/></svg>
+    Neuro-CanvasLMS
+  </a>
+  <nav>
+    <a href="#install">Install</a>
+    <a href="#compare">Compare</a>
+    <a href="#faq">FAQ</a>
+    <a class="gh" href="https://github.com/BloodyReginaa/Neuro-CanvasLMS">GitHub</a>
+  </nav>
+</div></header>
+
+<main id="top">
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Canvas LMS × Claude &amp; ChatGPT</div>
+      <h1>Your Canvas,<br><span>in every AI.</span></h1>
+      <p class="lead">Connect Canvas LMS to Claude and ChatGPT in about five minutes. Ask what's due, how you're doing and what Lecture 5 said, from your laptop or your phone.</p>
+      <div class="pills"><span class="pill">Free</span><span class="pill">Read-only</span><span class="pill">Open source</span><span class="pill">Your own cloud</span></div>
+      <div class="cta">
+        <button class="cmd mono" type="button" data-copy="npx -y neuro-canvas-lms" aria-label="Copy the install command"><span class="p">$</span>npx -y neuro-canvas-lms<span class="copy">Copy</span></button>
+        <a class="btn" href="#install">How to install</a>
+      </div>
+      <p class="check">Works at any Canvas school that lets students create access tokens. <a href="#check">30-second check</a></p>
+    </div>
+
+    <div class="win" role="img" aria-label="Claude answering 'What's due this week?' with three assignments from Canvas">
+      <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><div class="t">Claude</div></div>
+      <div class="chat">
+        <div class="q">What’s due this week?</div>
+        <div class="tool"><span class="ic"><svg width="13" height="13" viewBox="0 0 150 150"><path d="M44 106 L44 46 L106 104 L106 44" fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg></span><b>Canvas</b> planner · 3 items <span class="ok">✓</span></div>
+        <div class="say">Three things are due this week:</div>
+        <div class="rows">
+          <div class="row"><span class="tag" style="background:var(--t-cs);color:var(--t-cs-fg)">CS 201</span><span class="ttl">Lab 4 · Linked Lists</span><span class="due soon">Tonight 11:59 PM</span></div>
+          <div class="row"><span class="tag" style="background:var(--t-ma);color:var(--t-ma-fg)">MATH 233</span><span class="ttl">Homework 8</span><span class="due">Mon 11:59 PM</span></div>
+          <div class="row"><span class="tag" style="background:var(--t-en);color:var(--t-en-fg)">ENGL 110</span><span class="ttl">Essay draft</span><span class="due">Mon 12:00 PM</span></div>
+        </div>
+        <div class="note">Lab 4 is handed in on Gradescope, so Canvas can’t see it yet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="ask"><div class="wrap">
+  <h2>Ask about your courses like you'd ask a friend.</h2>
+  <p class="sub">Your AI reads Canvas for you: deadlines with submission status, grades and feedback, announcements, and the actual text of your lecture files.</p>
+  <div class="asks">
+    <span class="ask">“What’s due this week?”</span>
+    <span class="ask">“Summarize Lecture 5 in MATH 132.”</span>
+    <span class="ask">“What feedback did I get on HW 3?”</span>
+    <span class="ask">“When is Midterm 2?”</span>
+    <span class="ask">“Make me a study guide from weeks 8–12.”</span>
+    <span class="ask">“What’s in the code ZIP for Lecture 12?”</span>
+    <span class="ask">“Set up the PA2 starter code in this folder.”</span>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="em">📄</div><h3>Really reads your files</h3><p>PDF, Word, PowerPoint, Excel, Jupyter notebooks and about 90 code and text formats. ZIPs are unpacked on the server; scanned PDFs go to the AI as page images.</p></div>
+    <div class="card"><div class="em">🔗</div><h3>Follows the links too</h3><p>Syllabus on Dropbox? Slides on Google Drive? Files a module, page or assignment links publicly on Google, Dropbox or GitHub are read as text.</p></div>
+    <div class="card"><div class="em">🔎</div><h3>Finds hidden files</h3><p>Many courses hide their Files list. The connector searches the front page, syllabus, modules and assignments, so “the Lecture 12 slides” still turn up.</p></div>
+    <div class="card"><div class="em">📱</div><h3>Works on your phone</h3><p>It runs in the cloud, not on your laptop. Use it from claude.ai, the Claude and ChatGPT apps, Claude Code or Codex, even with your computer off.</p></div>
+    <div class="card"><div class="em">🔒</div><h3>Read-only and yours</h3><p>Only fixed read requests. It never submits, posts or changes anything. Your token stays in your own Cloudflare account; nobody else sees it.</p></div>
+    <div class="card"><div class="em">💸</div><h3>Free</h3><p>MIT-licensed and runs on Cloudflare’s free plan, which is far more than one student needs. No subscription, no ads, no account with us.</p></div>
+  </div>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <h2>Can you use it? Check in 30 seconds.</h2>
+  <p class="sub">In Canvas, open <b>Account → Settings</b> and scroll to <b>Approved Integrations</b>.</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+    <div class="card"><h3 style="color:var(--ok)">✓ You see “+ New Access Token”</h3><p>You’re set. Your school lets students create personal tokens, which is all the connector needs.</p></div>
+    <div class="card"><h3 style="color:var(--faint)">✕ No button, or creating one is refused</h3><p>Your school doesn’t allow student tokens, so this connector can’t work there yet. Your IT office may grant one on request.</p></div>
+  </div>
+</div></section>
+
+<section id="install"><div class="wrap">
+  <h2>How to connect Canvas to ChatGPT and Claude</h2>
+  <p class="sub">About five minutes. You need <a href="https://nodejs.org">Node.js 22+</a>, a free <a href="https://dash.cloudflare.com/sign-up">Cloudflare account</a> (verify its email) and your Canvas login.</p>
+  <ol class="steps">
+    <li><h3>Run the installer</h3><p>In a terminal (Terminal on Mac, PowerShell on Windows):</p><pre>npx -y neuro-canvas-lms</pre><p style="margin-top:8px">It signs you in to Cloudflare (click <b>Authorize</b> in the browser), asks for your school’s Canvas address, deploys the connector to your own account, checks it works and copies its URL for you.</p></li>
+    <li><h3>Create a Canvas token</h3><p>Canvas → Account → Settings → <b>+ New Access Token</b>. Copy it right away; Canvas shows it only once. Your school may cap its lifetime (30 days at UMass Amherst).</p></li>
+    <li><h3>Add it to Claude</h3><p>Settings → Connectors → <b>Add custom connector</b> → paste the URL → <b>Connect</b> → paste your Canvas token on the connector’s page → Authorize. It then works in claude.ai, the desktop and mobile apps and Claude Code.</p></li>
+    <li><h3>Or add it to ChatGPT</h3><p>Turn on developer mode and add a custom connector with the same URL.</p></li>
+    <li><h3>Ask away</h3><p>Start a new chat: “What assignments do I have this week?”</p></li>
+  </ol>
+  <p class="sub" style="margin-top:20px">Prefer not to type commands? Give Claude Code or Codex the <a href="https://github.com/BloodyReginaa/Neuro-CanvasLMS">repository link</a> and say “install the Canvas connector”. It never handles your token; you paste that yourself.</p>
+</div></section>
+
+<section id="compare"><div class="wrap">
+  <h2>Why not a local or hosted Canvas tool?</h2>
+  <p class="sub">There are other ways to give an AI your Canvas. They trade off differently.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th>Local Canvas MCP</th><th>Hosted service</th><th class="us">Neuro-CanvasLMS</th></tr></thead>
+    <tbody>
+      <tr><td>Works with your computer off</td><td class="n">No</td><td class="y">Yes</td><td class="y us">Yes</td></tr>
+      <tr><td>Claude &amp; ChatGPT mobile apps</td><td class="n">No</td><td class="y">Usually</td><td class="y us">Yes</td></tr>
+      <tr><td>Who holds your Canvas token</td><td>You</td><td class="n">The service</td><td class="y us">You (your Cloudflare)</td></tr>
+      <tr><td>Cost</td><td>Free</td><td>Free tier, files often paid</td><td class="y us">Free</td></tr>
+      <tr><td>Reads PDFs, slides, ZIPs on the server</td><td class="n">Varies</td><td class="n">Varies</td><td class="y us">Yes</td></tr>
+      <tr><td>Setup</td><td>Config files per app</td><td class="y">Sign up</td><td class="us">One command, ~5 min</td></tr>
+    </tbody>
+  </table></div>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <h2>Questions</h2>
+  <details><summary>Is it really free?</summary><p>Yes. It is open source (MIT) and runs on Cloudflare’s free Workers plan. You don’t pay us and there is nothing to subscribe to.</p></details>
+  <details><summary>Can it submit work or change anything in Canvas?</summary><p>No. It only makes fixed read-only requests. It never submits assignments, sends messages, starts quizzes or changes settings. Canvas still applies your own permissions, so it can only read what you can already see.</p></details>
+  <details><summary>Who can see my Canvas token?</summary><p>Only your own Worker and your school’s Canvas. The token is stored encrypted in your own Cloudflare account, and the connector locks itself to your Canvas account. The authors never see it. Files your AI reads are kept by your AI provider as part of that chat.</p></details>
+  <details><summary>My token expired. Do I reinstall?</summary><p>No. Create a new token in Canvas, then in Claude or ChatGPT disconnect and reconnect the connector and paste it.</p></details>
+  <details><summary>Does it work at my school?</summary><p>If you passed the <a href="#check">30-second check</a>, very likely. It is tested at UMass Amherst on Instructure-hosted Canvas. Schools that host Canvas themselves may serve files from servers it doesn’t allow yet; <a href="https://github.com/BloodyReginaa/Neuro-CanvasLMS/issues">open an issue</a> if something fails.</p></details>
+  <details><summary>What can’t it do?</summary><p>Gradescope, WebAssign, locked content and New Quizzes internals are out of reach, and files over 15 MiB can’t be read through the connector. For Gradescope assignments it tells you to check Gradescope instead of guessing.</p></details>
+  <details><summary>How do I update or uninstall?</summary><p>Run <code>npx -y neuro-canvas-lms</code> again to update; your AI tells you when a new version is out. To remove it, run <code>npx -y neuro-canvas-lms uninstall</code>, then delete the token and the connector.</p></details>
+  <details><summary>Is this made by my school or by Instructure?</summary><p>No. It is an independent community project by a student, provided as is. Check your school’s policy on personal access tokens before you use it.</p></details>
+</div></section>
+
+<section class="final"><div class="wrap">
+  <h2>Finals are coming. Let your AI read the syllabus.</h2>
+  <div class="cta">
+    <button class="cmd mono" type="button" data-copy="npx -y neuro-canvas-lms" aria-label="Copy the install command"><span class="p">$</span>npx -y neuro-canvas-lms<span class="copy">Copy</span></button>
+    <a class="btn" href="https://github.com/BloodyReginaa/Neuro-CanvasLMS">★ Star on GitHub</a>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <span>Neuro-CanvasLMS · MIT License · Not affiliated with Instructure, Anthropic or OpenAI.</span>
+  <a href="https://github.com/BloodyReginaa/Neuro-CanvasLMS">GitHub</a>
+  <a href="https://www.npmjs.com/package/neuro-canvas-lms">npm</a>
+  <a href="https://github.com/BloodyReginaa/Neuro-CanvasLMS/blob/main/docs/README.zh-CN.md">简体中文</a>
+  <a href="https://github.com/BloodyReginaa/Neuro-CanvasLMS/blob/main/docs/README.es.md">Español</a>
+  <a href="https://github.com/BloodyReginaa/Neuro-CanvasLMS/blob/main/docs/README.ja.md">日本語</a>
+</div></footer>
+
+<script>
+document.querySelectorAll("[data-copy]").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var label = b.querySelector(".copy");
+    var done = function () { label.textContent = "Copied"; setTimeout(function () { label.textContent = "Copy"; }, 1600); };
+    try { navigator.clipboard.writeText(b.getAttribute("data-copy")).then(done, function () {}); } catch (e) {}
+  });
+});
+</script>
+</body>
+</html>
