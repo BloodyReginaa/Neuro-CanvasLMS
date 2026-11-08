@@ -246,6 +246,36 @@ export function unreachable(e) {
 
 // One GET to the Canvas API: fixed headers, no redirects, Canvas errors turned into safe messages
 // (never the upstream body). `e.status` is set when Canvas refused this item (not a token problem).
+// Canvas throttles API use per token: it answers "403 Forbidden (Rate Limit Exceeded)" (its own
+// answers carry X-Rate-Limit-Remaining), and a proxy in front may answer 429. That is not "this
+// course hides its files" (no find_files hint, no retry over the socket): the AI is told to wait.
+// The error has no `status`, so nothing treats it as a hidden resource.
+async function rateLimit(r) {
+  if (r.status !== 429 && r.status !== 403) return null;
+  let limited = r.status === 429;
+  if (!limited) {
+    const remaining = r.headers.get('x-rate-limit-remaining');
+    if (remaining !== null && Number(remaining) <= 0) limited = true;
+    else if (!(r.headers.get('content-type') ?? '').includes('json'))
+      try {
+        limited = /rate limit/i.test((await r.clone().text()).slice(0, 2000));
+      } catch {}
+  }
+  if (!limited) return null;
+  await r.body?.cancel().catch(() => {});
+  const seconds = Number(r.headers.get('retry-after'));
+  const wait =
+    Number.isFinite(seconds) && seconds > 0
+      ? `${Math.min(Math.ceil(seconds), 3600)} seconds`
+      : 'about a minute';
+  return Object.assign(
+    new Error(
+      `Canvas rate limit reached (HTTP ${r.status}): too many Canvas requests in a short time. Wait ${wait} before the next Canvas call and do not retry in a loop. The token and the connection are fine; this is not a permission problem.`,
+    ),
+    { rateLimited: true },
+  );
+}
+
 export async function canvasGet(u, token, fetcher = fetch) {
   let r;
   try {
@@ -262,6 +292,8 @@ export async function canvasGet(u, token, fetcher = fetch) {
   } catch (e) {
     throw unreachable(e);
   }
+  const limited = await rateLimit(r);
+  if (limited) throw limited;
   if (
     r.status === 406 ||
     (r.status >= 500 && !(r.headers.get('content-type') ?? '').includes('json'))

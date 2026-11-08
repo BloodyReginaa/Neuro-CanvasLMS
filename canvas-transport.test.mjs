@@ -2,7 +2,7 @@ import { CANVAS_HOST as H } from './config.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { gzipSync } from 'node:zlib';
-import { createCanvasTransport, parseCanvasResponse } from './canvas-transport.mjs';
+import { createCanvasTransport, parseCanvasResponse, shouldFallBack } from './canvas-transport.mjs';
 import { callCanvas } from './canvas.mjs';
 const enc = new TextEncoder();
 const NO_FETCH = () => {
@@ -354,4 +354,15 @@ test('forced fetch mode never uses the socket, even on a 406', async () => {
     { mode: () => 'fetch' },
   )(`https://${H}/api/v1/x`, API);
   assert.equal(r.status, 406);
+});
+
+test('a rate limit is not retried over the socket', () => {
+  const r = (status, headers) => new Response('', { status, headers });
+  assert.equal(shouldFallBack(r(429, { 'content-type': 'text/plain' })), false);
+  assert.equal(
+    shouldFallBack(r(403, { 'content-type': 'text/plain', 'x-rate-limit-remaining': '0' })),
+    false,
+  );
+  // a firewall's HTML 403 (no Canvas headers) still falls back
+  assert.equal(shouldFallBack(r(403, { 'content-type': 'text/html' })), true);
 });

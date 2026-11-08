@@ -59,13 +59,15 @@ const userTimeZone = p =>
 const latestVersion = updateChecker();
 // Our own messages (no upstream bodies, no tokens) may be shown to the AI so it can correct itself.
 const SAFE_ERROR =
-  /^(Canvas|Invalid [a-z_]+$|Unexpected argument|Missing argument|Missing context_id|Unknown tool)/;
+  /^(Canvas|Connector storage|Invalid [a-z_]+$|Invalid date|Unexpected argument|Missing argument|Missing context_id|Unknown tool)/;
 // Anything else is shown by its name only. It is not necessarily a wrong argument (Canvas problems
 // are already "Canvas…" messages), so the AI is told to retry first.
 const safeMessage = e =>
   SAFE_ERROR.test(e?.message ?? '')
     ? e.message
     : `Unable to complete this read-only request (${e?.name ?? 'Error'}). Try again in a minute; if it fails the same way again, check the tool arguments.`;
+// The time limit for one tool call (TOOL_DEADLINE_MS only for tests).
+const toolDeadline = () => Number(workerEnv.TOOL_DEADLINE_MS) || 50 * 1000;
 const title = () => (SCHOOL_NAME ? `${SCHOOL_NAME} Canvas` : 'Canvas');
 const CSP =
   "default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://chatgpt.com/connector_platform_oauth_redirect https://chat.openai.com/connector_platform_oauth_redirect https://claude.ai/api/mcp/auth_callback https://claude.com/api/mcp/auth_callback http://localhost:* http://127.0.0.1:*; frame-ancestors 'none'; base-uri 'none'";
@@ -119,6 +121,31 @@ class CanvasMcp extends WorkerEntrypoint {
       ],
     }));
     server.setRequestHandler(CallToolRequestSchema, async ({ params }) => {
+      // One time limit for the whole call: clients give up after about a minute, and then the AI
+      // gets no text at all. Better to stop first and say why.
+      let timer;
+      const deadline = new Promise(resolve => {
+        timer = setTimeout(
+          () =>
+            resolve({
+              isError: true,
+              content: [
+                {
+                  type: 'text',
+                  text: `Canvas took longer than ${Math.round(toolDeadline() / 1000)} seconds for this request, so it was stopped. Canvas may be slow right now: try again in a minute, or ask for less (a smaller page, one file, a narrower query). The token and the connection are fine.`,
+                },
+              ],
+            }),
+          toolDeadline(),
+        );
+      });
+      try {
+        return await Promise.race([callTool(params), deadline]);
+      } finally {
+        clearTimeout(timer);
+      }
+    });
+    const callTool = async params => {
       try {
         const store = {
           store: async (bytes, metadata) => fileResourceURI(params.arguments, metadata),
@@ -170,7 +197,7 @@ class CanvasMcp extends WorkerEntrypoint {
           ],
         };
       }
-    });
+    };
     server.setRequestHandler(ListResourcesRequestSchema, async () => ({ resources: [] }));
     server.setRequestHandler(ReadResourceRequestSchema, async ({ params }) => {
       try {
@@ -340,6 +367,39 @@ const getProvider = () =>
 // Outermost layer: one log line per request with path, method and HTTP status only (no query
 // strings, headers, bodies or tokens). This also captures requests the OAuth layer rejects (401).
 const LOGGED_PATHS = new Set(['/mcp', '/authorize', '/oauth/token', '/oauth/register']);
+
+// Client registration is open (each AI app registers itself) and every registration is a KV write;
+// the free plan allows 1000 writes a day. So registrations are capped per day (counted in KV, one
+// extra write per registration) and per Worker instance per minute; past the cap new apps get a
+// 429 until the next UTC day, while existing connections keep working.
+// (REGISTER_PER_DAY / REGISTER_PER_MINUTE vars can change the caps.)
+const registerLimit = (name, fallback) => Number(workerEnv[name]) || fallback;
+let recentRegistrations = [];
+async function registrationAllowed(env, now = Date.now()) {
+  recentRegistrations = recentRegistrations.filter(t => now - t < 60 * 1000);
+  if (recentRegistrations.length >= registerLimit('REGISTER_PER_MINUTE', 5)) return false;
+  const key = 'reg:' + new Date(now).toISOString().slice(0, 10);
+  const count = Number(await env.OAUTH_KV.get(key)) || 0;
+  return count < registerLimit('REGISTER_PER_DAY', 30) ? { key, count } : false;
+}
+const oauthError = (status, error, error_description) =>
+  Response.json({ error, error_description }, { status, headers: { 'Cache-Control': 'no-store' } });
+
+// Anything that throws outside a tool call (most often Cloudflare KV: briefly unavailable or the
+// day's free quota used up) gets a short answer in the user's language, not Cloudflare's 1101 page.
+function failure(request, path) {
+  if (path.startsWith('/oauth/') || path === '/mcp' || path.startsWith('/.well-known/'))
+    return oauthError(
+      503,
+      'temporarily_unavailable',
+      "The connector's storage (Cloudflare KV) is unavailable or its free daily limit is used up (it resets at 00:00 UTC). Try again later.",
+    );
+  const lang = pickLang(request);
+  return page(
+    messagePage(lang, request.url, { titleKey: 'busy_title', bodyKey: 'busy_body' }),
+    503,
+  );
+}
 export default {
   async fetch(request, env, ctx) {
     applyConfig(env);
@@ -380,7 +440,31 @@ export default {
         return Response.json({ ok: false, version: VERSION }, { status: 500 });
       }
     }
-    const response = await getProvider().fetch(request, env, ctx);
+    let response;
+    try {
+      let slot = null;
+      if (path === '/oauth/register' && request.method === 'POST') {
+        slot = await registrationAllowed(env);
+        if (!slot)
+          response = oauthError(
+            429,
+            'temporarily_unavailable',
+            'Too many new app registrations today. Try again tomorrow (UTC); connections that already work are not affected.',
+          );
+      }
+      response ??= await getProvider().fetch(request, env, ctx);
+      if (slot && response.status < 300) {
+        recentRegistrations.push(Date.now());
+        ctx.waitUntil(
+          env.OAUTH_KV.put(slot.key, String(slot.count + 1), { expirationTtl: 2 * 86400 }).catch(
+            () => {},
+          ),
+        );
+      }
+    } catch (e) {
+      console.log(JSON.stringify({ http: { path, error: e?.name ?? 'Error' } }));
+      response = await failure(request, path);
+    }
     if (LOGGED_PATHS.has(path))
       console.log(
         JSON.stringify({ http: { path, method: request.method, status: response.status } }),

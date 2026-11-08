@@ -80,6 +80,19 @@ const M = {
     update_cancelled: 'Nothing changed. Run the same command again whenever you want to update.',
     failed:
       'Something went wrong: {detail}\n  Nothing is lost: run the same command again to continue.',
+    state_broken:
+      'The local install record could not be read (damaged). It was moved aside to {moved}; carrying on without it.',
+    no_account:
+      'This Cloudflare login has no account yet. Finish signing up at https://dash.cloudflare.com, then run this again.',
+    invalid_name:
+      '--name can only use lowercase letters, digits and dashes (at most 63 characters).',
+    step_kv_list: 'Could not read the list of your Cloudflare storage (KV)',
+    step_kv_create: 'Could not create the Cloudflare storage (KV)',
+    step_deploy: 'Uploading the connector to Cloudflare failed',
+    step_url: 'The connector was uploaded, but Cloudflare did not say its address',
+    storage_label: 'the storage "{title}"',
+    still_listed: 'Cloudflare still lists it after deleting',
+    timed_out: 'Cloudflare did not answer within {s} seconds (check your internet connection)',
   },
   zh: {
     title: 'Neuro-CanvasLMS 安装向导：把你的 Canvas 接进 Claude 或 ChatGPT',
@@ -87,7 +100,7 @@ const M = {
       '需要 Node.js {need} 或更新的版本（你现在是 {have}）。请到 https://nodejs.org 安装后再运行一次。',
     login_needed:
       '第 1/4 步 · 登录 Cloudflare（没有账号可以免费注册：https://dash.cloudflare.com/sign-up）。\n  浏览器会打开一个 Cloudflare 页面（可能在后台标签页里），请在 2 分钟内点蓝色的 "Authorize" 按钮。',
-    login_retry: '没有完成登录。请关掉旧的 Cloudflare 标签页，现在重新打开一个。',
+    login_retry: '没有完成登录。请关掉旧的 Cloudflare 标签页，马上会自动打开一个新页面。',
     login_failed: '没能登录 Cloudflare。准备好之后再运行一次这条命令。',
     logged_in: '已登录 Cloudflare：{email}',
     pick_account: '把连接器装在哪个 Cloudflare 账号里？',
@@ -149,7 +162,18 @@ const M = {
     update_q_unknown:
       '找到你已有的安装「{name}」。要更新到 {to} 吗？设置会沿用，AI 应用不用重新连接。(y/n)',
     update_cancelled: '什么都没改。想更新时再运行一次同一条命令就行。',
-    failed: '出错了：{detail}\n  没有任何东西丢失：再运行一次同一条命令就能接着装。',
+    failed: '出错了：{detail}\n  没有任何东西丢失：再运行一次同一条命令就能继续。',
+    state_broken: '本地安装记录读不出来（文件已损坏），已挪到 {moved}，接下来不再用它。',
+    no_account:
+      '这个 Cloudflare 登录下还没有账号。先在 https://dash.cloudflare.com 完成注册，再运行一次这条命令。',
+    invalid_name: '--name 只能用小写字母、数字和短横线（最多 63 个字符）。',
+    step_kv_list: '没能读取你的 Cloudflare 存储（KV）列表',
+    step_kv_create: '没能创建 Cloudflare 存储（KV）',
+    step_deploy: '把连接器上传到 Cloudflare 失败',
+    step_url: '连接器已经上传，但 Cloudflare 没有告诉它的地址',
+    storage_label: '存储「{title}」',
+    still_listed: '删除后 Cloudflare 仍然列出了它',
+    timed_out: 'Cloudflare 在 {s} 秒内没有回应（请检查网络连接）',
   },
   es: {
     title: 'Instalador de Neuro-CanvasLMS — conecta tu Canvas a Claude o ChatGPT',
@@ -233,6 +257,18 @@ const M = {
     update_cancelled: 'No se cambió nada. Ejecuta el mismo comando cuando quieras actualizar.',
     failed:
       'Algo salió mal: {detail}\n  No se perdió nada: vuelve a ejecutar el mismo comando para continuar.',
+    state_broken:
+      'No se pudo leer el registro local de la instalación (está dañado). Se movió a {moved}; se continúa sin él.',
+    no_account:
+      'Este inicio de sesión de Cloudflare aún no tiene cuenta. Termina el registro en https://dash.cloudflare.com y vuelve a ejecutar esto.',
+    invalid_name: '--name solo puede usar minúsculas, dígitos y guiones (máximo 63 caracteres).',
+    step_kv_list: 'No se pudo leer la lista de tu almacenamiento de Cloudflare (KV)',
+    step_kv_create: 'No se pudo crear el almacenamiento de Cloudflare (KV)',
+    step_deploy: 'Falló la subida del conector a Cloudflare',
+    step_url: 'El conector se subió, pero Cloudflare no indicó su dirección',
+    storage_label: 'el almacenamiento "{title}"',
+    still_listed: 'Cloudflare aún lo muestra después de borrarlo',
+    timed_out: 'Cloudflare no respondió en {s} segundos (revisa tu conexión a internet)',
   },
   ja: {
     title: 'Neuro-CanvasLMS インストーラー — Canvas を Claude や ChatGPT につなぐ',
@@ -316,6 +352,19 @@ const M = {
       '何も変更していません。更新したいときに同じコマンドをもう一度実行してください。',
     failed:
       'エラーが発生しました：{detail}\n  何も失われていません。同じコマンドをもう一度実行すると続きから進みます。',
+    state_broken:
+      'ローカルのインストール記録を読み取れませんでした（破損しています）。{moved} に移動し、使わずに続行します。',
+    no_account:
+      'この Cloudflare ログインにはまだアカウントがありません。https://dash.cloudflare.com で登録を完了してから、もう一度実行してください。',
+    invalid_name: '--name に使えるのは英小文字・数字・ハイフンだけです（63 文字まで）。',
+    step_kv_list: 'Cloudflare のストレージ（KV）の一覧を読み取れませんでした',
+    step_kv_create: 'Cloudflare のストレージ（KV）を作成できませんでした',
+    step_deploy: 'コネクタを Cloudflare にアップロードできませんでした',
+    step_url: 'コネクタはアップロードされましたが、Cloudflare がアドレスを返しませんでした',
+    storage_label: 'ストレージ「{title}」',
+    still_listed: '削除後も Cloudflare の一覧に残っています',
+    timed_out:
+      'Cloudflare が {s} 秒以内に応答しませんでした（インターネット接続を確認してください）',
   },
   hi: {
     title: 'Neuro-CanvasLMS इंस्टॉलर — अपने Canvas को Claude या ChatGPT से जोड़ें',
@@ -396,6 +445,19 @@ const M = {
     update_cancelled: 'कुछ नहीं बदला। जब अपडेट करना हो, वही कमांड फिर से चलाएँ।',
     failed:
       'कुछ गलत हो गया: {detail}\n  कुछ भी नहीं खोया: जारी रखने के लिए वही कमांड फिर से चलाएँ।',
+    state_broken:
+      'लोकल इंस्टॉल रिकॉर्ड पढ़ा नहीं जा सका (खराब है)। उसे {moved} पर हटा दिया गया; उसके बिना आगे बढ़ रहे हैं।',
+    no_account:
+      'इस Cloudflare लॉगिन में अभी कोई अकाउंट नहीं है। https://dash.cloudflare.com पर साइन-अप पूरा करें, फिर इसे दोबारा चलाएँ।',
+    invalid_name:
+      '--name में सिर्फ़ छोटे अक्षर, अंक और डैश हो सकते हैं (ज़्यादा से ज़्यादा 63 अक्षर)।',
+    step_kv_list: 'आपके Cloudflare स्टोरेज (KV) की सूची पढ़ी नहीं जा सकी',
+    step_kv_create: 'Cloudflare स्टोरेज (KV) बनाया नहीं जा सका',
+    step_deploy: 'कनेक्टर को Cloudflare पर अपलोड करना विफल रहा',
+    step_url: 'कनेक्टर अपलोड हो गया, लेकिन Cloudflare ने उसका पता नहीं बताया',
+    storage_label: 'स्टोरेज "{title}"',
+    still_listed: 'हटाने के बाद भी Cloudflare उसे दिखा रहा है',
+    timed_out: 'Cloudflare ने {s} सेकंड में जवाब नहीं दिया (अपना इंटरनेट कनेक्शन जाँचें)',
   },
 };
 export const msg = (lang, key, vars = {}) =>

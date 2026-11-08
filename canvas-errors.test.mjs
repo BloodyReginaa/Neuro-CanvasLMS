@@ -134,3 +134,49 @@ test('a file without a download address says so', async () => {
   assert.equal(r.text, null);
   assert.match(r.extraction_note, /no download address/);
 });
+
+test('a Canvas rate limit says to wait, not that the course hides it (no find_files hint)', async () => {
+  const limited = (status, headers, body) => async () =>
+    new Response(body, { status, headers: { 'content-type': 'text/plain', ...headers } });
+  // Canvas's own answer: 403 text "Rate Limit Exceeded"
+  await fails(
+    () =>
+      callCanvas(
+        'canvas_files',
+        { context_type: 'course', context_id: 7 },
+        't',
+        limited(403, {}, '403 Forbidden (Rate Limit Exceeded)'),
+      ),
+    /^Canvas rate limit reached \(HTTP 403\)/,
+    /Wait about a minute/,
+  );
+  // the header alone is enough, and the message has no "hidden for students" hint
+  await assert.rejects(
+    callCanvas(
+      'canvas_file',
+      { file_id: 1 },
+      't',
+      limited(403, { 'x-rate-limit-remaining': '0.0' }, '{}'),
+    ),
+    e => e.rateLimited && e.status === undefined && !/canvas_find_files/.test(e.message),
+  );
+  // a proxy's 429 with Retry-After
+  await fails(
+    () => callCanvas('canvas_courses', {}, 't', limited(429, { 'retry-after': '30' }, '')),
+    /Wait 30 seconds/,
+  );
+  // an ordinary 403 is still a permission answer, with the hint
+  await assert.rejects(
+    callCanvas(
+      'canvas_file',
+      { file_id: 1 },
+      't',
+      async () =>
+        new Response('{"status":"unauthorized"}', {
+          status: 403,
+          headers: { 'content-type': 'application/json', 'x-rate-limit-remaining': '600' },
+        }),
+    ),
+    e => e.status === 403 && /canvas_find_files/.test(e.message),
+  );
+});

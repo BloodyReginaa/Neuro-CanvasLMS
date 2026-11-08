@@ -10,7 +10,7 @@ const STUBS = {
   'cloudflare:sockets': 'export const connect = () => { throw new Error("no sockets in tests"); };',
   'cloudflare:workers':
     'export class WorkerEntrypoint { constructor(ctx, env) { this.ctx = ctx; this.env = env; } }' +
-    ' export const env = { CANVAS_TRANSPORT: "fetch" };',
+    ' export const env = { CANVAS_TRANSPORT: "fetch", REGISTER_PER_MINUTE: "1000" };',
 };
 const stubURL = s => 'data:text/javascript,' + encodeURIComponent(STUBS[s]);
 if (module.registerHooks)
@@ -415,4 +415,72 @@ test('the home page and unknown paths', async () => {
   assert.equal((await w.send('/nope')).status, 404);
   const health = await (await w.send('/healthz')).json();
   assert.equal(health.connected, false);
+});
+
+test('a tool call that takes too long is stopped with a message, before the client gives up', async () => {
+  const { env: vars } = await import('cloudflare:workers');
+  const w = setup();
+  const access = await connectAs(w, 111);
+  canvas = () => new Promise(() => {}); // Canvas never answers
+  vars.TOOL_DEADLINE_MS = '150';
+  try {
+    const r = await (
+      await mcp(w, access, 'tools/call', { name: 'canvas_courses', arguments: {} })
+    ).json();
+    assert.equal(r.result.isError, true);
+    assert.match(r.result.content[0].text, /^Canvas took longer than 0 seconds/);
+    assert.match(r.result.content[0].text, /connection are fine/);
+  } finally {
+    delete vars.TOOL_DEADLINE_MS;
+  }
+});
+
+test('client registration is capped per day; a full day gets 429, existing data is untouched', async () => {
+  const w = setup();
+  const { env: vars } = await import('cloudflare:workers');
+  vars.REGISTER_PER_DAY = '2';
+  try {
+    const register = () =>
+      w.send('/oauth/register', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          redirect_uris: ['http://localhost:9999/cb'],
+          token_endpoint_auth_method: 'none',
+        }),
+      });
+    assert.equal((await register()).status, 201);
+    await w.settle();
+    assert.equal((await register()).status, 201);
+    await w.settle();
+    const writes = w.kv.m.size;
+    const r = await register();
+    assert.equal(r.status, 429);
+    assert.equal((await r.json()).error, 'temporarily_unavailable');
+    assert.equal(w.kv.m.size, writes, 'a refused registration writes nothing');
+  } finally {
+    delete vars.REGISTER_PER_DAY;
+  }
+});
+
+test('storage (KV) failing: a page in the user language, an OAuth error, a 503 for /dl', async () => {
+  const w = setup();
+  const broken = async () => {
+    throw new Error('KV GET failed: 429 Too Many Requests');
+  };
+  w.kv.get = broken;
+  w.kv.put = broken;
+  const home = await w.send('/', { headers: { 'accept-language': 'zh-CN' } });
+  assert.equal(home.status, 503);
+  assert.match(await home.text(), /你的连接器出了点问题/);
+  const token = await w.send('/oauth/register', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ redirect_uris: ['http://localhost:9999/cb'] }),
+  });
+  assert.equal(token.status, 503);
+  assert.equal((await token.json()).error, 'temporarily_unavailable');
+  const dl = await w.send('/dl/' + 'a'.repeat(43), { headers: { 'x-canvas-download': '1' } });
+  assert.equal(dl.status, 503);
+  assert.doesNotMatch(await dl.text(), /expired/);
 });

@@ -8,6 +8,10 @@ const json = file => JSON.parse(readFileSync(new URL(file, import.meta.url), 'ut
 test('version.mjs, package.json and the MCP Registry entry (server.json) carry one version', () => {
   assert.equal(json('./package.json').version, VERSION);
   assert.equal(json('./server.json').version, VERSION);
+  // published with the package, so npx installs the dependency versions this release was tested with
+  const lock = json('./npm-shrinkwrap.json');
+  assert.equal(lock.version, VERSION);
+  assert.equal(lock.packages[''].version, VERSION);
 });
 
 test('server.json fits the MCP Registry limits', () => {

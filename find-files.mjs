@@ -183,15 +183,17 @@ export async function findFiles(args, token, fetcher) {
   // A source being hidden or not enabled (401/403/404) is normal. A source that failed (timeout,
   // network, rate limit, Canvas error) was not searched: the result is then incomplete, and if
   // nothing could be searched at all the error is passed on instead of an empty "complete" list.
-  // An expired token or an HTML error page (Canvas down, a firewall) stops everything.
+  // An expired token, a rate limit or an HTML error page (Canvas down, a firewall) stops everything.
   const failures = [];
   const hidden = e => [401, 403, 404].includes(e.status);
+  const stops = e =>
+    e.rateLimited || /authorization expired|HTML error page/.test(e?.message ?? '');
   const attempt = async (source, run) => {
     try {
       const n = await run();
       searched[source] = n === undefined ? 'ok' : `ok (${n})`;
     } catch (e) {
-      if (/authorization expired|HTML error page/.test(e.message ?? '')) throw e;
+      if (stops(e)) throw e;
       if (hidden(e)) searched[source] = `not available (HTTP ${e.status})`;
       else {
         failures.push(e);
@@ -365,7 +367,7 @@ export async function findFiles(args, token, fetcher) {
             page_url: r.data?.url ?? slug,
           });
         } catch (e) {
-          if (/authorization expired|HTML error page/.test(e.message ?? '')) throw e;
+          if (stops(e)) throw e;
           if (hidden(e)) pagesUnavailable++;
           else {
             failures.push(e);

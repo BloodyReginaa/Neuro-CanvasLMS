@@ -114,7 +114,7 @@ test('a failed check keeps what was known and waits a day before trying again', 
 
 test('the notice names both versions and the update command, only when newer', () => {
   const n = updateNotice('2.8.0', '2.7.1');
-  assert.ok(n.includes('2.8.0') && n.includes('2.7.1') && n.includes(UPDATE_COMMAND));
+  assert.ok(n.includes('2.8.0') && n.includes('2.7.1') && n.includes(`${UPDATE_COMMAND}@2.8.0 `));
   assert.match(n, /once in this conversation/);
   assert.equal(updateNotice('2.7.1', '2.7.1'), null);
   assert.equal(updateNotice('2.7.0', '2.7.1'), null);
@@ -135,7 +135,7 @@ test('the version tool checks GitHub when asked (at most every 10 minutes) and s
   assert.equal(behind.latest_version, '2.9.0');
   assert.equal(behind.running_version, '2.8.2');
   assert.equal(behind.up_to_date, false);
-  assert.ok(behind.how_to_update.includes(UPDATE_COMMAND));
+  assert.ok(behind.how_to_update.includes(`${UPDATE_COMMAND}@2.9.0 `));
   assert.match(behind.checked_at, /^\w{3} \d{4}-\d{2}-\d{2} \d{2}:\d{2} E[SD]T$/);
   clock += 60000;
   remote = '2.8.2';

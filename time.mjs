@@ -63,8 +63,16 @@ function offset(t, zone) {
     Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - Math.floor(t / 1000) * 1000
   );
 }
-const validDay = day =>
-  /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') && !Number.isNaN(Date.parse(day + 'T00:00:00Z'));
+// A YYYY-MM-DD day that exists on the calendar. Date.parse alone accepts 2026-02-30 (and the
+// planner then silently reads it as March 2), so the day must come back unchanged.
+const isDayShape = day => /^\d{4}-\d{2}-\d{2}$/.test(day ?? '');
+const validDay = day => {
+  if (!isDayShape(day)) return false;
+  const t = Date.parse(day + 'T00:00:00Z');
+  if (Number.isNaN(t) || new Date(t).toISOString().slice(0, 10) !== day)
+    throw new Error(`Invalid date: ${day} is not a day on the calendar (use YYYY-MM-DD).`);
+  return true;
+};
 // The instant a local day starts (midnight in that zone), as epoch milliseconds.
 export function dayStart(day, zone) {
   const guess = Date.parse(day + 'T00:00:00Z');
@@ -81,8 +89,14 @@ const iso = t => new Date(t).toISOString().replace(/\.\d{3}Z$/, 'Z');
 // reads an end date as the START of that day, so "today to today" was an empty range and
 // "Friday" missed Friday's 23:59 deadline. With the zone known this is exact; without it the end
 // moves one day on (Canvas reads plain dates in the user's own zone).
+// An impossible day or a start after the end is an error, not an empty range (the AI would
+// otherwise tell the user nothing is due).
 export function dayRange(start, end, zone) {
   const out = {};
+  if (validDay(start) && validDay(end) && start > end)
+    throw new Error(
+      `Invalid date range: start_date ${start} is after end_date ${end}. For one day pass the same date twice.`,
+    );
   const exact = isTimeZone(zone);
   if (validDay(start)) out.start_date = exact ? iso(dayStart(start, zone)) : start;
   else if (start !== undefined) out.start_date = start;
@@ -95,15 +109,31 @@ export function dayRange(start, end, zone) {
 // zone is kept for `ttl` milliseconds, since users rarely change it. A failed read is not kept, so
 // the next call tries again (e.g. after the user reconnects with a new token). A value that is not
 // a known IANA zone counts as "no zone": results then keep Canvas's UTC times.
-export function timeZoneCache({ ttl = 6 * 3600 * 1000, now = Date.now } = {}) {
+// The lookup comes before every tool call, so it gets `timeout` ms at most, and a failed or slow
+// lookup is remembered for `failTtl` ms: when Canvas is slow, each call waits for it once, not twice.
+export function timeZoneCache({
+  ttl = 6 * 3600 * 1000,
+  failTtl = 60 * 1000,
+  timeout = 5000,
+  now = Date.now,
+} = {}) {
   let cached = null;
   return async (user, read) => {
-    if (cached && cached.user === user && now() - cached.at < ttl) return cached.zone;
-    let zone;
+    if (cached && cached.user === user && now() - cached.at < (cached.failed ? failTtl : ttl))
+      return cached.zone;
+    let zone, timer;
     try {
-      zone = await read();
+      zone = await Promise.race([
+        read(),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error('time zone lookup timed out')), timeout);
+        }),
+      ]);
     } catch {
+      cached = { user, zone: null, at: now(), failed: true };
       return null;
+    } finally {
+      clearTimeout(timer);
     }
     zone = isTimeZone(zone) ? zone : null;
     cached = { user, zone, at: now() };

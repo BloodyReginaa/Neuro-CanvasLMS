@@ -51,6 +51,9 @@ const S = {
     down_title: 'Canvas is not answering right now',
     down_hint:
       'Your token is probably fine: Canvas is slow, down for maintenance, or could not be reached. Wait a few minutes, then go back and try again.',
+    busy_title: 'Something went wrong on your connector',
+    busy_body:
+      "Usually its Cloudflare storage is briefly unavailable, or the free plan's daily storage limit is used up (it resets at 00:00 UTC). Your token and your connection are not affected. Try again later.",
     footer: 'Open source · read-only · runs on your own Cloudflare account',
     version_label: 'Version',
     not_configured: 'Not configured yet. Run the installer.',
@@ -101,6 +104,9 @@ const S = {
     expired_body: '这个页面打开太久了，或者在另一个标签页里又打开过一次。请返回，重新粘贴令牌。',
     down_title: 'Canvas 暂时没有响应',
     down_hint: '令牌多半没有问题：Canvas 现在很慢、正在维护，或者连不上。等几分钟后返回重试。',
+    busy_title: '你的连接器出了点问题',
+    busy_body:
+      '通常是它的 Cloudflare 存储暂时不可用，或者免费版当天的存储额度用完了（每天 UTC 0 点重置）。你的令牌和已有的连接都不受影响，请稍后再试。',
     footer: '开源 · 只读 · 运行在你自己的 Cloudflare 账号上',
     version_label: '版本',
     not_configured: '还没配置，请运行安装向导。',
@@ -155,6 +161,9 @@ const S = {
     down_title: 'Canvas no responde ahora mismo',
     down_hint:
       'Seguramente tu token está bien: Canvas va lento, está en mantenimiento o no se pudo contactar. Espera unos minutos, luego vuelve e inténtalo de nuevo.',
+    busy_title: 'Algo salió mal en tu conector',
+    busy_body:
+      'Normalmente su almacenamiento de Cloudflare no está disponible por un momento, o se agotó el límite diario del plan gratuito (se reinicia a las 00:00 UTC). Tu token y tu conexión no se ven afectados. Inténtalo más tarde.',
     footer: 'Código abierto · solo lectura · en tu propia cuenta de Cloudflare',
     version_label: 'Versión',
     not_configured: 'Aún no configurado. Ejecuta el instalador.',
@@ -211,6 +220,9 @@ const S = {
     down_title: 'Canvas が今は応答していません',
     down_hint:
       'トークンはおそらく問題ありません。Canvas が遅いか、メンテナンス中か、接続できませんでした。数分待ってから、戻ってもう一度お試しください。',
+    busy_title: 'コネクタで問題が発生しました',
+    busy_body:
+      '多くの場合、Cloudflare のストレージが一時的に使えないか、無料プランの 1 日あたりのストレージ上限に達しています（UTC 0:00 にリセット）。トークンと接続には影響ありません。しばらくしてからもう一度お試しください。',
     footer: 'オープンソース · 読み取り専用 · あなたの Cloudflare アカウントで動作',
     version_label: 'バージョン',
     not_configured: '未設定です。インストーラーを実行してください。',
@@ -266,6 +278,9 @@ const S = {
     down_title: 'Canvas अभी जवाब नहीं दे रहा',
     down_hint:
       'आपका टोकन शायद ठीक है: Canvas धीमा है, रखरखाव में है, या उससे संपर्क नहीं हो सका। कुछ मिनट रुकें, फिर वापस जाकर दोबारा कोशिश करें।',
+    busy_title: 'आपके कनेक्टर में कुछ गड़बड़ हुई',
+    busy_body:
+      'आम तौर पर इसका Cloudflare स्टोरेज कुछ देर के लिए उपलब्ध नहीं होता, या फ़्री प्लान की रोज़ की स्टोरेज सीमा खत्म हो गई है (यह 00:00 UTC पर रीसेट होती है)। आपका टोकन और कनेक्शन प्रभावित नहीं हैं। बाद में फिर से कोशिश करें।',
     footer: 'ओपन सोर्स · केवल पढ़ना · आपके अपने Cloudflare खाते पर चलता है',
     version_label: 'संस्करण',
     not_configured: 'अभी कॉन्फ़िगर नहीं है। इंस्टॉलर चलाएँ।',

@@ -160,12 +160,20 @@ export function newDownloadId() {
     .replace(/=+$/, '');
 }
 
+// Cloudflare KV failed (briefly unavailable, or the free plan's 1000 writes a day are used up).
+export const STORAGE_DOWN =
+  "Connector storage (Cloudflare KV) is unavailable right now, so no download link could be made. It is often the free plan's daily KV limit, which resets at 00:00 UTC. Meanwhile use canvas_file_original or canvas_file_content; the Canvas connection itself is fine.";
+
 // Store the Canvas address for 5 minutes and return the Worker link that leads to it.
 export async function issueDownload(kv, origin, target, now = Date.now) {
   const id = newDownloadId();
-  await kv.put('dl:' + id, JSON.stringify({ target, exp: now() + DOWNLOAD_TTL * 1000 }), {
-    expirationTtl: DOWNLOAD_TTL,
-  });
+  try {
+    await kv.put('dl:' + id, JSON.stringify({ target, exp: now() + DOWNLOAD_TTL * 1000 }), {
+      expirationTtl: DOWNLOAD_TTL,
+    });
+  } catch {
+    throw new Error(STORAGE_DOWN);
+  }
   return `${origin}/dl/${id}`;
 }
 
@@ -188,11 +196,22 @@ export async function redeemDownload(request, kv, id, now = Date.now) {
       { status: 403, headers: plain },
     );
   const key = 'dl:' + id;
+  let stored;
+  try {
+    stored = await kv.get(key);
+  } catch {
+    // not "expired": the link may be fine, the storage is not
+    return new Response(
+      "The connector's storage (Cloudflare KV) is unavailable right now. Try again in a minute; if it keeps failing, the free plan's daily limit may be used up (it resets at 00:00 UTC).\n",
+      { status: 503, headers: plain },
+    );
+  }
   let entry = null;
   try {
-    entry = JSON.parse((await kv.get(key)) ?? 'null');
+    entry = JSON.parse(stored ?? 'null');
   } catch {}
-  if (entry) await kv.delete(key);
+  // Used up before it is used: a failed delete does not stop this download (it still expires).
+  if (entry) await kv.delete(key).catch(() => {});
   // KV expiry can lag a little: the stored deadline is checked too.
   if (!entry?.target || !(now() < entry.exp))
     return new Response(

@@ -135,9 +135,12 @@ export async function parseCanvasResponse(bytes) {
 }
 // A JSON answer is Canvas itself speaking; HTML (or a 406) means something in front of Canvas
 // rejected the request, which is when the socket path is worth trying.
+// A rate limit (429, or Canvas's own 403 carrying X-Rate-Limit-Remaining) is Canvas speaking too:
+// asking again at once over the socket would only add to the count.
 export function shouldFallBack(response) {
   if (response.status === 406) return true;
-  if (response.status < 400) return false;
+  if (response.status < 400 || response.status === 429) return false;
+  if (response.headers.has('x-rate-limit-remaining')) return false;
   return !(response.headers.get('content-type') ?? '').toLowerCase().includes('json');
 }
 

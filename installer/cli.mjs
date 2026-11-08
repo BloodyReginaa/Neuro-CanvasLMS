@@ -6,7 +6,8 @@
 // Running it again updates the connector to the code you are running and keeps its storage, so
 // existing Claude/ChatGPT connections keep working.
 // Language: your system language if supported (en, zh, es, ja, hi), else English; --lang to choose.
-// Automation/tests: --name, --canvas-host, --school, --account-id, --yes; env NCLMS_HOME, NCLMS_LANG.
+// Automation/tests: --name, --canvas-host, --school, --account-id, --yes; env NCLMS_HOME, NCLMS_LANG
+// (tests only: NCLMS_WRANGLER, a stand-in for wrangler's bin script).
 // Exit codes: 0 done, 1 failed, 2 deployed but not confirmed online yet (run `check` later).
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -40,12 +41,16 @@ import { ensureSubdomain } from './subdomain.mjs';
 
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 // wrangler's package "exports" hide bin/; find the package root from its main entry instead.
-const WRANGLER = (() => {
-  let dir = path.dirname(createRequire(import.meta.url).resolve('wrangler'));
-  while (path.basename(dir) !== 'wrangler' || !fs.existsSync(path.join(dir, 'package.json')))
-    dir = path.dirname(dir);
-  return path.join(dir, 'bin', 'wrangler.js');
-})();
+const WRANGLER =
+  process.env.NCLMS_WRANGLER ||
+  (() => {
+    let dir = path.dirname(createRequire(import.meta.url).resolve('wrangler'));
+    while (path.basename(dir) !== 'wrangler' || !fs.existsSync(path.join(dir, 'package.json'))) {
+      if (path.dirname(dir) === dir) throw new Error('wrangler is not installed');
+      dir = path.dirname(dir);
+    }
+    return path.join(dir, 'bin', 'wrangler.js');
+  })();
 const HOME = process.env.NCLMS_HOME || path.join(os.homedir(), '.neuro-canvas-lms');
 const args = parseArgs(process.argv.slice(2));
 function systemLanguages() {
@@ -67,7 +72,9 @@ const fail = detail => {
 };
 
 let accountEnv = {};
-function wrangler(argv, { cwd, inherit, timeout } = {}) {
+// Every wrangler step has a time limit (a hung network must not hang the installer); only the
+// interactive login waits as long as the user needs.
+function wrangler(argv, { cwd, inherit, timeout = inherit ? undefined : 2 * 60 * 1000 } = {}) {
   const r = spawnSync(process.execPath, [WRANGLER, ...argv], {
     cwd,
     encoding: 'utf8',
@@ -75,7 +82,37 @@ function wrangler(argv, { cwd, inherit, timeout } = {}) {
     timeout,
     env: { ...process.env, WRANGLER_SEND_METRICS: 'false', ...accountEnv },
   });
-  return { ok: r.status === 0, out: `${r.stdout ?? ''}${r.stderr ?? ''}`, stdout: r.stdout ?? '' };
+  let out = `${r.stdout ?? ''}${r.stderr ?? ''}`;
+  if (r.error?.code === 'ETIMEDOUT') out += '\n' + msg(lang, 'timed_out', { s: timeout / 1000 });
+  return { ok: r.status === 0, out, stdout: r.stdout ?? '' };
+}
+// JSON that wrangler printed on stdout (warnings and banners go to stderr, or come before it).
+function stdoutJson(r, open) {
+  try {
+    return JSON.parse(r.stdout.slice(r.stdout.indexOf(open)));
+  } catch {
+    return null;
+  }
+}
+
+// The local install record. A damaged file is moved aside (and said so) instead of failing every
+// run with the same JSON error; it is written to a temporary file first, then renamed, so an
+// interrupted write cannot damage it.
+function readState(statePath) {
+  if (!fs.existsSync(statePath)) return {};
+  try {
+    const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    if (state && typeof state === 'object' && !Array.isArray(state)) return state;
+  } catch {}
+  const moved = `${statePath}.damaged-${Date.now()}`;
+  fs.renameSync(statePath, moved);
+  say('state_broken', { moved });
+  return {};
+}
+function writeState(statePath, state) {
+  const tmp = `${statePath}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(state, null, 2));
+  fs.renameSync(tmp, statePath);
 }
 // A failed wrangler step: an unverified Cloudflare email gets its own clear message.
 const failStep = (what, out) =>
@@ -140,12 +177,13 @@ async function ensureLogin(saved) {
     }
     if (!who.ok) fail(msg(lang, 'login_failed'));
   }
-  const info = JSON.parse(who.out.slice(who.out.indexOf('{')));
+  const info = stdoutJson(who, '{');
+  if (!info) failStep('wrangler whoami', who.out);
   ok('logged_in', { email: info.email ?? '' });
   const accounts = info.accounts ?? [];
   if (args.accountId) return args.accountId;
   if (saved && accounts.some(a => a.id === saved)) return saved;
-  if (!accounts.length) fail('no Cloudflare account found');
+  if (!accounts.length) fail(msg(lang, 'no_account'));
   if (accounts.length === 1) return accounts[0].id;
   // Run by an agent (no terminal) or with --yes: never pick an account silently.
   if (args.yes || !process.stdin.isTTY)
@@ -174,13 +212,17 @@ async function checkCanvas(host) {
   try {
     const r = await fetch(`https://${host}/api/v1/users/self`, {
       redirect: 'manual',
+      signal: AbortSignal.timeout(20 * 1000),
       headers: { 'User-Agent': 'Neuro-CanvasLMS-installer', Accept: 'application/json' },
     });
     const ct = (r.headers.get('content-type') ?? '').split(';')[0];
     if (r.status === 401 && ct.includes('json')) return { ok: true };
     return { ok: false, detail: `HTTP ${r.status}${ct ? ', ' + ct : ''}` };
   } catch (e) {
-    return { ok: false, detail: e.cause?.code ?? e.message };
+    return {
+      ok: false,
+      detail: e.name === 'TimeoutError' ? 'timeout' : (e.cause?.code ?? e.message),
+    };
   }
 }
 async function askCanvasHost(previous, { quiet = false } = {}) {
@@ -205,19 +247,15 @@ async function askCanvasHost(previous, { quiet = false } = {}) {
   fail(msg(lang, 'cancelled'));
 }
 
-// null = the list could not be read (never treat that as "no storage").
+// { list } or, when the list could not be read, { detail } (never treat that as "no storage").
 function listNamespaces() {
   const r = wrangler(['kv', 'namespace', 'list']);
-  if (!r.ok) return null;
-  try {
-    return JSON.parse(r.out.slice(r.out.indexOf('[')));
-  } catch {
-    return null;
-  }
+  const list = r.ok ? stdoutJson(r, '[') : null;
+  return Array.isArray(list) ? { list } : { detail: lastLines(r.out) || 'no answer' };
 }
 function ensureKv(name, state) {
-  const namespaces = listNamespaces();
-  if (!namespaces) fail('could not list storage');
+  const { list: namespaces, detail } = listNamespaces();
+  if (!namespaces) failStep(msg(lang, 'step_kv_list'), detail);
   const existing =
     namespaces.find(n => n.id === state.kvId) ?? namespaces.find(n => n.title === `${name}-oauth`);
   if (existing) {
@@ -227,7 +265,7 @@ function ensureKv(name, state) {
   say('kv');
   const r = wrangler(['kv', 'namespace', 'create', `${name}-oauth`]);
   const id = r.out.match(/"id":\s*"([a-f0-9]{32})"/)?.[1];
-  if (!id) failStep('could not create storage', r.out);
+  if (!id) failStep(msg(lang, 'step_kv_create'), r.out);
   return id;
 }
 
@@ -250,11 +288,11 @@ async function install() {
   const [major] = process.versions.node.split('.').map(Number);
   if (major < 22) fail(msg(lang, 'node_old', { need: 22, have: process.versions.node }));
   const name = args.name ?? DEFAULT_NAME;
-  if (!validWorkerName(name)) fail('invalid --name');
+  if (!validWorkerName(name)) fail(msg(lang, 'invalid_name'));
   const dir = path.join(HOME, name);
   fs.mkdirSync(dir, { recursive: true });
   const statePath = path.join(dir, 'state.json');
-  const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : {};
+  const state = readState(statePath);
   const plan = updateChoices(state, args);
   if (plan.updating) {
     const from = await runningVersion(state.url);
@@ -270,10 +308,7 @@ async function install() {
   const school = plan.school;
   const kvId = ensureKv(name, state);
   const save = extra =>
-    fs.writeFileSync(
-      statePath,
-      JSON.stringify({ ...state, name, accountId, kvId, host, school, ...extra }, null, 2),
-    );
+    writeState(statePath, { ...state, name, accountId, kvId, host, school, ...extra });
   save({});
 
   say('deploy', { version: VERSION });
@@ -281,7 +316,9 @@ async function install() {
   const main = path.relative(dir, path.join(ROOT, 'worker.mjs'));
   const config = connectorConfig({ name, accountId, kvId, main, template, host, school });
   fs.writeFileSync(path.join(dir, 'wrangler.jsonc'), JSON.stringify(config, null, 2));
-  let r = wrangler(['deploy', '-c', 'wrangler.jsonc'], { cwd: dir });
+  const deploy = () =>
+    wrangler(['deploy', '-c', 'wrangler.jsonc'], { cwd: dir, timeout: 5 * 60 * 1000 });
+  let r = deploy();
   // New Cloudflare account: the user picks a workers.dev subdomain in the dashboard, then we retry.
   for (let i = 0; !r.ok && needsSubdomain(r.out) && i < 3; i++) {
     const link = subdomainLink(accountId);
@@ -289,11 +326,11 @@ async function install() {
     say('subdomain_needed', { link });
     openUrl(link);
     await ask(msg(lang, 'subdomain_wait'));
-    r = wrangler(['deploy', '-c', 'wrangler.jsonc'], { cwd: dir });
+    r = deploy();
   }
-  if (!r.ok) failStep('deploy failed', r.out);
+  if (!r.ok) failStep(msg(lang, 'step_deploy'), r.out);
   const url = parseWorkerUrl(r.out) ?? state.url;
-  if (!url) fail('could not read the connector URL: ' + lastLines(r.out));
+  if (!url) fail(`${msg(lang, 'step_url')}: ${lastLines(r.out)}`);
   ok('deploy_ok', { url });
   save({ url, version: VERSION });
 
@@ -357,9 +394,9 @@ function nextSteps(url, host, { tokenAsked = false } = {}) {
 async function check() {
   console.log(`\n  ${msg(lang, 'title')}\n`);
   const name = args.name ?? DEFAULT_NAME;
-  if (!validWorkerName(name)) fail('invalid --name');
+  if (!validWorkerName(name)) fail(msg(lang, 'invalid_name'));
   const statePath = path.join(HOME, name, 'state.json');
-  const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : {};
+  const state = readState(statePath);
   if (!state.url) {
     console.error('  ✗ ' + msg(lang, 'check_none', { name }));
     process.exitCode = 1;
@@ -379,7 +416,7 @@ async function uninstall() {
   const name = args.name ?? DEFAULT_NAME;
   const dir = path.join(HOME, name);
   const statePath = path.join(dir, 'state.json');
-  const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : {};
+  const state = readState(statePath);
   // The account the connector was installed in. In any other account "Worker does not exist"
   // would look like success while the Worker and its storage (with the token grants) stay online.
   const accountId = await ensureLogin(state.accountId);
@@ -393,8 +430,15 @@ async function uninstall() {
   if (!worker.ok && !/\b10090\b|does not exist/i.test(worker.out))
     fail(msg(lang, 'un_failed', { what: `Worker "${name}"`, detail: lastLines(worker.out) }));
   const before = listNamespaces();
-  if (!before) fail(msg(lang, 'un_failed', { what: 'storage', detail: 'could not list storage' }));
-  const kv = before.find(n => n.id === state.kvId) ?? before.find(n => n.title === `${name}-oauth`);
+  if (!before.list)
+    fail(
+      msg(lang, 'un_failed', {
+        what: msg(lang, 'step_kv_list'),
+        detail: before.detail,
+      }),
+    );
+  const kv =
+    before.list.find(n => n.id === state.kvId) ?? before.find(n => n.title === `${name}-oauth`);
   if (kv) {
     const r = wrangler([
       'kv',
@@ -404,11 +448,12 @@ async function uninstall() {
       kv.id,
       '--skip-confirmation',
     ]);
+    const what = msg(lang, 'storage_label', { title: kv.title });
     if (!r.ok && !/\b10013\b|not found/i.test(r.out))
-      fail(msg(lang, 'un_failed', { what: `storage "${kv.title}"`, detail: lastLines(r.out) }));
+      fail(msg(lang, 'un_failed', { what, detail: lastLines(r.out) }));
     const after = listNamespaces();
-    if (!after || after.some(n => n.id === kv.id))
-      fail(msg(lang, 'un_failed', { what: `storage "${kv.title}"`, detail: 'still listed' }));
+    if (!after.list || after.list.some(n => n.id === kv.id))
+      fail(msg(lang, 'un_failed', { what, detail: after.detail ?? msg(lang, 'still_listed') }));
   }
   fs.rmSync(dir, { recursive: true, force: true });
   ok('un_done');

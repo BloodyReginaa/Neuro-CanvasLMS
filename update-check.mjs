@@ -6,6 +6,10 @@
 // npm, not GitHub: an update is announced only once `npx` can actually install it.
 export const UPDATE_SOURCE = 'https://registry.npmjs.org/neuro-canvas-lms/latest';
 export const UPDATE_COMMAND = 'npx -y neuro-canvas-lms';
+// The update command names the exact version (only ever plain x.y.z, see newer()): what the user
+// runs is the release that was announced, with the dependency versions it was published with
+// (npm-shrinkwrap.json), not whatever npm resolves on the day.
+export const updateCommand = version => `${UPDATE_COMMAND}@${version}`;
 export const UPDATE_KEY = 'update:latest'; // in OAUTH_KV: { version, checked }
 import { localTime } from './time.mjs';
 
@@ -89,7 +93,7 @@ export function updateChecker({ fetcher = fetch, now = Date.now } = {}) {
 // What the AI is told when a newer version exists (null otherwise).
 export function updateNotice(latest, current) {
   if (!newer(latest, current)) return null;
-  return `Neuro-CanvasLMS ${latest} is available; this connector runs ${current}. Tell the user once in this conversation, briefly, after answering their question: to update, run ${UPDATE_COMMAND} in a terminal on the computer they installed it from (Node.js 22 or newer). It keeps their connection, so nothing needs to be reconnected. Afterwards, in ChatGPT the user refreshes this connector in ChatGPT's settings so it sees the new version; in Claude, a new chat picks it up.`;
+  return `Neuro-CanvasLMS ${latest} is available; this connector runs ${current}. Tell the user once in this conversation, briefly, after answering their question: to update, run ${updateCommand(latest)} in a terminal on the computer they installed it from (Node.js 22 or newer). It keeps their connection, so nothing needs to be reconnected. Afterwards, in ChatGPT the user refreshes this connector in ChatGPT's settings so it sees the new version; in Claude, a new chat picks it up.`;
 }
 
 export const versionTool = {
@@ -120,6 +124,6 @@ export async function connectorVersion(latest, kv, running, { timeZone } = {}) {
   };
   if (!version) out.note = 'npm could not be reached to check; try again later.';
   else if (newer(version, running))
-    out.how_to_update = `Run ${UPDATE_COMMAND} in a terminal on the computer the connector was installed from (Node.js 22 or newer), then answer y. It keeps the connection; nothing needs to be reconnected. Afterwards, in ChatGPT the user refreshes this connector in ChatGPT's settings so it sees the new version; in Claude, a new chat picks it up.`;
+    out.how_to_update = `Run ${updateCommand(version)} in a terminal on the computer the connector was installed from (Node.js 22 or newer), then answer y. It keeps the connection; nothing needs to be reconnected. Afterwards, in ChatGPT the user refreshes this connector in ChatGPT's settings so it sees the new version; in Claude, a new chat picks it up.`;
   return out;
 }

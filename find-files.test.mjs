@@ -312,10 +312,11 @@ test('failed sources make the result incomplete; nothing searchable is an error,
     }),
     /Canvas did not answer within 20 seconds/,
   );
-  // One source failing (JSON 500, rate limit) while the rest answer: files found, but incomplete.
+  // One source failing (JSON 500, 502) while the rest answer: files found, but incomplete. (A rate
+  // limit stops the whole search instead: see below.)
   for (const failing of [
     { status: 500, json: { errors: [] } },
-    { status: 429, json: { errors: [] } },
+    { status: 502, json: { errors: [] } },
   ]) {
     const r = await findFiles(
       { course_id: 7 },
@@ -339,4 +340,17 @@ test('a course where everything is 404 hints at a wrong course_id', async () => 
   assert.match(r.course_note, /check the course_id/);
   const real = await findFiles({ course_id: 7 }, 'tok', fakeCanvas(course));
   assert.equal(real.course_note, undefined);
+});
+
+test('a rate limit stops the search at once instead of more requests and a partial list', async () => {
+  let calls = 0;
+  const fetcher = async () => {
+    calls++;
+    return new Response('403 Forbidden (Rate Limit Exceeded)', {
+      status: 403,
+      headers: { 'content-type': 'text/plain' },
+    });
+  };
+  await assert.rejects(findFiles({ course_id: 7 }, 't', fetcher), /^Error: Canvas rate limit/);
+  assert.ok(calls <= 8, `${calls} requests`);
 });
