@@ -21,3 +21,4 @@ docs/
 Dockerfile
 .dockerignore
 scripts/glama-stdio.mjs
+glama.json
