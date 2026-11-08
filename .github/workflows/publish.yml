@@ -1,0 +1,79 @@
+# Publishes a release when a version tag (v2.14.0, …) is pushed: the tests, then npm, then the
+# official MCP Registry entry (server.json). No secrets are stored anywhere: npm and the registry
+# both trust this workflow through GitHub's short-lived OIDC token (npm: "Trusted Publisher" in the
+# package settings on npmjs.com, workflow file publish.yml).
+#
+# Release: bump version.mjs, package.json and server.json, commit and push to main, then
+#   git tag v2.14.0 && git push origin v2.14.0
+name: publish
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency: publish
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC for npm and the MCP Registry
+    env:
+      MCP_PUBLISHER_VERSION: v1.8.8
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: The tag is on main and matches every version
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::$GITHUB_REF_NAME is not on main"; exit 1; }
+          want="${GITHUB_REF_NAME#v}"
+          for got in "$(node -p "require('./package.json').version")" \
+                     "$(node -p "require('./server.json').version")" \
+                     "$(sed -n "s/^export const VERSION = '\(.*\)';/\1/p" version.mjs)"; do
+            [ "$got" = "$want" ] || { echo "::error::tag $GITHUB_REF_NAME but a file says $got"; exit 1; }
+          done
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false # no cache in release builds
+
+      - name: npm 11.5.1 or later (needed for trusted publishing)
+        run: |
+          npm --version
+          node -e "const [a,b,c]=process.argv[1].split('.').map(Number);process.exit(a>11||(a==11&&(b>5||(b==5&&c>=1)))?0:1)" "$(npm --version)" || npm install -g npm@11
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run format:check
+      - run: npm run check
+
+      - name: Publish to npm
+        run: npm publish
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      - name: Download and verify mcp-publisher
+        run: |
+          set -euo pipefail
+          archive="mcp-publisher_linux_amd64.tar.gz"
+          base_url="https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}"
+          curl --fail --location --silent --show-error --output "$archive" "$base_url/$archive"
+          curl --fail --location --silent --show-error --output "$archive.sigstore.json" "$base_url/$archive.sigstore.json"
+          cosign verify-blob \
+            --bundle "$archive.sigstore.json" \
+            --certificate-identity "https://github.com/modelcontextprotocol/registry/.github/workflows/release.yml@refs/tags/${MCP_PUBLISHER_VERSION}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "$archive"
+          tar xzf "$archive" mcp-publisher
+          rm -f "$archive" "$archive.sigstore.json"
+
+      - name: Publish to the MCP Registry
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish
