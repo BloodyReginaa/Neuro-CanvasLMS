@@ -1,6 +1,6 @@
 {
   "name": "neuro-canvas-lms",
-  "version": "2.13.0",
+  "version": "2.13.1",
   "description": "Canvas LMS MCP server for Claude and ChatGPT: read-only, deployed to your own free Cloudflare account with one command",
   "keywords": [
     "canvas",

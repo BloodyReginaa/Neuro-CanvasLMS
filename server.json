@@ -3,7 +3,7 @@
   "name": "io.github.BloodyReginaa/neuro-canvas-lms",
   "title": "Neuro-CanvasLMS",
   "description": "Read-only Canvas LMS for your AI: deadlines, grades, files, announcements. Runs on your Cloudflare.",
-  "version": "2.13.0",
+  "version": "2.13.1",
   "websiteUrl": "https://github.com/BloodyReginaa/Neuro-CanvasLMS#readme",
   "repository": {
     "url": "https://github.com/BloodyReginaa/Neuro-CanvasLMS",
