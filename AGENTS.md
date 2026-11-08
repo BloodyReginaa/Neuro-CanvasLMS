@@ -26,7 +26,9 @@ Code map:
 - Files: `file-content.mjs` (text extraction), `file-types.mjs` (file type detection shared by all
   readers), `zip-content.mjs` (server-side ZIP unpacking), `find-files.mjs` (finds files a course
   links to when its Files list is hidden), `external-links.mjs` (Google/Dropbox/GitHub share links →
-  the file itself), `module-file.mjs` + `file-resource.mjs` (original files as MCP resources),
+  the file itself), `link-content.mjs` (text of a file linked in the syllabus, a page, an
+  assignment or an announcement; only links that content really contains), `module-file.mjs` +
+  `file-resource.mjs` (original files as MCP resources),
   `download-link.mjs` (one-time, minutes-long Canvas storage link so coding agents can curl an original
   file to disk).
 - `owner.mjs`: owner binding, allowed OAuth clients. `i18n.mjs` + `pages.mjs`: web pages.

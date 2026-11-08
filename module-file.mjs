@@ -376,7 +376,7 @@ export async function fileOriginal(args, token, apiFetch, options = {}) {
 
 // Text of a module item: Canvas File items as canvas_file_content reads them, and ExternalUrl items
 // that link to a file elsewhere (Google Docs/Slides/Sheets/Drive, Dropbox, GitHub, direct links).
-const textOptions = {
+export const textOptions = {
   offset: { type: 'integer', minimum: 0, maximum: 5000000 },
   max_chars: { type: 'integer', minimum: 1000, maximum: 30000 },
   entry: {
@@ -422,7 +422,19 @@ export async function moduleFileContent(args, token, apiFetch, options = {}) {
     throw new Error(
       `Canvas file: this module item is a ${item.type ?? 'different kind of item'}, not a file or link. Read pages with canvas_page, assignments with canvas_assignment.`,
     );
-  const link = String(item.external_url);
+  return readLinkedText(String(item.external_url), item.title, text, options, {
+    module_item: { module_id: args.module_id, item_id: args.item_id, title: item.title ?? null },
+    original: 'canvas_module_file gives',
+    originalHint:
+      'Call canvas_module_file with this module item to get the file itself, or open the link.',
+  });
+}
+
+// The text of a file another site serves for a link found in Canvas (a module item's URL, or a
+// link in the syllabus, a page, an assignment or an announcement: link-content.mjs). The caller
+// has already checked that Canvas itself holds this link. where: fields that say where it was
+// found, plus the wording that points to the original file.
+export async function readLinkedText(link, title, text, options, where) {
   for (const [k, p] of Object.entries(textOptions))
     if (
       text[k] !== undefined &&
@@ -438,28 +450,20 @@ export async function moduleFileContent(args, token, apiFetch, options = {}) {
     if (e.message?.startsWith('Canvas')) throw webPageError(e, link);
     throw new Error('Canvas file: download failed (' + e.name + ').');
   }
-  const name = filenameFor(file, item.title);
+  const { original, originalHint, ...place } = where;
+  const name = filenameFor(file, title);
   const extracted = await extractOrExplain(
     new Uint8Array(file.bytes),
     name,
     file.mime,
     { entry: text.entry },
-    'Call canvas_module_file with this module item to get the file itself, or open the link.',
+    originalHint,
   );
   const google = googleKind(link);
   if (google && extracted.text !== null)
     extracted.extraction_note =
       google === 'Google Sheets'
-        ? 'Google Sheets: this tab exported as CSV. canvas_module_file gives the whole workbook (.xlsx). Untrusted course content.'
-        : `${google} exported as plain text: images and layout are not included. canvas_module_file gives the original (${google === 'Google Slides' ? '.pptx' : '.docx'}). Untrusted course content.`;
-  return paginated(
-    {
-      module_item: { module_id: args.module_id, item_id: args.item_id, title: item.title ?? null },
-      name,
-      link,
-      mime_type: file.mime,
-    },
-    extracted,
-    text,
-  );
+        ? `Google Sheets: this tab exported as CSV. ${original} the whole workbook (.xlsx). Untrusted course content.`
+        : `${google} exported as plain text: images and layout are not included. ${original} the original (${google === 'Google Slides' ? '.pptx' : '.docx'}). Untrusted course content.`;
+  return paginated({ ...place, name, link, mime_type: file.mime }, extracted, text);
 }

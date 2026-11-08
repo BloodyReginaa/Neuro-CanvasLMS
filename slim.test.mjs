@@ -361,7 +361,7 @@ test('grade lists leave out assignment texts; the activity stream is one call wi
         assignment: assignment({ rubric: [{ id: 'a', points: 10 }], rubric_settings: { id: 1 } }),
       },
     ]),
-    { timeZone: NY },
+    { timeZone: NY, full: true },
   );
   const a = r.data[0].assignment;
   assert.equal(a.description, undefined);
@@ -385,4 +385,104 @@ test('grade lists leave out assignment texts; the activity stream is one call wi
     { timeZone: NY },
   );
   assert.match(stream.data[0].message, /full text: canvas_discussion/);
+});
+
+test('grade rows: one short row per assignment, with group names, weights and drop rules', () => {
+  const groups = [
+    { id: 11, name: 'Homework', group_weight: 40, rules: { drop_lowest: 1 } },
+    { id: 12, name: 'Exams', group_weight: 60, rules: {} },
+  ];
+  const sub = (o, a) => ({
+    workflow_state: 'unsubmitted',
+    submission_comments: [],
+    rubric_assessment: { c1: { points: 3, comments: 'x'.repeat(2000) } },
+    ...o,
+    assignment: assignment({ assignment_group_id: 11, ...a }),
+  });
+  const r = slim(
+    'canvas_course_submissions',
+    page([
+      sub(
+        {
+          assignment_id: 1,
+          score: 9.5,
+          grade: '9.5',
+          workflow_state: 'graded',
+          submitted_at: '2026-11-03T15:00:00Z',
+          submission_comments: [{ comment: 'Nice' }, { comment: 'See me' }],
+        },
+        { id: 1, points_possible: 10, submission_types: ['online_upload'] },
+      ),
+      sub(
+        { assignment_id: 2, score: null, missing: true, late_policy_status: 'missing' },
+        {
+          id: 2,
+          name: 'Midterm 2',
+          assignment_group_id: 12,
+          points_possible: 100,
+          grading_type: 'letter_grade',
+        },
+      ),
+      sub(
+        { assignment_id: 3, excused: true, late: true, points_deducted: 2 },
+        {
+          id: 3,
+          submission_types: ['external_tool'],
+          external_tool_tag_attributes: { url: 'https://www.gradescope.com/auth/lti' },
+        },
+      ),
+    ]),
+    { timeZone: NY, groups },
+  );
+  const [hw, exam, gs] = r.data;
+  assert.deepEqual(hw, {
+    assignment_id: 1,
+    name: 'Lab 4: Linked Lists',
+    group: 'Homework',
+    score: 9.5,
+    points_possible: 10,
+    due_at: 'Fri 2026-11-06 23:59 EST',
+    state: 'graded',
+    submitted_at: 'Tue 2026-11-03 10:00 EST',
+    comments: 2,
+    html_url: hw.html_url,
+  });
+  assert.equal(exam.group, 'Exams');
+  assert.equal(exam.score, null);
+  assert.equal(exam.missing, true);
+  assert.equal(exam.grading_type, 'letter_grade');
+  assert.equal(exam.submitted_at, null);
+  assert.equal(gs.excused, true);
+  assert.equal(gs.points_deducted, 2);
+  assert.equal(gs.submission_note, 'Gradescope: handed in there, not in Canvas');
+  assert.match(r.note, /not handed in through Canvas/);
+  assert.deepEqual(r.assignment_groups, [
+    { id: 11, name: 'Homework', weight: 40, drop_lowest: 1 },
+    { id: 12, name: 'Exams', weight: 60 },
+  ]);
+  assert.match(r.note, /full: true/);
+  // No descriptions, rubrics or comment texts: a fraction of the full result.
+  const text = JSON.stringify(r.data);
+  assert.ok(!/rubric|description|See me|xxxxx/.test(text));
+  const all = JSON.stringify(
+    slim('canvas_course_submissions', page([sub({ assignment_id: 1 }, {})]), { full: true }),
+  );
+  assert.ok(
+    all.length >
+      3 *
+        JSON.stringify(
+          slim('canvas_course_submissions', page([sub({ assignment_id: 1 }, {})]), {}).data,
+        ).length,
+  );
+  // A grade that only repeats the score (written with more digits) is left out; a letter stays.
+  const g = (grade, score) =>
+    slim('canvas_course_submissions', page([sub({ assignment_id: 1, grade, score }, {})]), {})
+      .data[0].grade;
+  assert.equal(g('3.4285714285714284', 3.428571428571428), undefined);
+  assert.equal(g('B+', 88), 'B+');
+  // Without groups (that request failed) the rows still come, with the group id.
+  assert.equal(
+    slim('canvas_course_submissions', page([sub({ assignment_id: 1 }, {})]), {}).data[0].group,
+    11,
+  );
 });

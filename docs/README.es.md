@@ -23,9 +23,9 @@ Las herramientas locales de Canvas solo funcionan mientras tu computadora las ej
 
 ## Qué incluye
 
-- **64 herramientas de solo lectura:** cursos, módulos, páginas, archivos, tareas, entregas, calificaciones y comentarios, rúbricas, anuncios, foros, bandeja de entrada, calendario, pendientes, grupos, historial de exámenes y perfil.
+- **65 herramientas de solo lectura:** cursos, módulos, páginas, archivos, tareas, entregas, calificaciones y comentarios, rúbricas, anuncios, foros, bandeja de entrada, calendario, pendientes, grupos, historial de exámenes y perfil.
 - **Lectura real de archivos:** texto de PDF, Word, PowerPoint y Excel, unos 90 tipos de archivos de código y texto, y cuadernos de Jupyter (celdas y salidas); archivos ZIP descomprimidos en el servidor (índice y el contenido de cada archivo de código/texto); reconoce los PDF escaneados o escritos a mano y entrega el archivo original para que la IA vea cada página.
-- **También archivos enlazados:** las diapositivas, documentos y hojas que un módulo enlaza en Google Docs/Slides/Sheets o Google Drive, los archivos y carpetas de Dropbox, y los archivos y repositorios de GitHub se leen como texto si están compartidos públicamente ("Cualquier persona con el enlace").
+- **También archivos enlazados:** las diapositivas, documentos y hojas que un módulo, el programa del curso, una página, una tarea o un anuncio enlazan en Google Docs/Slides/Sheets o Google Drive, los archivos y carpetas de Dropbox, y los archivos y repositorios de GitHub se leen como texto si están compartidos públicamente ("Cualquier persona con el enlace").
 - **Encuentra los archivos que el curso oculta:** muchos cursos ocultan la lista de Archivos a los estudiantes. El conector busca en la página principal, el programa, los módulos, las tareas, los anuncios y las páginas enlazadas, así que la IA sigue encontrando "las diapositivas de la clase 12" por su nombre.
 - **El código inicial, directo a tu computadora:** en Claude Code, Codex y otros agentes de programación, pide "prepara la PA2 desde Canvas". El agente recibe un enlace de descarga de un solo uso que caduca en minutos, guarda los archivos iniciales de la tarea en tu carpeta y los descomprime.
 - **Solo lectura por diseño:** solo peticiones `GET` fijas. Nunca entrega tareas, envía mensajes, inicia exámenes ni modifica nada en Canvas.

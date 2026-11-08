@@ -299,9 +299,81 @@ function dedupe(data) {
   walk(data, 'data');
 }
 
+// ---- grade rows (canvas_course_submissions) ------------------------------------------------------
+// A grade check needs one short row per assignment, not each submission with its whole
+// assignment, rubric and comment thread (85 KB for one course in real use). full: true keeps all.
+export const GRADES_NOTE =
+  'One row per assignment. score is null until graded (or while the teacher hides it). state: unsubmitted, submitted, pending_review or graded. comments: number of teacher comments (canvas_submission shows them). submission_note "not handed in through Canvas" (on paper or nothing to hand in): "unsubmitted" is normal there. submission_note "<tool>: handed in there, not in Canvas" (Gradescope etc.): Canvas may show it as unsubmitted or missing even after it was submitted, so do not tell the user it is not done; the tool has the real status. Pass full: true for comments, rubric assessments and every field.';
+// "3.4285714285714284" and 3.428571428571428 are the same grade: written once, as the score.
+const sameNumber = (grade, score) =>
+  grade === null ||
+  grade === undefined ||
+  (typeof score === 'number' && Math.abs(Number(grade) - score) < 1e-9);
+export function gradeRows(submissions, groups = []) {
+  const names = new Map(groups.map(g => [g.id, g.name]));
+  return submissions.map(s => {
+    const a = isObject(s.assignment) ? s.assignment : {};
+    const comments = Array.isArray(s.submission_comments) ? s.submission_comments.length : 0;
+    const row = {
+      assignment_id: s.assignment_id ?? a.id,
+      name: a.name,
+      group: names.get(a.assignment_group_id) ?? a.assignment_group_id,
+      score: s.score ?? null,
+      points_possible: a.points_possible,
+      grade: sameNumber(s.grade, s.score) ? undefined : (s.grade ?? undefined),
+      grading_type: a.grading_type === 'points' ? undefined : a.grading_type,
+      due_at: a.due_at ?? null,
+      state: s.workflow_state,
+      submitted_at: s.submitted_at ?? null,
+      late: s.late || undefined,
+      missing: s.missing || undefined,
+      excused: s.excused || undefined,
+      late_policy_status: s.late_policy_status || undefined,
+      points_deducted: s.points_deducted > 0 ? s.points_deducted : undefined,
+      omit_from_final_grade: a.omit_from_final_grade || undefined,
+      comments: comments || undefined,
+      html_url: a.html_url,
+    };
+    // The long explanation is in GRADES_NOTE once, not on every row.
+    const note = submissionNote(a);
+    if (note)
+      row.submission_note =
+        note === NO_SUBMISSION_NOTE
+          ? 'not handed in through Canvas'
+          : note.replace(EXTERNAL_TOOL_NOTE, 'handed in there, not in Canvas');
+    return row;
+  });
+}
+const defined = o => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
+export function groupSummary(groups) {
+  return groups.map(g => {
+    const rules = isObject(g.rules) ? g.rules : {};
+    return defined({
+      id: g.id,
+      name: g.name,
+      weight: g.group_weight,
+      drop_lowest: rules.drop_lowest || undefined,
+      drop_highest: rules.drop_highest || undefined,
+      never_drop:
+        Array.isArray(rules.never_drop) && rules.never_drop.length ? rules.never_drop : undefined,
+    });
+  });
+}
+
 // result: what canvasGet returned ({ data, has_more, next_page, api_url, note? }).
-export function slim(name, result, { timeZone, now = new Date() } = {}) {
+// groups: canvas_course_submissions only, the course's assignment groups (compact rows, not full).
+export function slim(name, result, { timeZone, now = new Date(), full = false, groups } = {}) {
   const zone = isTimeZone(timeZone) ? timeZone : null;
+  if (name === 'canvas_course_submissions' && !full && Array.isArray(result.data)) {
+    const g = Array.isArray(groups) ? groups.filter(isObject) : [];
+    result = {
+      ...result,
+      data: gradeRows(result.data, g),
+      ...(g.length ? { assignment_groups: groupSummary(g) } : {}),
+      note: GRADES_NOTE,
+    };
+    name = 'canvas_course_submissions_rows';
+  }
   const base = 'https://' + CANVAS_HOST;
   const list = PREVIEW_TOOLS.has(name) && Array.isArray(result.data);
   const ctx = {

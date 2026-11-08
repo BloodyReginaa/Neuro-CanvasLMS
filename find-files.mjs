@@ -89,7 +89,7 @@ const FILE_HOSTS =
   /(^|\.)(dropbox\.com|drive\.google\.com|docs\.google\.com|onedrive\.live\.com|1drv\.ms|sharepoint\.com|box\.com|github\.com)$/i;
 const FILE_EXT =
   /\.(pdf|zip|pptx?|docx?|xlsx?|csv|txt|md|ipynb|py|java|c|cpp|h|js|tar|gz|tgz|7z|rar)$/i;
-function externalFileLink(raw) {
+export function externalFileLink(raw) {
   let u;
   try {
     u = new URL(raw);
@@ -250,9 +250,30 @@ export async function findFiles(args, token, fetcher) {
     if (e.found_in.length < MAX_PLACES && !e.found_in.some(p => JSON.stringify(p) === key))
       e.found_in.push(where);
   };
+  // Where a link was written, as canvas_link_content takes it (link-content.mjs).
+  const linkSource = where =>
+    where.type === 'syllabus'
+      ? { source: 'syllabus' }
+      : where.type === 'page'
+        ? where.page_url
+          ? { source: 'page', source_id: where.page_url }
+          : { source: 'front_page' }
+        : where.type === 'assignment' && Number.isSafeInteger(where.assignment_id)
+          ? { source: 'assignment', source_id: String(where.assignment_id) }
+          : where.type === 'announcement' && Number.isSafeInteger(where.topic_id)
+            ? { source: 'discussion', source_id: String(where.topic_id) }
+            : null;
   const addExternal = (x, where) => {
-    if (external.length < MAX_EXTERNAL && !external.some(y => y.url === x.url))
-      external.push({ ...x, found_in: where });
+    if (external.length < MAX_EXTERNAL && !external.some(y => y.url === x.url)) {
+      const from = linkSource(where);
+      external.push({
+        ...x,
+        found_in: where,
+        ...(from
+          ? { read_with: { tool: 'canvas_link_content', course_id: c, ...from, url: x.url } }
+          : {}),
+      });
+    }
   };
   const addHtml = (html, where) => {
     const r = scanHtml(html, c);
@@ -440,6 +461,6 @@ export async function findFiles(args, token, fetcher) {
         }
       : {}),
     how_to_read:
-      'Read a file_id with canvas_file_content (text from PDF/Office/code, ZIP listing and contents) or canvas_file_original (original bytes, e.g. scanned PDFs). An external link with read_with (a module item): call canvas_module_file_content with those IDs for its text (Google Docs/Slides/Sheets/Drive, Dropbox, GitHub), or canvas_module_file for the original file. Other external links cannot be read by this connector: give the user the link.',
+      'Read a file_id with canvas_file_content (text from PDF/Office/code, ZIP listing and contents) or canvas_file_original (original bytes, e.g. scanned PDFs). An external link with read_with: call the tool it names with those arguments for its text (Google Docs/Slides/Sheets/Drive, Dropbox, GitHub, direct file links); for a module item canvas_module_file gives the original file. Other external links cannot be read by this connector: give the user the link.',
   };
 }

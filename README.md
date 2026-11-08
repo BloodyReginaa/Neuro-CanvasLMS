@@ -23,9 +23,9 @@ Local Canvas tools only work while your own computer runs them. Hosted services 
 
 ## What you get
 
-- **64 read-only tools:** courses, modules, pages, files, assignments, submissions, grades and feedback, rubrics, announcements, discussions, inbox, calendar, to-dos, groups, quiz history and profile settings.
+- **65 read-only tools:** courses, modules, pages, files, assignments, submissions, grades and feedback, rubrics, announcements, discussions, inbox, calendar, to-dos, groups, quiz history and profile settings.
 - **Real file reading:** text from PDF, Word, PowerPoint and Excel, about 90 kinds of code and text files, and Jupyter notebooks (cells and outputs); ZIP archives unpacked on the server (listing plus every code/text file); scanned or handwritten PDFs are recognised and their original pages handed to the AI to look at.
-- **Linked files too:** course files that a module links on Google Docs/Slides/Sheets, Google Drive, Dropbox (files and folders) and GitHub (files and repositories) are read as text, as long as they are shared publicly ("Anyone with the link").
+- **Linked files too:** course files that a module, the syllabus, a page, an assignment or an announcement links on Google Docs/Slides/Sheets, Google Drive, Dropbox (files and folders) and GitHub (files and repositories) are read as text, as long as they are shared publicly ("Anyone with the link").
 - **Finds files the course hides:** many courses hide their Files list from students. The connector searches the front page, syllabus, modules, assignments, announcements and the pages they link to, so the AI can still find "the Lecture 12 slides" by name.
 - **Starter code onto your computer:** in Claude Code, Codex and other coding agents, ask "set up PA2 from Canvas". The agent gets a one-time download link that expires in minutes, saves the assignment's starter files in your folder and unpacks them.
 - **Read-only by design:** only fixed `GET` requests. It never submits work, sends messages, starts quizzes or changes anything in Canvas.

@@ -125,7 +125,14 @@ test('finds files through every entry point when the course hides Files and Page
     module_id: 1,
     item_id: 12,
   });
-  assert.ok(r.external_links.some(x => x.url.includes('hw1.zip') && !x.read_with));
+  // A link written into a page says how canvas_link_content reads it.
+  assert.deepEqual(r.external_links.find(x => x.url.includes('hw1.zip')).read_with, {
+    tool: 'canvas_link_content',
+    course_id: 7,
+    source: 'page',
+    source_id: 'front-page',
+    url: 'https://www.dropbox.com/scl/fi/abc/hw1.zip?dl=0',
+  });
   assert.ok(!r.external_links.some(x => x.url.includes('piazza')));
   assert.match(r.searched.course_files, /HTTP 403/);
   assert.match(r.searched.page_list, /HTTP 404/);

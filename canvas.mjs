@@ -219,7 +219,19 @@ export async function callCanvas(name, args, token, fetcher = fetch, opts = {}) 
   }
   if (name === 'canvas_file_content') return readFileContent(r.data, args, fetcher);
   if (args.raw) return r;
-  const out = slim(name, r, { timeZone: opts.timeZone });
+  // Compact grade rows name each assignment's group and come with the weights and drop rules:
+  // one more request, and the rows still come back without them if it fails.
+  let groups;
+  if (name === 'canvas_course_submissions' && !args.full)
+    groups = await canvasGet(
+      endpoint('canvas_assignment_groups', { course_id: args.course_id }),
+      token,
+      fetcher,
+    ).then(
+      g => (Array.isArray(g.data) ? g.data : undefined),
+      () => undefined,
+    );
+  const out = slim(name, r, { timeZone: opts.timeZone, full: args.full === true, groups });
   if (name === 'canvas_calendar_events' && Array.isArray(out.data) && out.data.length === 0) {
     const where = args.context_codes ? 'these calendars' : 'your personal calendar';
     const what =

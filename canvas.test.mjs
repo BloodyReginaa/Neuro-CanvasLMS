@@ -116,7 +116,8 @@ test('every registered tool routes only to approved Canvas GET endpoints', async
       assert.ok(!u.pathname.includes('undefined'));
       return new Response(t.name === 'canvas_file_content' ? '{}' : '[]');
     });
-    assert.equal(calls, 1, t.name);
+    // Compact grade rows also read the course's assignment groups (names, weights).
+    assert.equal(calls, t.name === 'canvas_course_submissions' ? 2 : 1, t.name);
   }
 });
 import { allowedDownload, extractBytes, readFileContent } from './file-content.mjs';

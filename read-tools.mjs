@@ -70,19 +70,22 @@ add(
 );
 add(
   'course_submissions',
-  "List your own submissions, scores and feedback for a course, with each assignment's name, dates and points (no assignment descriptions: canvas_assignment has them).",
+  "Your grades in one course, one compact row per assignment: name, group, score/points, due date, submitted or not, late, missing, excused, and the number of teacher comments; plus the assignment groups with their weights and drop rules. Pass full: true for the comments, rubric assessments and every field, or read one assignment's feedback with canvas_submission.",
   a => `/courses/${a.course_id}/students/submissions`,
-  { course_id: id },
-  ['course_id'],
   {
-    'student_ids[]': ['self'],
-    'include[]': [
-      'submission_comments',
-      'rubric_assessment',
-      'assignment',
-      'student_entered_score',
-    ],
+    course_id: id,
+    full: {
+      type: 'boolean',
+      description: 'true: every field, with teacher comments and rubric assessments (large).',
+    },
   },
+  ['course_id'],
+  a => ({
+    'student_ids[]': ['self'],
+    'include[]': a.full
+      ? ['submission_comments', 'rubric_assessment', 'assignment', 'student_entered_score']
+      : ['submission_comments', 'assignment'],
+  }),
 );
 add(
   'enrollments',
