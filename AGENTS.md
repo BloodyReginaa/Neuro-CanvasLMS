@@ -15,6 +15,12 @@ code (the school comes from Worker vars). It is a community project provided as 
   GitHub Actions (`.github/workflows/test.yml`) runs the tests, `npm run format:check` and the
   dry-run build on every push and pull request.
 - Never rename or remove MCP tools (clients store per-tool approvals by name); only add.
+- Versions: every release makes every user's AI announce an update, so release only what users
+  gain from. Patch: fixes. Minor: new tools or parameters, a tool answering differently, install
+  changes. Major: only if users must act (reconnect, change Cloudflare settings, newer Node).
+  Docs, CI and test changes are not released on their own. Bump the version only in the release
+  commit (version.mjs, `npm version x.y.z --no-git-tag-version`, server.json), after testing on a
+  real connector and in a new chat.
 
 Code map:
 - `worker.mjs`: OAuth + MCP entry, /healthz. `config.mjs`: school settings from Worker vars.
