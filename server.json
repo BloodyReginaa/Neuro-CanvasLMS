@@ -1,0 +1,32 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.BloodyReginaa/neuro-canvas-lms",
+  "title": "Neuro-CanvasLMS",
+  "description": "Read-only Canvas LMS for your AI: deadlines, grades, files, announcements. Runs on your Cloudflare.",
+  "version": "2.13.0",
+  "websiteUrl": "https://github.com/BloodyReginaa/Neuro-CanvasLMS#readme",
+  "repository": {
+    "url": "https://github.com/BloodyReginaa/Neuro-CanvasLMS",
+    "source": "github",
+    "id": "1447556074"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://{connector_host}/mcp",
+      "variables": {
+        "connector_host": {
+          "description": "Your own connector's address, printed by the installer (npx -y neuro-canvas-lms)",
+          "isRequired": true,
+          "placeholder": "neuro-canvas-lms.your-name.workers.dev"
+        }
+      }
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "setup": "Each user deploys their own copy to a free Cloudflare account: run npx -y neuro-canvas-lms, then add the printed URL as a custom connector. Sign-in is OAuth; the Canvas token is pasted only into the connector's own page.",
+      "readOnly": true
+    }
+  }
+}

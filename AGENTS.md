@@ -39,3 +39,6 @@ Code map:
   settings (without a terminal it does not ask). `installer/verify.mjs`: the post-deploy online
   check, also run alone by `npx -y neuro-canvas-lms check`.
 - `version.mjs`: shown on the home page and /healthz, compared with npm by update-check.mjs.
+- `server.json`: the entry in the official MCP Registry (one remote whose host each user fills in).
+  Same version as `version.mjs` and package.json (`version.test.mjs`); republish it with
+  `mcp-publisher publish` after each npm release.
