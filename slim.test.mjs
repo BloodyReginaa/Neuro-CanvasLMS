@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CANVAS_HOST as H } from './config.mjs';
-import { slim, PREVIEW_BUDGET } from './slim.mjs';
+import { slim, PREVIEW_BUDGET, lateBy, NO_TOTAL_NOTE } from './slim.mjs';
 import { callCanvas, endpoint, tools, withoutVerifiers } from './canvas.mjs';
 import { localTime, dayRange, isTimeZone } from './time.mjs';
 
@@ -484,5 +484,118 @@ test('grade rows: one short row per assignment, with group names, weights and dr
   assert.equal(
     slim('canvas_course_submissions', page([sub({ assignment_id: 1 }, {})]), {}).data[0].group,
     11,
+  );
+});
+
+test('grade rows: placeholder zeros, how late, and the student’s own due date', () => {
+  const now = new Date('2026-11-07T12:00:00Z');
+  const row = (s, a = {}) =>
+    slim(
+      'canvas_course_submissions',
+      page([
+        {
+          assignment_id: 1,
+          workflow_state: 'graded',
+          ...s,
+          assignment: assignment({ submission_types: ['online_quiz'], ...a }),
+        },
+      ]),
+      { timeZone: NY, now },
+    ).data[0];
+  // 0, graded, nothing submitted, due next week: a placeholder.
+  assert.equal(row({ score: 0 }, { due_at: '2026-11-14T04:59:59Z' }).likely_placeholder, true);
+  // The same after the due date, with a submission, excused, or not 0: not flagged.
+  for (const [s, due] of [
+    [{ score: 0 }, '2026-11-01T04:59:59Z'],
+    [{ score: 0, submitted_at: '2026-11-06T10:00:00Z' }, '2026-11-14T04:59:59Z'],
+    [{ score: 0, excused: true }, '2026-11-14T04:59:59Z'],
+    [{ score: 5 }, '2026-11-14T04:59:59Z'],
+    [{ score: 0 }, null],
+  ])
+    assert.equal(row(s, { due_at: due }).likely_placeholder, undefined);
+  // A section's own due date (cached_due_date) wins over the assignment's.
+  const own = row(
+    { score: 0, cached_due_date: '2026-11-20T04:59:59Z' },
+    { due_at: '2026-11-01T04:59:59Z' },
+  );
+  assert.equal(own.due_at, 'Thu 2026-11-19 23:59 EST');
+  assert.equal(own.likely_placeholder, true);
+  // How late, from Canvas's seconds_late.
+  assert.equal(row({ score: 8, late: true, seconds_late: 266400 }).late_by, '3 days 2 hours');
+  assert.equal(row({ score: 8, late: true, seconds_late: 15 }).late_by, '15 seconds');
+  assert.equal(row({ score: 8, seconds_late: 0 }).late_by, undefined);
+  assert.equal(lateBy(3600), '1 hour');
+  assert.equal(lateBy(5400), '1 hour 30 minutes');
+  assert.equal(lateBy(120), '2 minutes');
+});
+
+test('missing list: one short row per assignment with its course, full: true keeps everything', () => {
+  const data = [
+    {
+      ...assignment({ name: 'Quiz 7', course_id: 41016 }),
+      course: { id: 41016, name: 'COMPSCI 198C', syllabus_body: '<p>long</p>' },
+    },
+  ];
+  const r = slim('canvas_missing_submissions', page(data), { timeZone: NY });
+  assert.deepEqual(Object.keys(r.data[0]).sort(), [
+    'assignment_id',
+    'course',
+    'course_id',
+    'due_at',
+    'html_url',
+    'name',
+    'points_possible',
+    'submission_note',
+  ]);
+  assert.equal(r.data[0].course, 'COMPSCI 198C');
+  assert.match(r.data[0].submission_note, /^Gradescope: handed in there/);
+  assert.ok(!JSON.stringify(r.data).includes('Linked'));
+  const all = slim('canvas_missing_submissions', page(data), { timeZone: NY, full: true });
+  assert.ok(all.data[0].description);
+  assert.equal(
+    endpoint('canvas_missing_submissions', { full: true }).searchParams.has('full'),
+    false,
+  );
+});
+
+test('enrollments: sections of one course merged, no user copies, a course without a total says so', () => {
+  const user = { id: 7, name: 'Student', login_id: 'student' };
+  const grades = { current_score: 96.65, current_grade: 'A', final_score: 38.07 };
+  const r = slim(
+    'canvas_enrollments',
+    page([
+      { course_id: 41051, course_section_id: 1, type: 'StudentEnrollment', grades, user },
+      { course_id: 41051, course_section_id: 2, type: 'StudentEnrollment', grades, user },
+      { course_id: 39837, course_section_id: 3, type: 'StudentEnrollment', grades: {}, user },
+    ]),
+    {},
+  );
+  assert.equal(r.data.length, 2);
+  assert.deepEqual(r.data[0].sections, [1, 2]);
+  assert.equal(r.data[0].grades.current_score, 96.65);
+  assert.equal(r.data[0].grades_note, undefined);
+  assert.equal(r.data[1].sections, undefined);
+  assert.equal(r.data[1].grades_note, NO_TOTAL_NOTE);
+  assert.ok(!JSON.stringify(r).includes('login_id'));
+  // canvas_courses (total_scores) says the same about a course with no computed total.
+  const courses = slim(
+    'canvas_courses',
+    page([
+      { id: 39837, name: 'MUSIC 100', enrollments: [{ type: 'student' }] },
+      {
+        id: 41051,
+        name: 'MATH 132',
+        enrollments: [{ type: 'student', computed_current_score: 96.65 }],
+      },
+    ]),
+    {},
+  );
+  assert.equal(courses.data[0].grades_note, NO_TOTAL_NOTE);
+  assert.equal(courses.data[1].grades_note, undefined);
+  const twice = { type: 'student', computed_current_score: 96.65 };
+  assert.equal(
+    slim('canvas_courses', page([{ id: 1, enrollments: [twice, { ...twice }] }]), {}).data[0]
+      .enrollments.length,
+    1,
   );
 });

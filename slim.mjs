@@ -303,16 +303,37 @@ function dedupe(data) {
 // A grade check needs one short row per assignment, not each submission with its whole
 // assignment, rubric and comment thread (85 KB for one course in real use). full: true keeps all.
 export const GRADES_NOTE =
-  'One row per assignment. score is null until graded (or while the teacher hides it). state: unsubmitted, submitted, pending_review or graded. comments: number of teacher comments (canvas_submission shows them). submission_note "not handed in through Canvas" (on paper or nothing to hand in): "unsubmitted" is normal there. submission_note "<tool>: handed in there, not in Canvas" (Gradescope etc.): Canvas may show it as unsubmitted or missing even after it was submitted, so do not tell the user it is not done; the tool has the real status. Pass full: true for comments, rubric assessments and every field.';
+  'One row per assignment. score is null until graded (or while the teacher hides it). state: unsubmitted, submitted, pending_review or graded. comments: number of teacher comments (canvas_submission shows them). submission_note "not handed in through Canvas" (on paper or nothing to hand in): "unsubmitted" is normal there. submission_note "<tool>: handed in there, not in Canvas" (Gradescope etc.): Canvas may show it as unsubmitted or missing even after it was submitted, so do not tell the user it is not done; the tool has the real status. likely_placeholder: graded 0 before the due date with nothing submitted, which is usually a placeholder the teacher entered ahead of time, not a missed assignment: do not count it as lost points without saying so. late_by: how late the submission was. due_at is your own due date (section dates included). Pass full: true for comments, rubric assessments and every field.';
 // "3.4285714285714284" and 3.428571428571428 are the same grade: written once, as the score.
 const sameNumber = (grade, score) =>
   grade === null ||
   grade === undefined ||
   (typeof score === 'number' && Math.abs(Number(grade) - score) < 1e-9);
-export function gradeRows(submissions, groups = []) {
+// "3 days 2 hours", "15 seconds": how late a submission was (Canvas gives seconds).
+export function lateBy(seconds) {
+  if (!(seconds > 0)) return undefined;
+  const unit = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d) return unit(d, 'day') + (h ? ' ' + unit(h, 'hour') : '');
+  if (h) return unit(h, 'hour') + (m ? ' ' + unit(m, 'minute') : '');
+  if (m) return unit(m, 'minute');
+  return unit(Math.round(seconds), 'second');
+}
+// A 0 entered before the due date for something not handed in: almost always a placeholder.
+const placeholderZero = (s, due, now) =>
+  s.score === 0 &&
+  s.workflow_state === 'graded' &&
+  !s.submitted_at &&
+  !s.excused &&
+  typeof due === 'string' &&
+  Date.parse(due) > now.getTime();
+export function gradeRows(submissions, groups = [], now = new Date()) {
   const names = new Map(groups.map(g => [g.id, g.name]));
   return submissions.map(s => {
     const a = isObject(s.assignment) ? s.assignment : {};
+    const due = s.cached_due_date ?? a.due_at ?? null; // the student's own date (section overrides)
     const comments = Array.isArray(s.submission_comments) ? s.submission_comments.length : 0;
     const row = {
       assignment_id: s.assignment_id ?? a.id,
@@ -322,16 +343,18 @@ export function gradeRows(submissions, groups = []) {
       points_possible: a.points_possible,
       grade: sameNumber(s.grade, s.score) ? undefined : (s.grade ?? undefined),
       grading_type: a.grading_type === 'points' ? undefined : a.grading_type,
-      due_at: a.due_at ?? null,
+      due_at: due,
       state: s.workflow_state,
       submitted_at: s.submitted_at ?? null,
       late: s.late || undefined,
+      late_by: s.late ? lateBy(s.seconds_late) : undefined,
       missing: s.missing || undefined,
       excused: s.excused || undefined,
       late_policy_status: s.late_policy_status || undefined,
       points_deducted: s.points_deducted > 0 ? s.points_deducted : undefined,
       omit_from_final_grade: a.omit_from_final_grade || undefined,
       comments: comments || undefined,
+      likely_placeholder: placeholderZero(s, due, now) || undefined,
       html_url: a.html_url,
     };
     // The long explanation is in GRADES_NOTE once, not on every row.
@@ -343,6 +366,88 @@ export function gradeRows(submissions, groups = []) {
           : note.replace(EXTERNAL_TOOL_NOTE, 'handed in there, not in Canvas');
     return row;
   });
+}
+// canvas_missing_submissions: the assignments themselves, one short row each.
+export const MISSING_NOTE =
+  'Assignments Canvas marks as missing, one row each (canvas_assignment has the description). submission_note "<tool>: handed in there, not in Canvas": it may well be done there; check that tool before telling the user it is missing. Pass full: true for every field.';
+export function missingRows(assignments) {
+  return assignments.filter(isObject).map(a => {
+    const row = {
+      assignment_id: a.id,
+      name: a.name,
+      course: isObject(a.course) ? a.course.name : undefined,
+      course_id: a.course_id,
+      due_at: a.due_at ?? null,
+      points_possible: a.points_possible,
+      html_url: a.html_url,
+    };
+    const note = submissionNote(a);
+    if (note)
+      row.submission_note =
+        note === NO_SUBMISSION_NOTE
+          ? 'not handed in through Canvas'
+          : note.replace(EXTERNAL_TOOL_NOTE, 'handed in there, not in Canvas');
+    return row;
+  });
+}
+
+// canvas_enrollments: one entry per course and role (Canvas lists each section separately, each
+// with a copy of the user), and a word where a course shows no total.
+export const NO_TOTAL_NOTE =
+  'no total score is shown for this course (the teacher hides it or has not set one up): it is not a 0';
+export function enrollmentRows(enrollments) {
+  const out = [];
+  const seen = new Map();
+  for (const e of enrollments.filter(isObject)) {
+    const { user, ...rest } = e;
+    const key = JSON.stringify([e.course_id, e.type, e.role, e.enrollment_state, e.grades ?? null]);
+    const prior = seen.get(key);
+    if (prior) {
+      if (e.course_section_id !== undefined) prior.sections.push(e.course_section_id);
+      continue;
+    }
+    const row = { ...rest, sections: [e.course_section_id].filter(x => x !== undefined) };
+    delete row.course_section_id;
+    const g = isObject(e.grades) ? e.grades : null;
+    if (
+      /student/i.test(e.type ?? '') &&
+      g &&
+      g.current_score == null &&
+      g.current_grade == null &&
+      g.final_score == null &&
+      g.final_grade == null
+    )
+      row.grades_note = NO_TOTAL_NOTE;
+    seen.set(key, row);
+    out.push(row);
+  }
+  for (const r of out) if (r.sections?.length < 2) delete r.sections;
+  return out;
+}
+
+// canvas_courses (with total_scores): a student enrollment without any computed total.
+function noTotalCourse(c) {
+  if (!isObject(c) || !Array.isArray(c.enrollments)) return c;
+  // Two sections of one course come as two identical enrollments: keep one.
+  const seen = new Set();
+  const enrollments = c.enrollments.filter(e => {
+    const k = JSON.stringify(e);
+    return seen.has(k) ? false : seen.add(k);
+  });
+  const blank = e =>
+    isObject(e) &&
+    /student/i.test(e.type ?? '') &&
+    [
+      'computed_current_score',
+      'computed_current_grade',
+      'computed_final_score',
+      'computed_final_grade',
+    ].every(k => e[k] == null);
+  return {
+    ...c,
+    enrollments,
+    ...(enrollments.length && enrollments.every(blank) ? { grades_note: NO_TOTAL_NOTE } : {}),
+  };
 }
 const defined = o => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
 export function groupSummary(groups) {
@@ -364,11 +469,19 @@ export function groupSummary(groups) {
 // groups: canvas_course_submissions only, the course's assignment groups (compact rows, not full).
 export function slim(name, result, { timeZone, now = new Date(), full = false, groups } = {}) {
   const zone = isTimeZone(timeZone) ? timeZone : null;
+  if (name === 'canvas_missing_submissions' && !full && Array.isArray(result.data)) {
+    result = { ...result, data: missingRows(result.data), note: MISSING_NOTE };
+    name = 'canvas_missing_submissions_rows';
+  }
+  if (name === 'canvas_enrollments' && Array.isArray(result.data))
+    result = { ...result, data: enrollmentRows(result.data) };
+  if (name === 'canvas_courses' && Array.isArray(result.data))
+    result = { ...result, data: result.data.map(noTotalCourse) };
   if (name === 'canvas_course_submissions' && !full && Array.isArray(result.data)) {
     const g = Array.isArray(groups) ? groups.filter(isObject) : [];
     result = {
       ...result,
-      data: gradeRows(result.data, g),
+      data: gradeRows(result.data, g, now),
       ...(g.length ? { assignment_groups: groupSummary(g) } : {}),
       note: GRADES_NOTE,
     };

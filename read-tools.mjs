@@ -89,14 +89,19 @@ add(
 );
 add(
   'enrollments',
-  'Read your own enrollments and released course grades. Hidden grades remain hidden.',
+  'Read your own enrollments and released course grades, one entry per course (several sections of one course are merged). Hidden grades remain hidden; a course with no total says so in grades_note.',
   '/users/self/enrollments',
 );
 add(
   'missing_submissions',
-  'Assignments Canvas marks as missing (past due, not submitted in Canvas). Work handed in on an external tool such as Gradescope can be listed here by mistake: see submission_note.',
+  'Assignments Canvas marks as missing (past due, not submitted in Canvas), one short row each with its course. Work handed in on an external tool such as Gradescope can be listed here by mistake: see submission_note. Pass full: true for every field (descriptions are in canvas_assignment).',
   '/users/self/missing_submissions',
-  {},
+  {
+    full: {
+      type: 'boolean',
+      description: 'true: every field, with assignment descriptions (large).',
+    },
+  },
   [],
   { 'include[]': ['course'] },
 );
