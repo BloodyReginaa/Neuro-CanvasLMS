@@ -24,7 +24,9 @@ code (the school comes from Worker vars). It is a community project provided as 
 
 Code map:
 - `worker.mjs`: OAuth + MCP entry, /healthz. `config.mjs`: school settings from Worker vars.
-- `canvas.mjs` + `read-tools.mjs`: tools → fixed GET routes. `canvas-transport.mjs`: fetch with a TLS
+- `canvas.mjs` + `read-tools.mjs`: tools → fixed GET routes. `tool-list.mjs`: every tool in tools/list order,
+  plus PARAM_DOCS (what each id parameter is and where it comes from); a test requires every tool
+  and parameter to be described. `canvas-transport.mjs`: fetch with a TLS
   socket fallback to Canvas.
 - Results: `slim.mjs` (compact results: HTML → text, internal fields dropped, local times, list
   previews; `raw: true` skips it), `html-text.mjs` (HTML → text), `time.mjs` (time zones, day
@@ -47,6 +49,9 @@ Code map:
   settings (without a terminal it does not ask). `installer/verify.mjs`: the post-deploy online
   check, also run alone by `npx -y neuro-canvas-lms check`.
 - `version.mjs`: shown on the home page and /healthz, compared with npm by update-check.mjs.
+- `Dockerfile` + `scripts/glama-stdio.mjs`: a listing-only stdio server for MCP directories (Glama)
+  to read the tool list; it has no Canvas access and every call says how to deploy. Not in the npm
+  package.
 - `server.json`: the entry in the official MCP Registry (one remote whose host each user fills in).
   Same version as `version.mjs` and package.json (`version.test.mjs`).
 - Releases: bump those three, push to main, then push a tag `vX.Y.Z`;

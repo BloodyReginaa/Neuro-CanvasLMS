@@ -1,0 +1,9 @@
+node_modules
+.wrangler
+.git
+.github
+.claude
+docs
+*.test.mjs
+.dev.vars*
+.env*

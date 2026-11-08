@@ -27,7 +27,7 @@ add(
 );
 add(
   'pages',
-  'List accessible course or group pages.',
+  'List the wiki pages of a course or group that you can see, with their page_url, title and update time. Many courses hide this list (401/403/404); then find pages through canvas_modules or canvas_find_files.',
   a => ctx(a) + '/pages',
   context,
   Object.keys(context),
@@ -41,14 +41,14 @@ add(
 );
 add(
   'front_page',
-  'Read the front page of a course or group.',
+  'Read the front (home) page of a course or group in full. Often holds the schedule, office hours and links to slides; files it links are found by canvas_find_files.',
   a => ctx(a) + '/front_page',
   context,
   Object.keys(context),
 );
 add(
   'assignment_groups',
-  'Read assignment groups and grade weights.',
+  "List a course's assignment groups (for example Homework, Exams) with their grade weights and drop rules (drop lowest/highest). Use with canvas_course_submissions to work out a weighted grade.",
   a => `/courses/${a.course_id}/assignment_groups`,
   { course_id: id },
   ['course_id'],
@@ -107,7 +107,7 @@ add(
 );
 add(
   'rubrics',
-  'List accessible grading rubrics for a course.',
+  'List the grading rubrics of a course that you can see, with their criteria and point ranges. For the feedback on your own work use canvas_submission.',
   a => `/courses/${a.course_id}/rubrics`,
   { course_id: id },
   ['course_id'],
@@ -121,14 +121,14 @@ add(
 );
 add(
   'peer_reviews',
-  'Read peer review assignments visible to you; Canvas enforces access.',
+  'List the peer reviews of one assignment that are visible to you: the reviews you must do and the ones done on your work, with their status. Canvas only shows what your role allows.',
   a => `/courses/${a.course_id}/assignments/${a.assignment_id}/peer_reviews`,
   { course_id: id, assignment_id: id },
   ['course_id', 'assignment_id'],
 );
 add(
   'discussions',
-  'Read discussion topics in a course or group.',
+  'List discussion topics in a course or group, with titles, authors, dates and reply counts; search_term filters by title. Announcements are read with canvas_announcements.',
   a => ctx(a) + '/discussion_topics',
   { ...context, search_term: text },
   Object.keys(context),
@@ -136,7 +136,7 @@ add(
 );
 add(
   'discussion',
-  'Read one discussion or announcement in full without marking it read.',
+  'Read one discussion topic or announcement in full (message as text with links, author, dates). It does not mark it read. Replies are read with canvas_discussion_entries.',
   a => ctx(a) + `/discussion_topics/${a.topic_id}`,
   { ...context, topic_id: id },
   [...Object.keys(context), 'topic_id'],
@@ -150,14 +150,14 @@ add(
 );
 add(
   'discussion_replies',
-  'Read replies to one discussion entry.',
+  'Read the replies to one entry of a discussion, for threaded discussions. Take entry_id from canvas_discussion_entries.',
   a => ctx(a) + `/discussion_topics/${a.topic_id}/entries/${a.entry_id}/replies`,
   { ...context, topic_id: id, entry_id: id },
   [...Object.keys(context), 'topic_id', 'entry_id'],
 );
 add(
   'conversations',
-  'List Canvas Inbox conversations. This is Canvas messaging, not Gmail.',
+  'List Canvas Inbox conversations (messages from teachers and classmates inside Canvas), newest first; scope picks unread, starred, archived or sent. This is Canvas messaging, not Gmail. Read one in full with canvas_conversation.',
   '/conversations',
   { scope: choice('unread', 'starred', 'archived', 'sent') },
   [],
@@ -171,7 +171,11 @@ add(
   ['conversation_id'],
   { auto_mark_as_read: 'false' },
 );
-add('unread_count', 'Read Canvas Inbox unread count.', '/conversations/unread_count');
+add(
+  'unread_count',
+  'Read how many Canvas Inbox conversations are unread. This is Canvas messaging, not email. Read them with canvas_conversations (scope unread).',
+  '/conversations/unread_count',
+);
 add(
   'activity_stream',
   'What is new across all your current courses, newest first: announcements, discussion posts, graded submissions (score, grade, teacher comments) and Inbox messages. The quickest answer to "any updates?" or "what\'s new?": one call instead of checking each course. Long texts are shortened. Nothing is marked read.',
@@ -200,7 +204,7 @@ add(
 );
 add(
   'calendar_event',
-  'Read one accessible calendar event or reservation.',
+  'Read one calendar event or appointment reservation in full: time, place, description and the course it belongs to. Take event_id from canvas_calendar_events.',
   a => `/calendar_events/${a.event_id}`,
   { event_id: id },
   ['event_id'],
@@ -215,7 +219,7 @@ add(
 );
 add(
   'appointment_group',
-  'Read one appointment group and its slots.',
+  'Read one appointment group (sign-up slots a teacher offers, such as office hours or demos) with its available time slots and your reservations.',
   a => `/appointment_groups/${a.appointment_group_id}`,
   { appointment_group_id: id },
   ['appointment_group_id'],
@@ -230,7 +234,7 @@ add(
 );
 add(
   'planner_overrides',
-  'Read completion and dismissal flags on your planner items.',
+  "List the marks you set on planner items: which ones you checked off as done or dismissed in Canvas's to-do list. Planner items themselves come from canvas_planner.",
   '/planner/overrides',
 );
 add(
@@ -261,7 +265,7 @@ add(
 );
 add(
   'folders',
-  'Read personal, course, group or child folders.',
+  "List folders: your personal files (context_type user), a course's or group's folders, or the subfolders of a folder (context_type folder with its id). Many courses hide their files; use canvas_find_files then.",
   a =>
     a.context_type === 'user'
       ? '/users/self/folders'
@@ -269,9 +273,13 @@ add(
   { context_type: choice('user', 'course', 'group', 'folder'), context_id: id },
   ['context_type'],
 );
-add('folder', 'Read folder metadata.', a => `/folders/${a.folder_id}`, { folder_id: id }, [
-  'folder_id',
-]);
+add(
+  'folder',
+  "Read one folder's details: name, full path, parent folder and how many files and subfolders it holds. List its subfolders with canvas_folders (context_type folder).",
+  a => `/folders/${a.folder_id}`,
+  { folder_id: id },
+  ['folder_id'],
+);
 add(
   'file_content',
   'Read text from a Canvas file: PDF text, DOCX, PPTX, XLSX, plain text or code, and ZIP archives (unpacked on the server: listing plus the text of every code/text/document file inside; pass `entry` to read one file from the listing). Max download 15 MiB; paginated text via offset. For scanned or handwritten PDFs use canvas_file_original. No external URL input.',
@@ -291,27 +299,35 @@ add(
   },
   ['file_id'],
 );
-add('groups', 'Read groups you belong to.', '/users/self/groups');
-add('group', 'Read group information.', a => `/groups/${a.group_id}`, { group_id: id }, [
-  'group_id',
-]);
+add(
+  'groups',
+  'List the Canvas groups you belong to (project teams, study groups) with their ids and courses. Use the group id as context_id for group pages, files and discussions.',
+  '/users/self/groups',
+);
+add(
+  'group',
+  "Read one group's details: name, description, course and member count. List its members with canvas_group_members.",
+  a => `/groups/${a.group_id}`,
+  { group_id: id },
+  ['group_id'],
+);
 add(
   'group_members',
-  'Read members visible to you in a group.',
+  'List the members of one group that you are allowed to see, with their names.',
   a => `/groups/${a.group_id}/users`,
   { group_id: id },
   ['group_id'],
 );
 add(
   'module',
-  'Read one course module and your progress; does not mark completion.',
+  'Read one course module: its name, unlock date, prerequisites and your completion progress. It does not mark anything complete. List its items with canvas_module_items.',
   a => `/courses/${a.course_id}/modules/${a.module_id}`,
   { course_id: id, module_id: id },
   ['course_id', 'module_id'],
 );
 add(
   'module_item',
-  'Read one module item and completion requirement.',
+  'Read one module item: its type, title, link to the content and the requirement to complete it (view, submit, minimum score) with your status.',
   a => `/courses/${a.course_id}/modules/${a.module_id}/items/${a.item_id}`,
   { course_id: id, module_id: id, item_id: id },
   ['course_id', 'module_id', 'item_id'],
@@ -357,7 +373,7 @@ add(
 );
 add(
   'communication_channels',
-  'Read your configured Canvas notification channels.',
+  'List the places Canvas sends you notifications (email addresses, push, SMS) with their ids. Use an id with canvas_notification_preferences.',
   '/users/self/communication_channels',
 );
 add(
@@ -367,6 +383,18 @@ add(
   { channel_id: id },
   ['channel_id'],
 );
-add('favorites', 'Read your favorite courses.', '/users/self/favorites/courses');
-add('favorite_groups', 'Read your favorite groups.', '/users/self/favorites/groups');
-add('course_nicknames', 'Read your personal course nicknames.', '/users/self/course_nicknames');
+add(
+  'favorites',
+  'List the courses you starred as favorites in Canvas (the ones on your dashboard). For every course use canvas_courses.',
+  '/users/self/favorites/courses',
+);
+add(
+  'favorite_groups',
+  'List the groups you starred as favorites in Canvas.',
+  '/users/self/favorites/groups',
+);
+add(
+  'course_nicknames',
+  'List the nicknames you gave courses in Canvas, so you can match a name like "Calc" to its course.',
+  '/users/self/course_nicknames',
+);

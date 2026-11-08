@@ -17,3 +17,7 @@ docs/
 .claude/
 .prettierrc.json
 .prettierignore
+# Listing-only server for MCP directories (Glama); not part of the connector.
+Dockerfile
+.dockerignore
+scripts/glama-stdio.mjs
