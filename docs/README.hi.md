@@ -4,7 +4,7 @@
 
 [![npm](https://img.shields.io/npm/v/neuro-canvas-lms?label=npm&color=c9a462)](https://www.npmjs.com/package/neuro-canvas-lms) [![tests](https://github.com/BloodyReginaa/Neuro-CanvasLMS/actions/workflows/test.yml/badge.svg)](https://github.com/BloodyReginaa/Neuro-CanvasLMS/actions/workflows/test.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/BloodyReginaa/Neuro-CanvasLMS/blob/main/LICENSE)
 
-![Claude में "What's due this week?" का जवाब देता Neuro-CanvasLMS](https://raw.githubusercontent.com/BloodyReginaa/Neuro-CanvasLMS/main/docs/images/banner.png)
+[![48 सेकंड में Neuro-CanvasLMS: Claude में "What's due this week?" का जवाब (देखने के लिए क्लिक करें)](https://raw.githubusercontent.com/BloodyReginaa/Neuro-CanvasLMS/main/docs/images/promo-cover.jpg)](https://bloodyreginaa.github.io/Neuro-CanvasLMS/#film)
 
 **अपने Canvas LMS को सीधे Claude और ChatGPT से जोड़ें।** आपके कोर्स, समय-सीमाएँ, ग्रेड और लेक्चर फ़ाइलें अब आपके AI की जानकारी का हिस्सा हैं — किसी भी चैट में, किसी भी डिवाइस पर। यह एक केवल-पढ़ने वाला रिमोट MCP सर्वर है, जिसे एक कमांड आपके अपने मुफ़्त Cloudflare खाते में डिप्लॉय कर देता है। यह हर उस Canvas संस्थान में काम करता है जो छात्रों को एक्सेस टोकन बनाने देता है (नीचे 30 सेकंड में जाँचें)।
 

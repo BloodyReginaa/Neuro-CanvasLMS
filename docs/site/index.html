@@ -36,6 +36,18 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
+  "@type": "VideoObject",
+  "name": "Neuro-CanvasLMS in 48 seconds",
+  "description": "Connect Canvas LMS to Claude and ChatGPT: ask what's due, read lecture files and set up starter code, from your laptop or your phone.",
+  "thumbnailUrl": "https://bloodyreginaa.github.io/Neuro-CanvasLMS/promo-poster.jpg",
+  "uploadDate": "2026-11-08",
+  "duration": "PT48S",
+  "contentUrl": "https://bloodyreginaa.github.io/Neuro-CanvasLMS/promo-en.mp4"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
     { "@type": "Question", "name": "Can I connect Canvas LMS to ChatGPT or Claude?",
@@ -125,6 +137,24 @@ h1 span { color: var(--faint); }
 .btn:hover { text-decoration: none; filter: brightness(.97); }
 .check { margin-top: 16px; font-size: 14px; color: var(--muted); }
 
+/* film: muted loop while on screen; the button restarts it with sound */
+.film { margin: 0 0 56px; position: relative; aspect-ratio: 16 / 9; border-radius: 20px; overflow: hidden; background: #ebe8e1; box-shadow: var(--shadow); }
+.film video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.film .sound { position: absolute; left: 20px; bottom: 20px; display: inline-flex; align-items: center; gap: 10px; border: 0; cursor: pointer;
+  padding: 7px 16px 7px 7px; border-radius: 999px; background: rgba(255,255,255,.93); color: #1d1d1f; box-shadow: 0 6px 24px rgba(0,0,0,.2);
+  font: 600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.film .sound i { width: 30px; height: 30px; border-radius: 50%; background: #1d1d1f; display: grid; place-items: center; flex: none; }
+.film .sound i::after { content: ""; margin-left: 3px; border-style: solid; border-width: 6px 0 6px 10px; border-color: transparent transparent transparent #fff; }
+.film .sound b { font-weight: 500; color: #6e6e73; }
+.film .sound:hover { background: #fff; }
+.film.on .sound { display: none; }
+@media (max-width: 600px) {
+  .film { margin-bottom: 40px; border-radius: 14px; }
+  .film .sound { left: 8px; bottom: 8px; gap: 7px; padding: 4px 11px 4px 4px; font-size: 13px; }
+  .film .sound i { width: 22px; height: 22px; }
+  .film .sound i::after { margin-left: 2px; border-width: 4.5px 0 4.5px 7.5px; }
+}
+
 /* chat mock */
 .win { background: var(--bg2); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; }
 .bar { height: 42px; display: flex; align-items: center; padding: 0 16px; gap: 7px; border-bottom: 1px solid var(--line); position: relative; }
@@ -204,6 +234,7 @@ footer a { color: var(--muted); }
     Neuro-CanvasLMS
   </a>
   <nav>
+    <a href="#film">Watch</a>
     <a href="#install">Install</a>
     <a href="#compare">Compare</a>
     <a href="#faq">FAQ</a>
@@ -241,6 +272,11 @@ footer a { color: var(--muted); }
       </div>
     </div>
   </div>
+
+  <figure class="film" id="film">
+    <video src="promo-en.mp4" poster="promo-poster.jpg" muted loop playsinline preload="metadata" aria-label="Neuro-CanvasLMS in 48 seconds: Claude and ChatGPT reading Canvas deadlines, lecture files and starter code"></video>
+    <button class="sound" type="button"><i></i>Watch with sound <b>0:48</b></button>
+  </figure>
 </div>
 
 <section id="ask"><div class="wrap">
@@ -341,6 +377,34 @@ document.querySelectorAll("[data-copy]").forEach(function (b) {
     try { navigator.clipboard.writeText(b.getAttribute("data-copy")).then(done, function () {}); } catch (e) {}
   });
 });
+
+// The film plays muted while it is on screen (not with reduced motion or Data Saver).
+// "Watch with sound" or a click on it restarts it with sound and the browser's controls.
+(function () {
+  var fig = document.getElementById("film");
+  var v = fig && fig.querySelector("video");
+  if (!v) return;
+  var heard = false;
+  var play = function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+  var withSound = function () {
+    heard = true;
+    fig.classList.add("on");
+    v.controls = true; v.loop = false; v.muted = false; v.currentTime = 0;
+    play();
+  };
+  fig.querySelector(".sound").addEventListener("click", withSound);
+  v.addEventListener("click", function () { if (!heard) withSound(); });
+  var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var saveData = navigator.connection && navigator.connection.saveData;
+  if (!("IntersectionObserver" in window)) return;
+  new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (heard) { if (!e.isIntersecting) v.pause(); return; }
+      if (calm || saveData) return;
+      if (e.intersectionRatio >= 0.4) play(); else v.pause();
+    });
+  }, { threshold: [0, 0.4] }).observe(v);
+})();
 </script>
 </body>
 </html>

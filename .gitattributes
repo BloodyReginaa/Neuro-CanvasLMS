@@ -1,0 +1,3 @@
+# The promo videos are for the GitHub Pages site only; keep them out of source archives
+# (GitHub tarballs, npx github:...). The npm package already skips docs/ via .npmignore.
+docs/site/*.mp4 export-ignore

@@ -4,7 +4,7 @@
 
 [![npm](https://img.shields.io/npm/v/neuro-canvas-lms?label=npm&color=c9a462)](https://www.npmjs.com/package/neuro-canvas-lms) [![tests](https://github.com/BloodyReginaa/Neuro-CanvasLMS/actions/workflows/test.yml/badge.svg)](https://github.com/BloodyReginaa/Neuro-CanvasLMS/actions/workflows/test.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/BloodyReginaa/Neuro-CanvasLMS/blob/main/LICENSE)
 
-![Neuro-CanvasLMS respondiendo "What's due this week?" en Claude](https://raw.githubusercontent.com/BloodyReginaa/Neuro-CanvasLMS/main/docs/images/banner.png)
+[![Neuro-CanvasLMS en 48 segundos: Claude respondiendo "What's due this week?" (clic para verlo)](https://raw.githubusercontent.com/BloodyReginaa/Neuro-CanvasLMS/main/docs/images/promo-cover.jpg)](https://bloodyreginaa.github.io/Neuro-CanvasLMS/#film)
 
 **Conecta tu Canvas LMS directamente a Claude y ChatGPT.** Tus cursos, fechas de entrega, calificaciones y apuntes pasan a formar parte de lo que sabe tu IA, en cualquier chat y desde cualquier dispositivo. Es un servidor MCP remoto de solo lectura que un solo comando despliega en tu propia cuenta gratuita de Cloudflare. Funciona en cualquier universidad con Canvas que permita a los estudiantes crear tokens de acceso (compruébalo en 30 segundos más abajo).
 
