@@ -11,6 +11,11 @@
 // Both paths only talk to the configured Canvas host on 443, only send GET /api/v1/... with an
 // allowlisted set of headers, never follow redirects, and bound size and time.
 // Anything else (file downloads) goes through fetch() WITHOUT credentials.
+// File downloads: from 2026-11-20 Instructure's file storage (inst-fs-*.inscloudgate.net) answered
+// every fetch() from the Worker with an nginx "406 Not Acceptable" (whatever the User-Agent or
+// Accept), while the same request over a TLS socket got its normal 302. So a 406 from a Canvas
+// file host is retried once over the socket too (createFileFetch): GET only, never credentials,
+// only Accept and User-Agent, size-bounded, redirects returned to the caller, not followed.
 import { CANVAS_HOST } from './config.mjs';
 const MAX_BODY = 16 * 1024 * 1024;
 const MAX_WIRE = MAX_BODY + 1024 * 1024;
@@ -175,6 +180,74 @@ async function boundedFetchResponse(response) {
   });
 }
 
+// One GET over a raw TLS socket to hostname:443; the whole answer is read (bounded) and parsed.
+async function socketGet(connect, hostname, url, headers, signal) {
+  signal?.throwIfAborted();
+  const socket = connect({ hostname, port: 443 }, { secureTransport: 'on' });
+  socket.closed.catch(() => {});
+  const close = () => socket.close().catch(() => {});
+  const timer = setTimeout(close, 20000);
+  signal?.addEventListener('abort', close, { once: true });
+  try {
+    await socket.opened;
+    const lines = [`GET ${url.pathname}${url.search} HTTP/1.1`, `Host: ${hostname}`];
+    for (const [key, value] of headers) lines.push(`${key}: ${value}`);
+    lines.push('Accept-Encoding: identity', 'Connection: close', '', '');
+    const writer = socket.writable.getWriter();
+    await writer.write(encoder.encode(lines.join('\r\n')));
+    writer.releaseLock();
+    const reader = socket.readable.getReader();
+    const chunks = [];
+    let size = 0;
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      size += value.length;
+      if (size > MAX_WIRE) throw new Error('Canvas transport: response is too large.');
+      chunks.push(value);
+    }
+    signal?.throwIfAborted();
+    return await parseCanvasResponse(concat(chunks, size));
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', close);
+    await close();
+  }
+}
+
+// Hosts that serve Canvas files (the same as file-content.mjs allowedDownload, without S3).
+export const canvasFileHost = host =>
+  host === CANVAS_HOST ||
+  host.endsWith('.instructure.com') ||
+  host.endsWith('.inscloudgate.net') ||
+  host === 'canvas-user-content.com' ||
+  host.endsWith('.canvas-user-content.com');
+
+// fetch() for file downloads, with the socket as the fallback on a 406 from a Canvas file host.
+export function createFileFetch(connect, fetcher = fetch, { log = () => {} } = {}) {
+  return async function fileFetch(input, init = {}) {
+    const response = await fetcher(input, init);
+    if (response.status !== 406) return response;
+    const url = new URL(input);
+    const headers = new Headers(init.headers);
+    if (
+      url.protocol !== 'https:' ||
+      (url.port && url.port !== '443') ||
+      url.username ||
+      url.password ||
+      !canvasFileHost(url.hostname) ||
+      (init.method ?? 'GET') !== 'GET' ||
+      init.body ||
+      [...headers.keys()].some(k => !['accept', 'user-agent'].includes(k))
+    )
+      return response;
+    await response.body?.cancel().catch(() => {});
+    const again = await socketGet(connect, url.hostname, url, headers, init.signal);
+    log({ via: 'socket', status: again.status, reason: 'file download fetch HTTP 406' });
+    return again;
+  };
+}
+
 // mode: 'auto' (default: fetch first, socket on rejection), 'fetch' or 'socket'.
 // log: receives { via, status, reason } — never URLs, headers or tokens.
 export function createCanvasTransport(
@@ -182,39 +255,8 @@ export function createCanvasTransport(
   fetcher = fetch,
   { mode = () => 'auto', log = () => {} } = {},
 ) {
-  async function viaSocket(url, headers, signal) {
-    signal?.throwIfAborted();
-    const socket = connect({ hostname: CANVAS_HOST, port: 443 }, { secureTransport: 'on' });
-    socket.closed.catch(() => {});
-    const close = () => socket.close().catch(() => {});
-    const timer = setTimeout(close, 20000);
-    signal?.addEventListener('abort', close, { once: true });
-    try {
-      await socket.opened;
-      const lines = [`GET ${url.pathname}${url.search} HTTP/1.1`, `Host: ${CANVAS_HOST}`];
-      for (const [key, value] of headers) lines.push(`${key}: ${value}`);
-      lines.push('Accept-Encoding: identity', 'Connection: close', '', '');
-      const writer = socket.writable.getWriter();
-      await writer.write(encoder.encode(lines.join('\r\n')));
-      writer.releaseLock();
-      const reader = socket.readable.getReader();
-      const chunks = [];
-      let size = 0;
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        size += value.length;
-        if (size > MAX_WIRE) throw new Error('Canvas transport: response is too large.');
-        chunks.push(value);
-      }
-      signal?.throwIfAborted();
-      return await parseCanvasResponse(concat(chunks, size));
-    } finally {
-      clearTimeout(timer);
-      signal?.removeEventListener('abort', close);
-      await close();
-    }
-  }
+  const viaSocket = (url, headers, signal) => socketGet(connect, CANVAS_HOST, url, headers, signal);
+  const fileFetch = createFileFetch(connect, fetcher, { log });
 
   return async function canvasTransport(input, options = {}) {
     const url = new URL(input);
@@ -222,7 +264,7 @@ export function createCanvasTransport(
     if (url.origin !== `https://${CANVAS_HOST}` || !url.pathname.startsWith('/api/v1/')) {
       if (new Headers(options.headers).has('authorization'))
         throw new Error('Canvas transport: credentials cannot leave the fixed API origin.');
-      return fetcher(input, options);
+      return fileFetch(input, options);
     }
     if (
       url.username ||

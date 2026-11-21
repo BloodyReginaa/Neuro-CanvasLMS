@@ -16,6 +16,12 @@ import {
 import { DOWNLOAD_UA, loginRedirect, extractOrExplain, paginated } from './file-content.mjs';
 export const MAX_FILE_BYTES = 15 * 1024 * 1024;
 const cloudFetch = (input, init) => fetch(input, init);
+// Downloads of original files. The Worker swaps in createFileFetch (canvas-transport.mjs): fetch with
+// a TLS-socket retry when Canvas file storage answers 406. Tests pass their own `fetcher`.
+let fileFetch = cloudFetch;
+export const useFileFetch = f => {
+  fileFetch = f;
+};
 const id = { type: 'integer', minimum: 1 };
 export const moduleFileTool = {
   name: 'canvas_module_file',
@@ -96,7 +102,7 @@ export function downloadURL(raw, purpose = 'original') {
 }
 export async function downloadOriginal(
   raw,
-  { fetcher = cloudFetch, resolve = resolvePublic, maxBytes = MAX_FILE_BYTES, purpose } = {},
+  { fetcher = fileFetch, resolve = resolvePublic, maxBytes = MAX_FILE_BYTES, purpose } = {},
 ) {
   let url = downloadURL(raw, purpose);
   const signal = AbortSignal.timeout(25000);

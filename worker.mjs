@@ -6,6 +6,7 @@ import {
   moduleFileContent,
   fileOriginalTool,
   fileOriginal,
+  useFileFetch,
 } from './module-file.mjs';
 import { findFilesTool, findFiles } from './find-files.mjs';
 import { linkContentTool, linkContent } from './link-content.mjs';
@@ -16,7 +17,7 @@ import {
   redeemDownload,
 } from './download-link.mjs';
 import { connect } from 'cloudflare:sockets';
-import { createCanvasTransport } from './canvas-transport.mjs';
+import { createCanvasTransport, createFileFetch } from './canvas-transport.mjs';
 import { OAuthProvider } from '@cloudflare/workers-oauth-provider';
 import { WorkerEntrypoint, env as workerEnv } from 'cloudflare:workers';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -44,6 +45,12 @@ const canvasTransport = createCanvasTransport(connect, fetch, {
     ['fetch', 'socket'].includes(workerEnv.CANVAS_TRANSPORT) ? workerEnv.CANVAS_TRANSPORT : 'auto',
   log: entry => console.log(JSON.stringify({ canvas_transport: entry })),
 });
+// Original-file downloads (module-file.mjs) get the same 406 fallback as canvas_file_content.
+useFileFetch(
+  createFileFetch(connect, fetch, {
+    log: entry => console.log(JSON.stringify({ canvas_transport: entry })),
+  }),
+);
 // The user's Canvas time zone, so results show local times and day ranges cover local days
 // (time.mjs keeps it for a few hours per Worker instance).
 const zoneOf = timeZoneCache();

@@ -2,7 +2,12 @@ import { CANVAS_HOST as H } from './config.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { gzipSync } from 'node:zlib';
-import { createCanvasTransport, parseCanvasResponse, shouldFallBack } from './canvas-transport.mjs';
+import {
+  createCanvasTransport,
+  createFileFetch,
+  parseCanvasResponse,
+  shouldFallBack,
+} from './canvas-transport.mjs';
 import { callCanvas } from './canvas.mjs';
 const enc = new TextEncoder();
 const NO_FETCH = () => {
@@ -365,4 +370,73 @@ test('a rate limit is not retried over the socket', () => {
   );
   // a firewall's HTML 403 (no Canvas headers) still falls back
   assert.equal(shouldFallBack(r(403, { 'content-type': 'text/html' })), true);
+});
+
+// 2026-11-20: Canvas file storage answered every fetch() from the Worker with 406, the socket did not.
+const FILE = {
+  method: 'GET',
+  redirect: 'manual',
+  headers: { Accept: '*/*', 'User-Agent': 'UA' },
+};
+const nginx406 = async () =>
+  new Response('<html><center>406 Not Acceptable</center></html>', {
+    status: 406,
+    headers: { 'content-type': 'text/html' },
+  });
+test('file downloads: a 406 from Canvas file storage is retried once over the socket', async () => {
+  const f = fixture(
+    wire('HTTP/1.1 302 Found\r\nLocation: https://s3.example/x\r\nContent-Length: 0'),
+  );
+  const logs = [];
+  const client = createCanvasTransport(f.connect, nginx406, { log: e => logs.push(e) });
+  const r = await client('https://inst-fs-iad-prod.inscloudgate.net/files/abc/x?token=t', FILE);
+  assert.equal(r.status, 302);
+  assert.equal(r.headers.get('location'), 'https://s3.example/x');
+  assert.deepEqual(f.connection.address, {
+    hostname: 'inst-fs-iad-prod.inscloudgate.net',
+    port: 443,
+  });
+  assert.match(
+    f.request,
+    /^GET \/files\/abc\/x\?token=t HTTP\/1\.1\r\nHost: inst-fs-iad-prod\.inscloudgate\.net\r\n/,
+  );
+  assert.match(f.request, /\r\naccept: \*\/\*\r\n/);
+  assert.match(f.request, /\r\nuser-agent: UA\r\n/);
+  assert.doesNotMatch(f.request, /authorization|cookie/i);
+  assert.equal(f.closes, 1);
+  assert.equal(logs[0].via, 'socket');
+});
+test('file downloads: the socket is only for a 406 from a Canvas file host with a plain GET', async () => {
+  const never = () => {
+    throw new Error('socket must not be used');
+  };
+  const ok = createFileFetch(never, async () => new Response('file'));
+  assert.equal(await (await ok('https://x.inscloudgate.net/f', FILE)).text(), 'file');
+  const other = createFileFetch(never, nginx406);
+  assert.equal((await other('https://docs.google.com/f', FILE)).status, 406);
+  assert.equal((await other('https://bucket.s3.amazonaws.com/f', FILE)).status, 406);
+  assert.equal((await other('https://x.inscloudgate.net:8443/f', FILE)).status, 406);
+  assert.equal((await other('http://x.inscloudgate.net/f', FILE)).status, 406);
+  assert.equal(
+    (await other('https://x.inscloudgate.net/f', { ...FILE, method: 'HEAD' })).status,
+    406,
+  );
+  assert.equal(
+    (
+      await other('https://x.inscloudgate.net/f', {
+        ...FILE,
+        headers: { ...FILE.headers, Cookie: 'c' },
+      })
+    ).status,
+    406,
+  );
+  const same = createFileFetch(
+    fixture(wire('HTTP/1.1 200 OK\r\nContent-Type: application/pdf\r\nContent-Length: 4', '%PDF'))
+      .connect,
+    nginx406,
+  );
+  assert.equal(
+    await (await same('https://a1-2.cluster9.canvas-user-content.com/f', FILE)).text(),
+    '%PDF',
+  );
 });
